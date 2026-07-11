@@ -1,0 +1,29 @@
+# Node modules
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
+
+# npm cache
+.npm/
+
+# Temporary files
+tmp/
+temp/
+
+# Render
+.render/
+
+# Coverage
+coverage/

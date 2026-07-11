@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Panel - Virtual Classroom</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #111214; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .top-bar { padding: 15px; text-align: center; background: #1a1c20; border-bottom: 1px solid #2a2d32; }
+        .controls input, .controls button { padding: 10px 15px; font-size: 14px; margin: 5px; border: none; border-radius: 6px; outline: none; }
+        .controls input { background: #2a2d32; color: #fff; width: 200px; }
+        .controls button { background: #007fff; color: white; cursor: pointer; font-weight: bold; }
+        .meeting-container { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; }
+        
+        /* বাম পাশের সাইডবার - শুধু নিজের ভিডিও দেখানোর জন্য */
+        .sidebar { width: 22%; background: #161719; border-right: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 15px; padding: 15px; }
+        .my-video-card { width: 100%; background: #222; border-radius: 8px; border: 2px solid #3e424b; overflow: hidden; position: relative; }
+        .my-video-card video { width: 100%; object-fit: cover; aspect-ratio: 4/3; transform: scaleX(-1); }
+        .label { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); padding: 2px 6px; font-size: 11px; border-radius: 4px; }
+
+        /* শিক্ষকের বড় স্ক্রিন (90% এরিয়া কভার) */
+        .main-display { flex: 1; display: flex; justify-content: center; align-items: center; background: #0e0f11; padding: 20px; position: relative; }
+        .main-display video { width: 95%; height: 90%; object-fit: cover; background: #222; border-radius: 12px; }
+        .role-label { position: absolute; top: 35px; left: 45px; background: #e02424; padding: 5px 12px; font-weight: bold; border-radius: 6px; }
+        
+        .action-bar { height: 70px; background: #1a1c20; display: flex; justify-content: center; align-items: center; border-top: 1px solid #2a2d32; }
+        .raise-btn { padding: 12px 30px; font-size: 15px; font-weight: bold; border: none; border-radius: 30px; background: #ff9800; color: black; cursor: pointer; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <h2>Student Dashboard</h2>
+        <div class="controls">
+            <input type="text" id="roomIdInput" placeholder="Enter Class Room ID">
+            <button id="joinBtn">Join Class</button>
+        </div>
+        <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px;"></h4>
+    </div>
+
+    <div class="meeting-container">
+        <div class="sidebar">
+            <div class="my-video-card">
+                <video id="localVideo" autoplay playsinline muted></video>
+                <div class="label">You (Student)</div>
+            </div>
+        </div>
+        <div class="main-display" id="mainArea">
+            <div class="role-label">Teacher Live Screen</div>
+            <video id="teacherVideo" autoplay playsinline></video>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button id="raiseHandBtn" class="raise-btn">Raise Hand ✋</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let localStream;
+        let teacherPc;
+        const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19020' }] };
+
+        document.getElementById('joinBtn').onclick = async () => {
+            const roomId = document.getElementById('roomIdInput').value;
+            if (!roomId) return alert("Please enter Room ID");
+
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            document.getElementById('localVideo').srcObject = localStream;
+            
+            // শুরুতে স্টুডেন্টের নিজের অডিও মিউট বা ডিজেবল থাকবে
+            localStream.getAudioTracks()[0].enabled = false;
+
+            document.getElementById('roomDisplay').innerText = `Joined Room: ${roomId}`;
+            document.getElementById('raiseHandBtn').style.display = 'block';
+
+            socket.emit('join-room', { roomId, role: 'student' });
+        };
+
+        document.getElementById('raiseHandBtn').onclick = function() {
+            socket.emit('raise-hand');
+            this.innerText = "Hand Raised ✋ Waiting...";
+            this.disabled = true;
+            this.style.background = '#555';
+            this.style.color = '#fff';
+        };
+
+        socket.on('all-users', ({ teacherId }) => {
+            if (teacherId) setupTeacherConnection(teacherId);
+        });
+
+        socket.on('teacher-connected', (teacherId) => {
+            setupTeacherConnection(teacherId);
+        });
+
+        socket.on('signal', async (data) => {
+            if (data.signal.offer) {
+                await teacherPc.setRemoteDescription(new RTCSessionDescription(data.signal.offer));
+                const answer = await teacherPc.createAnswer();
+                await teacherPc.setLocalDescription(answer);
+                socket.emit('signal', { target: data.sender, signal: { answer } });
+            } else if (data.signal.candidate) {
+                try { await teacherPc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){}
+            }
+        });
+
+        socket.on('allowed-to-talk', () => {
+            localStream.getAudioTracks()[0].enabled = true; // মাইক অ্যাক্টিভেট হলো
+            alert("Teacher has allowed you to talk! Your microphone is now live.");
+            document.getElementById('raiseHandBtn').style.display = 'none';
+        });
+
+        socket.on('teacher-disconnected', () => {
+            alert("Teacher has left the classroom.");
+            document.getElementById('teacherVideo').srcObject = null;
+        });
+
+        function setupTeacherConnection(teacherId) {
+            teacherPc = new RTCPeerConnection(servers);
+            localStream.getTracks().forEach(track => teacherPc.addTrack(track, localStream));
+
+            teacherPc.ontrack = (event) => {
+                document.getElementById('teacherVideo').srcObject = event.streams[0];
+            };
+
+            teacherPc.onicecandidate = (event) => {
+                if (event.candidate) socket.emit('signal', { target: teacherId, signal: { candidate: event.candidate } });
+            };
+        }
+    </script>
+</body>
+</html>

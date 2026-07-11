@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Panel - Virtual Classroom</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #111214; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .top-bar { padding: 15px; text-align: center; background: #1a1c20; border-bottom: 1px solid #2a2d32; }
+        .controls button { padding: 10px 20px; font-size: 14px; border: none; border-radius: 6px; background: #2ea44f; color: white; cursor: pointer; font-weight: bold; }
+        .meeting-container { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; }
+        
+        /* বাম পাশের প্যানেল - সব স্টুডেন্টদের দেখার জন্য */
+        .sidebar { width: 22%; background: #161719; border-right: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 15px; padding: 15px; overflow-y: auto; }
+        .student-card { position: relative; width: 100%; background: #222; border-radius: 8px; border: 2px solid #3e424b; overflow: hidden; }
+        .student-card video { width: 100%; object-fit: cover; aspect-ratio: 4/3; }
+        .student-label { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); padding: 2px 6px; font-size: 11px; border-radius: 4px; }
+        .action-btn { position: absolute; top: 5px; right: 5px; background: #ff9800; border: none; color: #000; padding: 5px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; cursor: pointer; display: none; }
+
+        /* শিক্ষকের বড় স্ক্রিন (90% এরিয়া কভার) */
+        .main-display { flex: 1; display: flex; justify-content: center; align-items: center; background: #0e0f11; padding: 20px; position: relative; }
+        .main-display video { width: 95%; height: 90%; object-fit: cover; background: #222; border-radius: 12px; transform: scaleX(-1); }
+        .role-label { position: absolute; top: 35px; left: 45px; background: #2ea44f; padding: 5px 12px; font-weight: bold; border-radius: 6px; }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <h2>Teacher Dashboard</h2>
+        <div class="controls" style="margin-top: 10px;">
+            <button id="createBtn">Start & Create Classroom</button>
+        </div>
+        <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px;"></h4>
+    </div>
+
+    <div class="meeting-container">
+        <div class="sidebar" id="studentGrid"></div>
+        <div class="main-display" id="mainArea">
+            <div class="role-label">Your Screen (Teacher)</div>
+            <video id="localVideo" autoplay playsinline muted></video>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        let localStream;
+        const peerConnections = {};
+        const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19020' }] };
+
+        document.getElementById('createBtn').onclick = async () => {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            document.getElementById('localVideo').srcObject = localStream;
+            
+            const roomId = Math.random().toString(36).substring(2, 9);
+            document.getElementById('roomDisplay').innerText = `Class Room ID: ${roomId} (Share this with students)`;
+            
+            socket.emit('join-room', { roomId, role: 'teacher' });
+            this.style.display = 'none';
+        };
+
+        socket.on('all-users', ({ users }) => {
+            users.forEach(user => {
+                if (user.role === 'student') createPeerConnection(user.id);
+            });
+        });
+
+        socket.on('user-joined', ({ userId, role }) => {
+            if (role === 'student') {
+                const pc = createPeerConnection(userId);
+                initiateCall(pc, userId);
+            }
+        });
+
+        async function initiateCall(pc, userId) {
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            socket.emit('signal', { target: userId, signal: { offer } });
+        }
+
+        socket.on('signal', async (data) => {
+            let pc = peerConnections[data.sender];
+            if (!pc) return;
+            if (data.signal.answer) {
+                await pc.setRemoteDescription(new RTCSessionDescription(data.signal.answer));
+            } else if (data.signal.candidate) {
+                try { await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){}
+            }
+        });
+
+        socket.on('student-raised-hand', (studentId) => {
+            const btn = document.getElementById(`allow-${studentId}`);
+            if (btn) btn.style.display = 'block';
+        });
+
+        socket.on('user-left', (userId) => {
+            if (peerConnections[userId]) peerConnections[userId].close();
+            delete peerConnections[userId];
+            const card = document.getElementById(`card-${userId}`);
+            if (card) card.remove();
+        });
+
+        function createPeerConnection(userId) {
+            const pc = new RTCPeerConnection(servers);
+            peerConnections[userId] = pc;
+            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+            pc.ontrack = (event) => {
+                if (document.getElementById(`card-${userId}`)) return;
+                
+                const grid = document.getElementById('studentGrid');
+                const card = document.createElement('div');
+                card.className = 'student-card';
+                card.id = `card-${userId}`;
+
+                const video = document.createElement('video');
+                video.autoplay = true; video.playsInline = true;
+                video.srcObject = event.streams[0];
+
+                const label = document.createElement('div');
+                label.className = 'student-label';
+                label.innerText = `Student (${userId.substring(0,4)})`;
+
+                const allowBtn = document.createElement('button');
+                allowBtn.className = 'action-btn';
+                allowBtn.id = `allow-${userId}`;
+                allowBtn.innerText = "Allow to Talk 🎙️";
+                allowBtn.onclick = () => {
+                    socket.emit('allow-student', userId);
+                    allowBtn.innerText = "Allowed";
+                    allowBtn.disabled = true;
+                };
+
+                card.appendChild(video);
+                card.appendChild(label);
+                card.appendChild(allowBtn);
+                grid.appendChild(card);
+            };
+
+            pc.onicecandidate = (event) => {
+                if (event.candidate) socket.emit('signal', { target: userId, signal: { candidate: event.candidate } });
+            };
+            return pc;
+        }
+    </script>
+</body>
+</html>

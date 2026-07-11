@@ -3,61 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebRTC Meeting Room</title>
+    <title>Teacher-Student Virtual Classroom</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #111214; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        /* টপ কন্ট্রোল বার */
         .top-bar { padding: 15px; text-align: center; background: #1a1c20; border-bottom: 1px solid #2a2d32; }
         .controls input, .controls button { padding: 10px 15px; font-size: 14px; margin: 5px; border: none; border-radius: 6px; outline: none; }
-        .controls input { background: #2a2d32; color: #fff; width: 200px; }
-        .controls button { background: #007fff; color: white; cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .controls button:hover { background: #0066cc; }
-        #createBtn { background: #2ea44f; }
-        #createBtn:hover { background: #22863a; }
-
-        /* মূল ইন্টারফেস লেআউট */
+        .controls input { background: #2a2d32; color: #fff; width: 180px; }
+        .controls button { color: white; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        
+        .btn-teacher { background: #2ea44f; }
+        .btn-student { background: #007fff; }
+        
         .meeting-container { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; }
 
-        /* বাম পাশের প্যানেল (জয়েন করা ইউজারদের জন্য স্ক্রলবার) */
-        .sidebar { width: 20%; background: #161719; border-right: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 15px; padding: 15px; overflow-y: auto; }
-        .sidebar video { width: 100%; background: #222; border-radius: 8px; border: 2px solid #3e424b; object-fit: cover; aspect-ratio: 4/3; }
+        /* বাম পাশের প্যানেল - শিক্ষার্থীদের জন্য */
+        .sidebar { width: 22%; background: #161719; border-right: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 15px; padding: 15px; overflow-y: auto; }
+        .student-card { position: relative; width: 100%; background: #222; border-radius: 8px; border: 2px solid #3e424b; overflow: hidden; }
+        .student-card video { width: 100%; object-fit: cover; aspect-ratio: 4/3; }
+        .student-label { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); padding: 2px 6px; font-size: 11px; border-radius: 4px; }
+        .action-inside-card { position: absolute; top: 5px; right: 5px; background: #ff9800; border: none; color: #000; padding: 4px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; cursor: pointer; display: none; }
 
-        /* মেইন ডিসপ্লে এরিয়া (90% কভার থিম) */
-        .main-display { flex: 1; display: flex; justify-content: center; align-items: center; background: #0e0f11; padding: 20px; }
-        .main-display video { width: 95%; height: 90%; object-fit: cover; background: #222; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); transform: scaleX(-1); }
+        /* মেইন ডিসপ্লে - শিক্ষকের জন্য (90% ভিজ্যুয়াল এরিয়া) */
+        .main-display { flex: 1; display: flex; justify-content: center; align-items: center; background: #0e0f11; padding: 20px; position: relative; }
+        .main-display video { width: 95%; height: 90%; object-fit: cover; background: #222; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); }
+        .teacher-label { position: absolute; top: 35px; left: 45px; background: #2ea44f; padding: 5px 12px; font-weight: bold; border-radius: 6px; font-size: 14px; z-index: 10; }
 
-        /* বটম অ্যাকশন বার (Mic/Cam Toggle) */
+        /* বটম বার */
         .action-bar { height: 70px; background: #1a1c20; display: flex; justify-content: center; align-items: center; gap: 20px; border-top: 1px solid #2a2d32; }
-        .action-btn { padding: 12px 24px; font-size: 14px; font-weight: bold; border: none; border-radius: 30px; cursor: pointer; transition: 0.3s; color: white; }
-        .btn-active { background: #3a3f47; }
-        .btn-disabled { background: #ea4335 !important; }
+        .action-btn { padding: 12px 24px; font-size: 14px; font-weight: bold; border: none; border-radius: 30px; cursor: pointer; transition: 0.3s; color: white; background: #3a3f47; }
+        #raiseHandBtn { background: #ff9800; color: black; display: none; }
+        .btn-disabled { background: #ea4335 !important; color: white; }
     </style>
 </head>
 <body>
 
     <div class="top-bar">
-        <h2 style="font-size: 18px; margin-bottom: 5px;">WebRTC Multi-User Meeting Room</h2>
+        <h2 style="font-size: 18px; margin-bottom: 5px;">Virtual Classroom (WebRTC)</h2>
         <div class="controls">
-            <button id="createBtn">Create Meeting</button>
             <input type="text" id="roomIdInput" placeholder="Enter Room ID">
-            <button id="joinBtn">Join Meeting</button>
+            <button id="teacherBtn" class="btn-teacher">Join as Teacher</button>
+            <button id="studentBtn" class="btn-student">Join as Student</button>
         </div>
         <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px;"></h4>
     </div>
 
     <div class="meeting-container">
-        <div class="sidebar" id="remoteVideoGrid"></div>
+        <div class="sidebar" id="studentGrid"></div>
 
-        <div class="main-display">
-            <video id="localVideo" autoplay playsinline muted></video>
-        </div>
+        <div class="main-display" id="mainDisplayArea">
+            <div class="teacher-label">Teacher Screen</div>
+            </div>
     </div>
 
     <div class="action-bar">
-        <button id="micBtn" class="action-btn btn-active">Mute Mic</button>
-        <button id="camBtn" class="action-btn btn-active">Turn Camera Off</button>
+        <button id="micBtn" class="action-btn" style="display:none;">Mute Mic</button>
+        <button id="raiseHandBtn" class="action-btn">Raise Hand ✋</button>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -66,90 +68,115 @@
     let localStream;
     const peerConnections = {}; 
     let roomId;
+    let myRole = ''; // 'teacher' or 'student'
+    let isMicEnabled = true;
 
-    let isMicOn = true;
-    let isCamOn = true;
+    const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19020' }, { urls: 'stun:stun1.l.google.com:19020' }] };
 
-    const servers = {
-        iceServers: [
-            { urls: 'stun:stun.l.google.com:19020' },
-            { urls: 'stun:stun1.l.google.com:19020' }
-        ]
-    };
-
-    async function startMedia() {
+    async function startMedia(role) {
+        myRole = role;
         try {
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            // স্টুডেন্ট হলে শুরুতে মাইক অফ (muted) অবস্থায় থাকবে, শিক্ষক অনুমতি দিলে অন হবে
+            localStream = await navigator.mediaDevices.getUserMedia({ 
+                video: true, 
+                audio: true 
+            });
+            
+            if(myRole === 'student') {
+                localStream.getAudioTracks()[0].enabled = false; // Initial Mute for students
+                isMicEnabled = false;
+                document.getElementById('raiseHandBtn').style.display = 'block';
+            } else {
+                document.getElementById('micBtn').style.display = 'block';
+                document.getElementById('micBtn').innerText = "Mute Mic";
+            }
         } catch (error) {
-            console.log("আসল ক্যামেরা পাওয়া যায়নি বা ব্যস্ত! ডামী ভিডিও তৈরি হচ্ছে...");
+            // ডামী ক্যামেরা জেনারেটর (টেস্টিং এর সুবিধার্থে)
             const canvas = document.createElement('canvas');
             canvas.width = 640; canvas.height = 480;
             const ctx = canvas.getContext('2d');
             setInterval(() => {
-                ctx.fillStyle = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                ctx.fillStyle = role === 'teacher' ? '#2ea44f' : '#007fff';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                ctx.fillStyle = '#000'; ctx.font = '30px Arial';
-                ctx.fillText('Fake Camera', 230, 240);
+                ctx.fillStyle = '#fff'; ctx.font = '30px Arial';
+                ctx.fillText(role === 'teacher' ? 'Teacher Live' : 'Student Live', 200, 240);
             }, 100);
             localStream = canvas.captureStream(30);
             const ctxAudio = new AudioContext();
-            const oscillator = ctxAudio.createOscillator();
             const dst = ctxAudio.createMediaStreamDestination();
-            oscillator.connect(dst); oscillator.start();
-            localStream.addTrack(dst.stream.getAudioTracks()[0]);
+            localStream.addTrack(dst.stream.getAudioTracks()[0] || new MediaStreamTrack());
         }
-        document.getElementById('localVideo').srcObject = localStream;
-        setupControls();
+
+        // লেআউট লজিক: শিক্ষক হলে তার নিজের ভিডিও মেইন বড় স্ক্রিনে যাবে
+        if (myRole === 'teacher') {
+            const video = document.createElement('video');
+            video.id = 'localVideo'; video.autoplay = true; video.playsInline = true; video.muted = true;
+            video.style.transform = "scaleX(-1)";
+            video.srcObject = localStream;
+            document.getElementById('mainDisplayArea').appendChild(video);
+        } else {
+            // স্টুডেন্ট হলে তার নিজের ভিডিও বাম পাশের ছোট প্যানেলে যাবে
+            createStudentCard('localVideo', localStream, "You (Student)");
+        }
+        
+        setupMicControl();
     }
 
-    // মাইক্রোফোন এবং ক্যামেরা অন/অফ হ্যান্ডলার
-    function setupControls() {
+    function setupMicControl() {
         document.getElementById('micBtn').onclick = function() {
-            isMicOn = !isMicOn;
-            localStream.getAudioTracks()[0].enabled = isMicOn;
-            this.innerText = isMicOn ? "Mute Mic" : "Unmute Mic";
-            this.className = `action-btn ${isMicOn ? 'btn-active' : 'btn-disabled'}`;
+            isMicEnabled = !isMicEnabled;
+            localStream.getAudioTracks()[0].enabled = isMicEnabled;
+            this.innerText = isMicEnabled ? "Mute Mic" : "Unmute Mic";
+            this.className = `action-btn ${isMicEnabled ? '' : 'btn-disabled'}`;
         };
 
-        document.getElementById('camBtn').onclick = function() {
-            isCamOn = !isCamOn;
-            localStream.getVideoTracks()[0].enabled = isCamOn;
-            this.innerText = isCamOn ? "Turn Camera Off" : "Turn Camera On";
-            this.className = `action-btn ${isCamOn ? 'btn-active' : 'btn-disabled'}`;
+        document.getElementById('raiseHandBtn').onclick = function() {
+            socket.emit('raise-hand');
+            this.innerText = "Hand Raised ✋";
+            this.disabled = true;
         };
     }
 
-    document.getElementById('createBtn').onclick = async () => {
-        await startMedia();
-        roomId = Math.random().toString(36).substring(2, 9);
-        document.getElementById('roomDisplay').innerText = `Room ID: ${roomId}`;
-        socket.emit('join-room', roomId);
+    // জয়েন বাটন ট্রিগার
+    document.getElementById('teacherBtn').onclick = async () => {
+        roomId = document.getElementById('roomIdInput').value || 'class101';
+        await startMedia('teacher');
+        socket.emit('join-room', { roomId, role: 'teacher' });
+        document.getElementById('roomDisplay').innerText = `Classroom: ${roomId} (Logged as Teacher)`;
     };
 
-    document.getElementById('joinBtn').onclick = async () => {
-        roomId = document.getElementById('roomIdInput').value;
-        if (!roomId) return alert("Please enter a Room ID");
-        await startMedia();
-        document.getElementById('roomDisplay').innerText = `Joined Room: ${roomId}`;
-        socket.emit('join-room', roomId);
+    document.getElementById('studentBtn').onclick = async () => {
+        roomId = document.getElementById('roomIdInput').value || 'class101';
+        await startMedia('student');
+        socket.emit('join-room', { roomId, role: 'student' });
+        document.getElementById('roomDisplay').innerText = `Classroom: ${roomId} (Logged as Student)`;
     };
 
-    socket.on('all-users', async (users) => {
-        for (let userId of users) {
-            const pc = createPeerConnection(userId);
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            socket.emit('signal', { target: userId, signal: { offer } });
+    // রুমে থাকা বাকিদের সাথে কানেক্ট করা
+    socket.on('all-users', async ({ users, teacherId }) => {
+        users.forEach(user => {
+            createPeerConnection(user.id, user.role);
+        });
+        // যদি শিক্ষক আগে থেকেই রুমে থাকে এবং আমি স্টুডেন্ট হই, তবে শিক্ষকের অফারের জন্য ওয়েট করব
+    });
+
+    socket.on('user-joined', ({ userId, role }) => {
+        const pc = createPeerConnection(userId, role);
+        // শিক্ষক জয়েন করলে বা আমরা শিক্ষক হলে অফার ইনিশিয়েট করব
+        if (myRole === 'teacher' || role === 'teacher') {
+            initiateCall(pc, userId);
         }
     });
 
-    socket.on('user-joined', (userId) => {
-        createPeerConnection(userId);
-    });
+    async function initiateCall(pc, userId) {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit('signal', { target: userId, signal: { offer } });
+    }
 
     socket.on('signal', async (data) => {
         let pc = peerConnections[data.sender];
-        if (!pc) pc = createPeerConnection(data.sender);
+        if (!pc) return;
 
         if (data.signal.offer) {
             await pc.setRemoteDescription(new RTCSessionDescription(data.signal.offer));
@@ -160,45 +187,92 @@
             await pc.setRemoteDescription(new RTCSessionDescription(data.signal.answer));
         } else if (data.signal.candidate) {
             try {
-                if (pc.remoteDescription && pc.remoteDescription.type) {
-                    await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
-                } else {
-                    setTimeout(async () => {
-                        if(pc.remoteDescription && pc.remoteDescription.type) {
-                            await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
-                        }
-                    }, 500);
-                }
+                await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
             } catch (e) { console.error(e); }
         }
     });
 
-    socket.on('user-left', (userId) => {
-        if (peerConnections[userId]) {
-            peerConnections[userId].close();
-            delete peerConnections[userId];
+    // শিক্ষক এর স্ক্রিনে হাত তোলার নোটিফিকেশন হ্যান্ডেল করা
+    socket.on('student-raised-hand', (studentId) => {
+        const allowBtn = document.getElementById(`allow-${studentId}`);
+        if (allowBtn) {
+            allowBtn.style.display = 'block'; // শিক্ষকের স্ক্রিনে বাটনটি ভেসে উঠবে
         }
-        const videoEl = document.getElementById(userId);
-        if (videoEl) videoEl.remove();
     });
 
-    function createPeerConnection(userId) {
+    // শিক্ষক অনুমতি দিলে স্টুডেন্টের মাইক অন করার অপশন দেওয়া
+    socket.on('allowed-to-talk', () => {
+        isMicEnabled = true;
+        localStream.getAudioTracks()[0].enabled = true;
+        const micBtn = document.getElementById('micBtn');
+        micBtn.style.display = 'block';
+        micBtn.innerText = "Mute Mic";
+        document.getElementById('raiseHandBtn').style.display = 'none';
+        alert("Teacher has allowed you to talk! Your mic is now active.");
+    });
+
+    socket.on('user-left', (userId) => {
+        if (peerConnections[userId]) peerConnections[userId].close();
+        delete peerConnections[userId];
+        const el = document.getElementById(`card-${userId}`) || document.getElementById(userId);
+        if (el) el.remove();
+    });
+
+    function createStudentCard(id, stream, labelText) {
+        const grid = document.getElementById('studentGrid');
+        if(document.getElementById(`card-${id}`)) return;
+
+        const card = document.createElement('div');
+        card.className = 'student-card';
+        card.id = `card-${id}`;
+
+        const video = document.createElement('video');
+        video.autoplay = true; video.playsInline = true;
+        video.srcObject = stream;
+        if(id === 'localVideo') video.muted = true;
+
+        const label = document.createElement('div');
+        label.className = 'student-label';
+        label.innerText = labelText;
+
+        // Allow to talk button (শুধু শিক্ষকের প্যানেলে দেখানোর জন্য লজিক)
+        const allowBtn = document.createElement('button');
+        allowBtn.className = 'action-inside-card';
+        allowBtn.id = `allow-${id}`;
+        allowBtn.innerText = "Allow to Talk 🎙️";
+        allowBtn.onclick = () => {
+            socket.emit('allow-student', id);
+            allowBtn.innerText = "Allowed";
+            allowBtn.disabled = true;
+        };
+
+        card.appendChild(video);
+        card.appendChild(label);
+        card.appendChild(allowBtn);
+        grid.appendChild(card);
+    }
+
+    function createPeerConnection(userId, role) {
         const pc = new RTCPeerConnection(servers);
         peerConnections[userId] = pc;
 
         localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
         pc.ontrack = (event) => {
-            let videoEl = document.getElementById(userId);
-            if (!videoEl) {
-                videoEl = document.createElement('video');
-                videoEl.id = userId;
-                videoEl.autoplay = true;
-                videoEl.playsInline = true;
-                // জয়েন করা অন্যান্য ইউজারদের বাম পাশের সাইডবারে পাঠানো হচ্ছে
-                document.getElementById('remoteVideoGrid').appendChild(videoEl);
+            if (role === 'teacher') {
+                // শিক্ষক এর ভিডিও মেইন স্ক্রিনে (90% width) সেট হবে সবার পেজে
+                let videoEl = document.getElementById('teacherVideo');
+                if (!videoEl) {
+                    videoEl = document.createElement('video');
+                    videoEl.id = 'teacherVideo';
+                    videoEl.autoplay = true; videoEl.playsInline = true;
+                    document.getElementById('mainDisplayArea').appendChild(videoEl);
+                }
+                videoEl.srcObject = event.streams[0];
+            } else {
+                // শিক্ষার্থীদের ভিডিও বাম পাশের সাইডবারে যাবে
+                createStudentCard(userId, event.streams[0], `Student (${userId.substring(0,4)})`);
             }
-            videoEl.srcObject = event.streams[0];
         };
 
         pc.onicecandidate = (event) => {
