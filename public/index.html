@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRTC Meeting Room</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #111214; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        /* টপ কন্ট্রোল বার */
+        .top-bar { padding: 15px; text-align: center; background: #1a1c20; border-bottom: 1px solid #2a2d32; }
+        .controls input, .controls button { padding: 10px 15px; font-size: 14px; margin: 5px; border: none; border-radius: 6px; outline: none; }
+        .controls input { background: #2a2d32; color: #fff; width: 200px; }
+        .controls button { background: #007fff; color: white; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .controls button:hover { background: #0066cc; }
+        #createBtn { background: #2ea44f; }
+        #createBtn:hover { background: #22863a; }
+
+        /* মূল ইন্টারফেস লেআউট */
+        .meeting-container { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; }
+
+        /* বাম পাশের প্যানেল (জয়েন করা ইউজারদের জন্য স্ক্রলবার) */
+        .sidebar { width: 20%; background: #161719; border-right: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 15px; padding: 15px; overflow-y: auto; }
+        .sidebar video { width: 100%; background: #222; border-radius: 8px; border: 2px solid #3e424b; object-fit: cover; aspect-ratio: 4/3; }
+
+        /* মেইন ডিসপ্লে এরিয়া (90% কভার থিম) */
+        .main-display { flex: 1; display: flex; justify-content: center; align-items: center; background: #0e0f11; padding: 20px; }
+        .main-display video { width: 95%; height: 90%; object-fit: cover; background: #222; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); transform: scaleX(-1); }
+
+        /* বটম অ্যাকশন বার (Mic/Cam Toggle) */
+        .action-bar { height: 70px; background: #1a1c20; display: flex; justify-content: center; align-items: center; gap: 20px; border-top: 1px solid #2a2d32; }
+        .action-btn { padding: 12px 24px; font-size: 14px; font-weight: bold; border: none; border-radius: 30px; cursor: pointer; transition: 0.3s; color: white; }
+        .btn-active { background: #3a3f47; }
+        .btn-disabled { background: #ea4335 !important; }
+    </style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <h2 style="font-size: 18px; margin-bottom: 5px;">WebRTC Multi-User Meeting Room</h2>
+        <div class="controls">
+            <button id="createBtn">Create Meeting</button>
+            <input type="text" id="roomIdInput" placeholder="Enter Room ID">
+            <button id="joinBtn">Join Meeting</button>
+        </div>
+        <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px;"></h4>
+    </div>
+
+    <div class="meeting-container">
+        <div class="sidebar" id="remoteVideoGrid"></div>
+
+        <div class="main-display">
+            <video id="localVideo" autoplay playsinline muted></video>
+        </div>
+    </div>
+
+    <div class="action-bar">
+        <button id="micBtn" class="action-btn btn-active">Mute Mic</button>
+        <button id="camBtn" class="action-btn btn-active">Turn Camera Off</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    let localStream;
+    const peerConnections = {}; 
+    let roomId;
+
+    let isMicOn = true;
+    let isCamOn = true;
+
+    const servers = {
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19020' },
+            { urls: 'stun:stun1.l.google.com:19020' }
+        ]
+    };
+
+    async function startMedia() {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        } catch (error) {
+            console.log("আসল ক্যামেরা পাওয়া যায়নি বা ব্যস্ত! ডামী ভিডিও তৈরি হচ্ছে...");
+            const canvas = document.createElement('canvas');
+            canvas.width = 640; canvas.height = 480;
+            const ctx = canvas.getContext('2d');
+            setInterval(() => {
+                ctx.fillStyle = `hsl(${Math.random() * 360}, 100%, 50%)`;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#000'; ctx.font = '30px Arial';
+                ctx.fillText('Fake Camera', 230, 240);
+            }, 100);
+            localStream = canvas.captureStream(30);
+            const ctxAudio = new AudioContext();
+            const oscillator = ctxAudio.createOscillator();
+            const dst = ctxAudio.createMediaStreamDestination();
+            oscillator.connect(dst); oscillator.start();
+            localStream.addTrack(dst.stream.getAudioTracks()[0]);
+        }
+        document.getElementById('localVideo').srcObject = localStream;
+        setupControls();
+    }
+
+    // মাইক্রোফোন এবং ক্যামেরা অন/অফ হ্যান্ডলার
+    function setupControls() {
+        document.getElementById('micBtn').onclick = function() {
+            isMicOn = !isMicOn;
+            localStream.getAudioTracks()[0].enabled = isMicOn;
+            this.innerText = isMicOn ? "Mute Mic" : "Unmute Mic";
+            this.className = `action-btn ${isMicOn ? 'btn-active' : 'btn-disabled'}`;
+        };
+
+        document.getElementById('camBtn').onclick = function() {
+            isCamOn = !isCamOn;
+            localStream.getVideoTracks()[0].enabled = isCamOn;
+            this.innerText = isCamOn ? "Turn Camera Off" : "Turn Camera On";
+            this.className = `action-btn ${isCamOn ? 'btn-active' : 'btn-disabled'}`;
+        };
+    }
+
+    document.getElementById('createBtn').onclick = async () => {
+        await startMedia();
+        roomId = Math.random().toString(36).substring(2, 9);
+        document.getElementById('roomDisplay').innerText = `Room ID: ${roomId}`;
+        socket.emit('join-room', roomId);
+    };
+
+    document.getElementById('joinBtn').onclick = async () => {
+        roomId = document.getElementById('roomIdInput').value;
+        if (!roomId) return alert("Please enter a Room ID");
+        await startMedia();
+        document.getElementById('roomDisplay').innerText = `Joined Room: ${roomId}`;
+        socket.emit('join-room', roomId);
+    };
+
+    socket.on('all-users', async (users) => {
+        for (let userId of users) {
+            const pc = createPeerConnection(userId);
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            socket.emit('signal', { target: userId, signal: { offer } });
+        }
+    });
+
+    socket.on('user-joined', (userId) => {
+        createPeerConnection(userId);
+    });
+
+    socket.on('signal', async (data) => {
+        let pc = peerConnections[data.sender];
+        if (!pc) pc = createPeerConnection(data.sender);
+
+        if (data.signal.offer) {
+            await pc.setRemoteDescription(new RTCSessionDescription(data.signal.offer));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            socket.emit('signal', { target: data.sender, signal: { answer } });
+        } else if (data.signal.answer) {
+            await pc.setRemoteDescription(new RTCSessionDescription(data.signal.answer));
+        } else if (data.signal.candidate) {
+            try {
+                if (pc.remoteDescription && pc.remoteDescription.type) {
+                    await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
+                } else {
+                    setTimeout(async () => {
+                        if(pc.remoteDescription && pc.remoteDescription.type) {
+                            await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
+                        }
+                    }, 500);
+                }
+            } catch (e) { console.error(e); }
+        }
+    });
+
+    socket.on('user-left', (userId) => {
+        if (peerConnections[userId]) {
+            peerConnections[userId].close();
+            delete peerConnections[userId];
+        }
+        const videoEl = document.getElementById(userId);
+        if (videoEl) videoEl.remove();
+    });
+
+    function createPeerConnection(userId) {
+        const pc = new RTCPeerConnection(servers);
+        peerConnections[userId] = pc;
+
+        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+        pc.ontrack = (event) => {
+            let videoEl = document.getElementById(userId);
+            if (!videoEl) {
+                videoEl = document.createElement('video');
+                videoEl.id = userId;
+                videoEl.autoplay = true;
+                videoEl.playsInline = true;
+                // জয়েন করা অন্যান্য ইউজারদের বাম পাশের সাইডবারে পাঠানো হচ্ছে
+                document.getElementById('remoteVideoGrid').appendChild(videoEl);
+            }
+            videoEl.srcObject = event.streams[0];
+        };
+
+        pc.onicecandidate = (event) => {
+            if (event.candidate) {
+                socket.emit('signal', { target: userId, signal: { candidate: event.candidate } });
+            }
+        };
+
+        return pc;
+    }
+</script>
+</body>
+</html>
