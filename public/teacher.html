@@ -66,44 +66,53 @@
             document.getElementById('shareBtn').style.display = 'inline-block'; // জয়েন করার পর শেয়ার বাটন দেখাবে
         };
 
-        // স্ক্রিন শেয়ারিং লজিক
-        document.getElementById('shareBtn').onclick = async function() {
-            if (!isScreenSharing) {
-                try {
-                    // স্ক্রিন ক্যাপচার করার API
-                    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                    const videoTrack = screenStream.getVideoTracks()[0];
-
-                    // সব কানেক্টেড স্টুডেন্টদের কাছে ক্যামেরার ট্র্যাক বদলে স্ক্রিন ট্র্যাক পাঠানো
-                    for (let userId in peerConnections) {
-                        const senders = peerConnections[userId].getSenders();
-                        const sender = senders.find(s => s.track.kind === 'video');
-                        if (sender) {
-                            sender.replaceTrack(videoTrack);
-                        }
-                    }
-
-                    // শিক্ষকের নিজের স্ক্রিনেও শেয়ার করা উইন্ডোটি দেখানো
-                    const localVideo = document.getElementById('localVideo');
-                    localVideo.srcObject = screenStream;
-                    localVideo.classList.remove('mirror'); // স্ক্রিন শেয়ার সোজা দেখানোর জন্য মিরর এফেক্ট রিমুভ
-                    document.getElementById('screenLabel').innerText = "Your Screen (Sharing Screen...)";
-                    this.innerText = "Stop Sharing ❌";
-                    this.style.background = "#ea4335";
-                    isScreenSharing = true;
-
-                    // যদি ব্রাউজারের নিচের "Stop Sharing" বাটনে ক্লিক করে বন্ধ করে
-                    videoTrack.onended = () => {
-                        stopScreenShare();
-                    };
-
-                } catch (error) {
-                    console.error("Screen share denied or failed:", error);
-                }
-            } else {
-                stopScreenShare();
+      document.getElementById('shareBtn').onclick = async function() {
+         if (!isScreenSharing) {
+        try {
+            // অ্যান্ড্রয়েড এবং আইওএস ব্রাউজার সাপোর্টের জন্য স্ট্যান্ডার্ড চেক
+            if (!navigator.mediaDevices.getDisplayMedia) {
+                alert("আপনার মোবাইল ব্রাউজারটি সরাসরি স্ক্রিন শেয়ার সাপোর্ট করছে না। অনুগ্রহ করে 'chrome://flags' থেকে Screen Capture এনাবল করুন অথবা ল্যাপটপ ব্যবহার করুন।");
+                return;
             }
-        };
+
+            // স্ক্রিন ক্যাপচার করার এপিআই কল
+            screenStream = await navigator.mediaDevices.getDisplayMedia({ 
+                video: true,
+                audio: false // মোবাইলে স্ক্রিন শেয়ারের সাথে সিস্টেম অডিও শেয়ারিং সাপোর্ট করে না, তাই false রাখা নিরাপদ
+            });
+            
+            const videoTrack = screenStream.getVideoTracks()[0];
+
+            // সব কানেক্টেড স্টুডেন্টদের কাছে ট্র্যাক বদলে স্ক্রিন ট্র্যাক পাঠানো
+            for (let userId in peerConnections) {
+                const senders = peerConnections[userId].getSenders();
+                const sender = senders.find(s => s.track && s.track.kind === 'video');
+                if (sender) {
+                    sender.replaceTrack(videoTrack);
+                }
+            }
+
+            // শিক্ষকের নিজের স্ক্রিনেও শেয়ার করা উইন্ডোটি দেখানো
+            const localVideo = document.getElementById('localVideo');
+            localVideo.srcObject = screenStream;
+            localVideo.classList.remove('mirror'); 
+            document.getElementById('screenLabel').innerText = "Your Screen (Sharing Screen...)";
+            this.innerText = "Stop Sharing ❌";
+            this.style.background = "#ea4335";
+            isScreenSharing = true;
+
+            videoTrack.onended = () => {
+                stopScreenShare();
+            };
+
+        } catch (error) {
+            console.error("Screen share failed:", error);
+            alert("স্ক্রিন শেয়ার পারমিশন দেওয়া হয়নি অথবা আপনার ডিভাইসটি এটি সাপোর্ট করছে না।");
+        }
+    } else {
+        stopScreenShare();
+    }
+};
 
         // স্ক্রিন শেয়ার বন্ধ করে পুনরায় ক্যামেরা চালু করার ফাংশন
         function stopScreenShare() {
