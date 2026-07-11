@@ -8,7 +8,8 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #111214; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .top-bar { padding: 15px; text-align: center; background: #1a1c20; border-bottom: 1px solid #2a2d32; }
-        .controls button { padding: 10px 20px; font-size: 14px; border: none; border-radius: 6px; background: #2ea44f; color: white; cursor: pointer; font-weight: bold; }
+        .controls button { padding: 10px 20px; font-size: 14px; border: none; border-radius: 6px; background: #2ea44f; color: white; cursor: pointer; font-weight: bold; margin: 5px; }
+        #shareBtn { background: #007fff; } /* স্ক্রিন শেয়ার বাটনের কালার */
         .meeting-container { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; }
         
         /* বাম পাশের প্যানেল - সব স্টুডেন্টদের দেখার জন্য */
@@ -20,8 +21,9 @@
 
         /* শিক্ষকের বড় স্ক্রিন (90% এরিয়া কভার) */
         .main-display { flex: 1; display: flex; justify-content: center; align-items: center; background: #0e0f11; padding: 20px; position: relative; }
-        .main-display video { width: 95%; height: 90%; object-fit: cover; background: #222; border-radius: 12px; transform: scaleX(-1); }
-        .role-label { position: absolute; top: 35px; left: 45px; background: #2ea44f; padding: 5px 12px; font-weight: bold; border-radius: 6px; }
+        .main-display video { width: 95%; height: 90%; object-fit: cover; background: #222; border-radius: 12px; }
+        .mirror { transform: scaleX(-1); } /* শুধু ক্যামেরার জন্য মিরর, স্ক্রিন শেয়ারের জন্য নয় */
+        .role-label { position: absolute; top: 35px; left: 45px; background: #2ea44f; padding: 5px 12px; font-weight: bold; border-radius: 6px; z-index: 10; }
     </style>
 </head>
 <body>
@@ -30,6 +32,7 @@
         <h2>Teacher Dashboard</h2>
         <div class="controls" style="margin-top: 10px;">
             <button id="createBtn">Start & Create Classroom</button>
+            <button id="shareBtn" style="display: none;">Share Screen 🖥️</button>
         </div>
         <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px;"></h4>
     </div>
@@ -37,8 +40,8 @@
     <div class="meeting-container">
         <div class="sidebar" id="studentGrid"></div>
         <div class="main-display" id="mainArea">
-            <div class="role-label">Your Screen (Teacher)</div>
-            <video id="localVideo" autoplay playsinline muted></video>
+            <div class="role-label" id="screenLabel">Your Screen (Teacher Camera)</div>
+            <video id="localVideo" class="mirror" autoplay playsinline muted></video>
         </div>
     </div>
 
@@ -46,10 +49,12 @@
     <script>
         const socket = io();
         let localStream;
+        let screenStream; // স্ক্রিন শেয়ার ট্র্যাক রাখার জন্য
+        let isScreenSharing = false;
         const peerConnections = {};
         const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19020' }] };
 
-        document.getElementById('createBtn').onclick = async () => {
+        document.getElementById('createBtn').onclick = async function() {
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             document.getElementById('localVideo').srcObject = localStream;
             
@@ -58,7 +63,77 @@
             
             socket.emit('join-room', { roomId, role: 'teacher' });
             this.style.display = 'none';
+            document.getElementById('shareBtn').style.display = 'inline-block'; // জয়েন করার পর শেয়ার বাটন দেখাবে
         };
+
+        // স্ক্রিন শেয়ারিং লজিক
+        document.getElementById('shareBtn').onclick = async function() {
+            if (!isScreenSharing) {
+                try {
+                    // স্ক্রিন ক্যাপচার করার API
+                    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                    const videoTrack = screenStream.getVideoTracks()[0];
+
+                    // সব কানেক্টেড স্টুডেন্টদের কাছে ক্যামেরার ট্র্যাক বদলে স্ক্রিন ট্র্যাক পাঠানো
+                    for (let userId in peerConnections) {
+                        const senders = peerConnections[userId].getSenders();
+                        const sender = senders.find(s => s.track.kind === 'video');
+                        if (sender) {
+                            sender.replaceTrack(videoTrack);
+                        }
+                    }
+
+                    // শিক্ষকের নিজের স্ক্রিনেও শেয়ার করা উইন্ডোটি দেখানো
+                    const localVideo = document.getElementById('localVideo');
+                    localVideo.srcObject = screenStream;
+                    localVideo.classList.remove('mirror'); // স্ক্রিন শেয়ার সোজা দেখানোর জন্য মিরর এফেক্ট রিমুভ
+                    document.getElementById('screenLabel').innerText = "Your Screen (Sharing Screen...)";
+                    this.innerText = "Stop Sharing ❌";
+                    this.style.background = "#ea4335";
+                    isScreenSharing = true;
+
+                    // যদি ব্রাউজারের নিচের "Stop Sharing" বাটনে ক্লিক করে বন্ধ করে
+                    videoTrack.onended = () => {
+                        stopScreenShare();
+                    };
+
+                } catch (error) {
+                    console.error("Screen share denied or failed:", error);
+                }
+            } else {
+                stopScreenShare();
+            }
+        };
+
+        // স্ক্রিন শেয়ার বন্ধ করে পুনরায় ক্যামেরা চালু করার ফাংশন
+        function stopScreenShare() {
+            if (!isScreenSharing) return;
+
+            const videoTrack = localStream.getVideoTracks()[0];
+
+            // সব স্টুডেন্টের কাছে আবার ক্যামেরার ট্র্যাক ফেরত পাঠানো
+            for (let userId in peerConnections) {
+                const senders = peerConnections[userId].getSenders();
+                const sender = senders.find(s => s.track.kind === 'video');
+                if (sender) {
+                    sender.replaceTrack(videoTrack);
+                }
+            }
+
+            // শিক্ষকের মেইন স্ক্রিনে আবার নিজের ক্যামেরা ফিরিয়ে আনা
+            const localVideo = document.getElementById('localVideo');
+            localVideo.srcObject = localStream;
+            localVideo.classList.add('mirror'); // ক্যামেরা আবার মিরর করা
+            document.getElementById('screenLabel').innerText = "Your Screen (Teacher Camera)";
+            
+            const shareBtn = document.getElementById('shareBtn');
+            shareBtn.innerText = "Share Screen 🖥️";
+            shareBtn.style.background = "#007fff";
+            
+            // স্ক্রিন স্ট্রিম ট্র্যাক ক্লোজ করা
+            screenStream.getTracks().forEach(track => track.stop());
+            isScreenSharing = false;
+        }
 
         socket.on('all-users', ({ users }) => {
             users.forEach(user => {
@@ -104,7 +179,14 @@
         function createPeerConnection(userId) {
             const pc = new RTCPeerConnection(servers);
             peerConnections[userId] = pc;
-            localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+            
+            // যদি স্ক্রিন শেয়ার চালু থাকে, তবে নতুন স্টুডেন্টকে স্ক্রিন স্ট্রিম পাঠানো হবে, অন্যথায় ক্যামেরা
+            const currentStream = isScreenSharing ? screenStream : localStream;
+            
+            // ভিডিও ট্র্যাক অ্যাড করা
+            currentStream.getVideoTracks().forEach(track => pc.addTrack(track, currentStream));
+            // অডিও ট্র্যাক সবসময় অরিজিনাল লোকাল স্ট্রিম (মাইক) থেকেই যাবে
+            localStream.getAudioTracks().forEach(track => pc.addTrack(track, localStream));
 
             pc.ontrack = (event) => {
                 if (document.getElementById(`card-${userId}`)) return;
