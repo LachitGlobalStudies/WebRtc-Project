@@ -7,40 +7,42 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #111214; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .top-bar { padding: 15px; text-align: center; background: #1a1c20; border-bottom: 1px solid #2a2d32; }
+        .top-bar { padding: 2px; text-align: center; background: #1a1c20; border-bottom: 1px solid #2a2d32; }
         .controls button { padding: 10px 20px; font-size: 14px; border: none; border-radius: 6px; background: #2ea44f; color: white; cursor: pointer; font-weight: bold; margin: 5px; }
         #shareBtn { background: #007fff; } /* স্ক্রিন শেয়ার বাটনের কালার */
-        .meeting-container { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; }
+        .meeting-container { display: flex; flex: 1; height: calc(100vh - 3px); overflow: hidden; }
         
         /* বাম পাশের প্যানেল - সব স্টুডেন্টদের দেখার জন্য */
-        .sidebar { width: 22%; background: #161719; border-right: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 15px; padding: 15px; overflow-y: auto; }
+        .sidebar { width: 15%; background: #161719; border-right: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 8px; padding: 3px; overflow-y: auto; }
         .student-card { position: relative; width: 100%; background: #222; border-radius: 8px; border: 2px solid #3e424b; overflow: hidden; }
         .student-card video { width: 100%; object-fit: cover; aspect-ratio: 4/3; }
         .student-label { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); padding: 2px 6px; font-size: 11px; border-radius: 4px; }
         .action-btn { position: absolute; top: 5px; right: 5px; background: #ff9800; border: none; color: #000; padding: 5px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; cursor: pointer; display: none; }
 
         /* শিক্ষকের বড় স্ক্রিন (90% এরিয়া কভার) */
-        .main-display { flex: 1; display: flex; justify-content: center; align-items: center; background: #0e0f11; padding: 20px; position: relative; }
-        .main-display video { width: 95%; height: 90%; object-fit: cover; background: #222; border-radius: 12px; }
+        .main-display { flex: 1; display: flex; justify-content: center; align-items: center; background: #0e0f11; padding: 2px; position: relative; }
+        .main-display video { width: 100%; height: 100%; object-fit: cover; background: #222; border-radius: 15px; }
         .mirror { transform: scaleX(-1); } /* শুধু ক্যামেরার জন্য মিরর, স্ক্রিন শেয়ারের জন্য নয় */
         .role-label { position: absolute; top: 35px; left: 45px; background: #2ea44f; padding: 5px 12px; font-weight: bold; border-radius: 6px; z-index: 10; }
     </style>
 </head>
 <body>
 
-    <div class="top-bar">
-        <h2>Teacher Dashboard</h2>
-        <div class="controls" style="margin-top: 10px;">
-            <button id="createBtn">Start & Create Classroom</button>
-            <button id="shareBtn" style="display: none;">Share Screen 🖥️</button>
-        </div>
-        <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px;"></h4>
-    </div>
+   
 
     <div class="meeting-container">
-        <div class="sidebar" id="studentGrid"></div>
+        <div class="sidebar" id="studentGrid">
+             <div class="top-bar">
+            
+                <div class="controls" style="margin-top: 10px;">
+                    <button id="createBtn">Start & Create Classroom</button>
+                    <button id="shareBtn" style="display: none;">Share Screen 🖥️</button>
+                </div>
+                
+            </div>
+            <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px;"></h4>
+        </div>
         <div class="main-display" id="mainArea">
-            <div class="role-label" id="screenLabel">Your Screen (Teacher Camera)</div>
             <video id="localVideo" class="mirror" autoplay playsinline muted></video>
         </div>
     </div>
