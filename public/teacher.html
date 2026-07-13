@@ -7,43 +7,85 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background: #111214; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .top-bar { padding: 2px; text-align: center; background: #1a1c20; border-bottom: 1px solid #2a2d32; }
+        .top-bar { padding: 15px; text-align: center; background: #1a1c20; border-bottom: 1px solid #2a2d32; position: relative; }
         .controls button { padding: 10px 20px; font-size: 14px; border: none; border-radius: 6px; background: #2ea44f; color: white; cursor: pointer; font-weight: bold; margin: 5px; }
-        #shareBtn { background: #007fff; } /* স্ক্রিন শেয়ার বাটনের কালার */
-        .meeting-container { display: flex; flex: 1; height: calc(100vh - 3px); overflow: hidden; }
+        #shareBtn { background: #007fff; }
+        #muteAllBtn { background: #ea4335; }
+        #unmuteAllBtn { background: #2ea44f; }
         
-        /* বাম পাশের প্যানেল - সব স্টুডেন্টদের দেখার জন্য */
-        .sidebar { width: 15%; background: #161719; border-right: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 8px; padding: 3px; overflow-y: auto; }
+        /* Master Toggle Button Style */
+        .master-chat-btn { position: absolute; right: 20px; top: 22px; padding: 10px 15px; background: #ff9800; color: #000; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; }
+
+        .meeting-container { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; position: relative; }
+        .sidebar { width: 15%; background: #161719; border-right: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 5px; padding: 3px; overflow-y: auto; }
         .student-card { position: relative; width: 100%; background: #222; border-radius: 8px; border: 2px solid #3e424b; overflow: hidden; }
         .student-card video { width: 100%; object-fit: cover; aspect-ratio: 4/3; }
         .student-label { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); padding: 2px 6px; font-size: 11px; border-radius: 4px; }
-        .action-btn { position: absolute; top: 5px; right: 5px; background: #ff9800; border: none; color: #000; padding: 5px 8px; font-size: 11px; font-weight: bold; border-radius: 4px; cursor: pointer; display: none; }
+        
+        .mic-control-btn { position: absolute; top: 5px; right: 5px; border: none; padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 4px; cursor: pointer; color: white; transition: 0.2s; z-index: 20; }
+        .mic-off { background: #ea4335; } 
+        .mic-on { background: #2ea44f; }  
+        .hand-raised { background: #ff9800; color: #000; animation: blink 1s infinite; box-shadow: 0 0 10px #ff9800; }
 
-        /* শিক্ষকের বড় স্ক্রিন (90% এরিয়া কভার) */
+        @keyframes blink { 50% { opacity: 0.4; } }
+
         .main-display { flex: 1; display: flex; justify-content: center; align-items: center; background: #0e0f11; padding: 2px; position: relative; }
-        .main-display video { width: 100%; height: 100%; object-fit: cover; background: #222; border-radius: 15px; }
-        .mirror { transform: scaleX(-1); } /* শুধু ক্যামেরার জন্য মিরর, স্ক্রিন শেয়ারের জন্য নয় */
+        .main-display video { width: 100%; height: 100%; object-fit: cover; background: #222; border-radius: 12px; }
+        .mirror { transform: scaleX(-1); }
         .role-label { position: absolute; top: 35px; left: 45px; background: #2ea44f; padding: 5px 12px; font-weight: bold; border-radius: 6px; z-index: 10; }
+
+        /* Sync Dynamic Layout Chat Panel */
+        .chat-panel { width: 0; min-width: 0; max-width: 28%; background: #161719; border-left: 0 solid #2a2d32; display: flex; flex-direction: column; transition: 0.3s; overflow: hidden; }
+        .chat-panel.open { width: 28%; min-width: 280px; border-left: 1px solid #2a2d32; }
+        .chat-header { padding: 15px; background: #1a1c20; font-weight: bold; text-align: center; border-bottom: 1px solid #2a2d32; color: #ff9800; }
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg-block { padding: 8px 12px; border-radius: 6px; max-width: 85%; font-size: 13px; line-height: 1.4; word-break: break-all; }
+        .msg-me { background: #007fff; color: #fff; align-self: flex-end; }
+        .msg-other { background: #2a2d32; color: #fff; align-self: flex-start; }
+        .chat-input-area { padding: 10px; background: #1a1c20; border-top: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 8px; }
+        .chat-row { display: flex; gap: 5px; }
+        .chat-input-area input[type="text"] { flex: 1; padding: 8px; background: #222; border: 1px solid #3a3f47; border-radius: 4px; color: #fff; outline: none; }
+        .chat-input-area button { padding: 8px 15px; background: #2ea44f; border: none; color: #fff; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .file-label { display: inline-block; background: #444; text-align: center; padding: 5px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .file-link { color: #ff9800; text-decoration: underline; display: block; font-weight: bold; margin-top: 4px; }
     </style>
 </head>
 <body>
 
-   
+    
 
     <div class="meeting-container">
         <div class="sidebar" id="studentGrid">
-             <div class="top-bar">
-            
+
+            <div class="top-bar">
                 <div class="controls" style="margin-top: 10px;">
                     <button id="createBtn">Start & Create Classroom</button>
                     <button id="shareBtn" style="display: none;">Share Screen 🖥️</button>
+                    <button id="muteAllBtn" style="display: none;">Mute All Students 🎙️❌</button>
+                    <button id="unmuteAllBtn" style="display: none;">Unmute All Students 🎙️✅</button>
+                    <button  id="masterChatBtn" style="display: none;">Open Chat Board 💬</button>
                 </div>
-                
+                <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px;"></h4>
             </div>
-            <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px;"></h4>
         </div>
+        
         <div class="main-display" id="mainArea">
             <video id="localVideo" class="mirror" autoplay playsinline muted></video>
+        </div>
+
+        <div class="chat-panel" id="chatPanel">
+            <div class="chat-header">Classroom Sync Chat (Live)</div>
+            <div class="chat-messages" id="chatWindow"></div>
+            <div class="chat-input-area">
+                <div class="chat-row">
+                    <input type="text" id="msgInput" placeholder="Type a message...">
+                    <button id="sendMsgBtn">Send</button>
+                </div>
+                <label class="file-label">
+                    📁 Share File / Notes (PDF, Image)
+                    <input type="file" id="fileInput" style="display: none;">
+                </label>
+            </div>
         </div>
     </div>
 
@@ -51,105 +93,150 @@
     <script>
         const socket = io();
         let localStream;
-        let screenStream; // স্ক্রিন শেয়ার ট্র্যাক রাখার জন্য
+        let screenStream;
         let isScreenSharing = false;
+        let isChatPanelOpen = false;
         const peerConnections = {};
+        const studentMicStatus = {}; 
         const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19020' }] };
+
+        // Master Control Button Function for Teacher
+        const chatPanel = document.getElementById('chatPanel');
+        const masterChatBtn = document.getElementById('masterChatBtn');
+
+        masterChatBtn.onclick = () => {
+            if (!isChatPanelOpen) {
+                chatPanel.classList.add('open');
+                masterChatBtn.innerText = "Close Chat Board ✖";
+                masterChatBtn.style.background = "#ea4335";
+                isChatPanelOpen = true;
+                socket.emit('toggle-room-chat', { open: true }); // Notify server to open for students
+            } else {
+                chatPanel.classList.remove('open');
+                masterChatBtn.innerText = "Open Chat Board 💬";
+                masterChatBtn.style.background = "#ff9800";
+                isChatPanelOpen = false;
+                socket.emit('toggle-room-chat', { open: false }); // Notify server to close for students
+            }
+        };
 
         document.getElementById('createBtn').onclick = async function() {
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             document.getElementById('localVideo').srcObject = localStream;
             
             const roomId = Math.random().toString(36).substring(2, 9);
-            document.getElementById('roomDisplay').innerText = `Class Room ID: ${roomId} (Share this with students)`;
+            document.getElementById('roomDisplay').innerText = `Class Room ID: ${roomId}`;
             
             socket.emit('join-room', { roomId, role: 'teacher' });
             this.style.display = 'none';
-            document.getElementById('shareBtn').style.display = 'inline-block'; // জয়েন করার পর শেয়ার বাটন দেখাবে
+            document.getElementById('shareBtn').style.display = 'inline-block';
+            document.getElementById('muteAllBtn').style.display = 'inline-block';
+            document.getElementById('unmuteAllBtn').style.display = 'inline-block';
+            masterChatBtn.style.display = 'inline-block';
         };
 
-      document.getElementById('shareBtn').onclick = async function() {
-         if (!isScreenSharing) {
-        try {
-            // অ্যান্ড্রয়েড এবং আইওএস ব্রাউজার সাপোর্টের জন্য স্ট্যান্ডার্ড চেক
-            if (!navigator.mediaDevices.getDisplayMedia) {
-                alert("আপনার মোবাইল ব্রাউজারটি সরাসরি স্ক্রিন শেয়ার সাপোর্ট করছে না। অনুগ্রহ করে 'chrome://flags' থেকে Screen Capture এনাবল করুন অথবা ল্যাপটপ ব্যবহার করুন।");
-                return;
-            }
+        // Text Message Broadcast Pipeline
+        document.getElementById('sendMsgBtn').onclick = sendTextMessage;
+        document.getElementById('msgInput').onkeypress = (e) => { if (e.key === 'Enter') sendTextMessage(); };
 
-            // স্ক্রিন ক্যাপচার করার এপিআই কল
-            screenStream = await navigator.mediaDevices.getDisplayMedia({ 
-                video: true,
-                audio: false // মোবাইলে স্ক্রিন শেয়ারের সাথে সিস্টেম অডিও শেয়ারিং সাপোর্ট করে না, তাই false রাখা নিরাপদ
-            });
-            
-            const videoTrack = screenStream.getVideoTracks()[0];
+        function sendTextMessage() {
+            const input = document.getElementById('msgInput');
+            const text = input.value.trim();
+            if (!text) return;
 
-            // সব কানেক্টেড স্টুডেন্টদের কাছে ট্র্যাক বদলে স্ক্রিন ট্র্যাক পাঠানো
-            for (let userId in peerConnections) {
-                const senders = peerConnections[userId].getSenders();
-                const sender = senders.find(s => s.track && s.track.kind === 'video');
-                if (sender) {
-                    sender.replaceTrack(videoTrack);
-                }
-            }
-
-            // শিক্ষকের নিজের স্ক্রিনেও শেয়ার করা উইন্ডোটি দেখানো
-            const localVideo = document.getElementById('localVideo');
-            localVideo.srcObject = screenStream;
-            localVideo.classList.remove('mirror'); 
-            document.getElementById('screenLabel').innerText = "Your Screen (Sharing Screen...)";
-            this.innerText = "Stop Sharing ❌";
-            this.style.background = "#ea4335";
-            isScreenSharing = true;
-
-            videoTrack.onended = () => {
-                stopScreenShare();
-            };
-
-        } catch (error) {
-            console.error("Screen share failed:", error);
-            alert("স্ক্রিন শেয়ার পারমিশন দেওয়া হয়নি অথবা আপনার ডিভাইসটি এটি সাপোর্ট করছে না।");
+            const data = { sender: 'Teacher', text: text };
+            socket.emit('send-message', data);
+            appendMsg(data, 'msg-me');
+            input.value = '';
         }
-    } else {
-        stopScreenShare();
-    }
-};
 
-        // স্ক্রিন শেয়ার বন্ধ করে পুনরায় ক্যামেরা চালু করার ফাংশন
+        // File Sharing Broadcast Pipeline
+        document.getElementById('fileInput').onchange = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) return alert("File size must be under 10MB");
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const fileData = {
+                    sender: 'Teacher',
+                    fileName: file.name,
+                    fileBuffer: evt.target.result
+                };
+                socket.emit('share-file', fileData);
+                appendFile(fileData, 'msg-me');
+            };
+            reader.readAsDataURL(file);
+        };
+
+        // Network Socket Event Receivers
+        socket.on('receive-message', (data) => { appendMsg(data, 'msg-other'); });
+        socket.on('receive-file', (data) => { appendFile(data, 'msg-other'); });
+
+        function appendMsg(data, className) {
+            const win = document.getElementById('chatWindow');
+            const div = document.createElement('div');
+            div.className = `msg-block ${className}`;
+            div.innerHTML = `<strong>${data.sender}:</strong> ${data.text}`;
+            win.appendChild(div);
+            win.scrollTop = win.scrollHeight;
+        }
+
+        function appendFile(data, className) {
+            const win = document.getElementById('chatWindow');
+            const div = document.createElement('div');
+            div.className = `msg-block ${className}`;
+            div.innerHTML = `<strong>${data.sender} Shared:</strong> <a class="file-link" href="${data.fileBuffer}" download="${data.fileName}">📁 ${data.fileName}</a>`;
+            win.appendChild(div);
+            win.scrollTop = win.scrollHeight;
+        }
+
+        document.getElementById('muteAllBtn').onclick = function() { socket.emit('mute-all-students'); };
+        document.getElementById('unmuteAllBtn').onclick = function() { socket.emit('unmute-all-students'); };
+
+        document.getElementById('shareBtn').onclick = async function() {
+            if (!isScreenSharing) {
+                try {
+                    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                    const videoTrack = screenStream.getVideoTracks()[0];
+                    for (let userId in peerConnections) {
+                        const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
+                        if (sender) sender.replaceTrack(videoTrack);
+                    }
+                    const localVideo = document.getElementById('localVideo');
+                    localVideo.srcObject = screenStream;
+                    localVideo.classList.remove('mirror');
+                    document.getElementById('screenLabel').innerText = "Your Screen (Sharing Screen...)";
+                    this.innerText = "Stop Sharing ❌";
+                    this.style.background = "#ea4335";
+                    isScreenSharing = true;
+                    videoTrack.onended = () => { stopScreenShare(); };
+                } catch (error) {}
+            } else {
+                stopScreenShare();
+            }
+        };
+
         function stopScreenShare() {
             if (!isScreenSharing) return;
-
             const videoTrack = localStream.getVideoTracks()[0];
-
-            // সব স্টুডেন্টের কাছে আবার ক্যামেরার ট্র্যাক ফেরত পাঠানো
             for (let userId in peerConnections) {
-                const senders = peerConnections[userId].getSenders();
-                const sender = senders.find(s => s.track.kind === 'video');
-                if (sender) {
-                    sender.replaceTrack(videoTrack);
-                }
+                const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
+                if (sender) sender.replaceTrack(videoTrack);
             }
-
-            // শিক্ষকের মেইন স্ক্রিনে আবার নিজের ক্যামেরা ফিরিয়ে আনা
             const localVideo = document.getElementById('localVideo');
             localVideo.srcObject = localStream;
-            localVideo.classList.add('mirror'); // ক্যামেরা আবার মিরর করা
+            localVideo.classList.add('mirror');
             document.getElementById('screenLabel').innerText = "Your Screen (Teacher Camera)";
-            
             const shareBtn = document.getElementById('shareBtn');
             shareBtn.innerText = "Share Screen 🖥️";
             shareBtn.style.background = "#007fff";
-            
-            // স্ক্রিন স্ট্রিম ট্র্যাক ক্লোজ করা
             screenStream.getTracks().forEach(track => track.stop());
             isScreenSharing = false;
         }
 
         socket.on('all-users', ({ users }) => {
-            users.forEach(user => {
-                if (user.role === 'student') createPeerConnection(user.id);
-            });
+            users.forEach(user => { if (user.role === 'student') createPeerConnection(user.id); });
         });
 
         socket.on('user-joined', ({ userId, role }) => {
@@ -168,21 +255,50 @@
         socket.on('signal', async (data) => {
             let pc = peerConnections[data.sender];
             if (!pc) return;
-            if (data.signal.answer) {
-                await pc.setRemoteDescription(new RTCSessionDescription(data.signal.answer));
-            } else if (data.signal.candidate) {
-                try { await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){}
-            }
+            if (data.signal.answer) await pc.setRemoteDescription(new RTCSessionDescription(data.signal.answer));
+            else if (data.signal.candidate) { try { await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){} }
         });
 
         socket.on('student-raised-hand', (studentId) => {
-            const btn = document.getElementById(`allow-${studentId}`);
-            if (btn) btn.style.display = 'block';
+            const btn = document.getElementById(`mic-${studentId}`);
+            if (btn && studentMicStatus[studentId] !== 'unmuted') {
+                btn.innerText = "✋ Hand Raised";
+                btn.className = "mic-control-btn hand-raised";
+            }
+        });
+
+        socket.on('single-student-unmuted-ui', (studentId) => {
+            studentMicStatus[studentId] = 'unmuted';
+            const btn = document.getElementById(`mic-${studentId}`);
+            if (btn) { btn.innerText = "Live 🎙️"; btn.className = "mic-control-btn mic-on"; }
+        });
+
+        socket.on('single-student-muted-ui', (studentId) => {
+            studentMicStatus[studentId] = 'muted';
+            const btn = document.getElementById(`mic-${studentId}`);
+            if (btn) { btn.innerText = "Muted 🔇"; btn.className = "mic-control-btn mic-off"; }
+        });
+
+        socket.on('all-students-muted-ui', () => {
+            for (let userId in studentMicStatus) {
+                studentMicStatus[userId] = 'muted';
+                const btn = document.getElementById(`mic-${userId}`);
+                if (btn) { btn.innerText = "Muted 🔇"; btn.className = "mic-control-btn mic-off"; }
+            }
+        });
+
+        socket.on('all-students-unmuted-ui', () => {
+            for (let userId in studentMicStatus) {
+                studentMicStatus[userId] = 'unmuted';
+                const btn = document.getElementById(`mic-${userId}`);
+                if (btn) { btn.innerText = "Live 🎙️"; btn.className = "mic-control-btn mic-on"; }
+            }
         });
 
         socket.on('user-left', (userId) => {
             if (peerConnections[userId]) peerConnections[userId].close();
             delete peerConnections[userId];
+            delete studentMicStatus[userId];
             const card = document.getElementById(`card-${userId}`);
             if (card) card.remove();
         });
@@ -190,13 +306,10 @@
         function createPeerConnection(userId) {
             const pc = new RTCPeerConnection(servers);
             peerConnections[userId] = pc;
+            studentMicStatus[userId] = 'muted'; 
             
-            // যদি স্ক্রিন শেয়ার চালু থাকে, তবে নতুন স্টুডেন্টকে স্ক্রিন স্ট্রিম পাঠানো হবে, অন্যথায় ক্যামেরা
             const currentStream = isScreenSharing ? screenStream : localStream;
-            
-            // ভিডিও ট্র্যাক অ্যাড করা
             currentStream.getVideoTracks().forEach(track => pc.addTrack(track, currentStream));
-            // অডিও ট্র্যাক সবসময় অরিজিনাল লোকাল স্ট্রিম (মাইক) থেকেই যাবে
             localStream.getAudioTracks().forEach(track => pc.addTrack(track, localStream));
 
             pc.ontrack = (event) => {
@@ -215,19 +328,22 @@
                 label.className = 'student-label';
                 label.innerText = `Student (${userId.substring(0,4)})`;
 
-                const allowBtn = document.createElement('button');
-                allowBtn.className = 'action-btn';
-                allowBtn.id = `allow-${userId}`;
-                allowBtn.innerText = "Allow to Talk 🎙️";
-                allowBtn.onclick = () => {
-                    socket.emit('allow-student', userId);
-                    allowBtn.innerText = "Allowed";
-                    allowBtn.disabled = true;
+                const micBtn = document.createElement('button');
+                micBtn.className = 'mic-control-btn mic-off';
+                micBtn.id = `mic-${userId}`;
+                micBtn.innerText = "Muted 🔇";
+                
+                micBtn.onclick = () => {
+                    if (studentMicStatus[userId] === 'muted') {
+                        socket.emit('allow-student', userId);
+                    } else {
+                        socket.emit('mute-student', userId);
+                    }
                 };
 
                 card.appendChild(video);
                 card.appendChild(label);
-                card.appendChild(allowBtn);
+                card.appendChild(micBtn);
                 grid.appendChild(card);
             };
 

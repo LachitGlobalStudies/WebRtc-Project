@@ -6,35 +6,52 @@
     <title>Student Panel - Virtual Classroom</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #111214; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .top-bar { padding: 3px; text-align: center; background: #1a1c20; border-bottom: 1px solid #2a2d32; }
-        .controls input, .controls button { padding: 10px 15px; font-size: 14px; margin: 2px; border: none; border-radius: 6px; outline: none; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #111214; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        .top-bar { padding: 5px; text-align: center; background: #1a1c20; border-bottom: 1px solid #2a2d32; }
+        .controls input, .controls button { padding: 3px 5px; font-size: 14px; margin: 3px; border: none; border-radius: 6px; outline: none; }
         .controls input { background: #2a2d32; color: #fff; width: 170px; }
         .controls button { background: #007fff; color: white; cursor: pointer; font-weight: bold; }
-        .meeting-container { display: flex; flex: 1; height: calc(100vh - 2px); overflow: hidden; }
         
-        /* বাম পাশের সাইডবার - শুধু নিজের ভিডিও দেখানোর জন্য */
-        .sidebar { width: 15%; background: #161719; border-right: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 8px; padding: 3px; }
+        .meeting-container { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; position: relative; }
+        .sidebar { width: 15%; background: #161719; border-right: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 5px; padding: 5px; }
         .my-video-card { width: 100%; background: #222; border-radius: 8px; border: 2px solid #3e424b; overflow: hidden; position: relative; }
         .my-video-card video { width: 100%; object-fit: cover; aspect-ratio: 4/3; transform: scaleX(-1); }
         .label { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); padding: 2px 6px; font-size: 11px; border-radius: 4px; }
 
-        /* শিক্ষকের বড় স্ক্রিন (90% এরিয়া কভার) */
         .main-display { flex: 1; display: flex; justify-content: center; align-items: center; background: #0e0f11; padding: 2px; position: relative; }
         .main-display video { width: 100%; height: 100%; object-fit: cover; background: #222; border-radius: 12px; }
         .role-label { position: absolute; top: 35px; left: 45px; background: #e02424; padding: 5px 12px; font-weight: bold; border-radius: 6px; }
         
-        .action-bar { height: 70px; background: #1a1c20; display: flex; justify-content: center; align-items: center; border-top: 1px solid #2a2d32; }
+        .action-bar { height: 70px; background: #1a1c20; display: flex; justify-content: center; align-items: center; border-top: 1px solid #2a2d32; gap: 15px; }
         .raise-btn { padding: 12px 30px; font-size: 15px; font-weight: bold; border: none; border-radius: 30px; background: #ff9800; color: black; cursor: pointer; display: none; }
+        #statusLabel { font-size: 14px; padding: 10px 20px; border-radius: 20px; font-weight: bold; display: none; }
+        .status-muted { background: #ea4335; color: white; }
+        .status-live { background: #2ea44f; color: white; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 50% { opacity: 0.7; } }
+
+        /* Dynamic Chat Panel (No Local Toggle Button for Students) */
+        .chat-panel { width: 0; min-width: 0; max-width: 28%; background: #161719; border-left: 0 solid #2a2d32; display: flex; flex-direction: column; transition: 0.3s; overflow: hidden; }
+        .chat-panel.open { width: 28%; min-width: 280px; border-left: 1px solid #2a2d32; }
+        .chat-header { padding: 15px; background: #1a1c20; font-weight: bold; text-align: center; border-bottom: 1px solid #2a2d32; color: #4caf50; }
+        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg-block { padding: 8px 12px; border-radius: 6px; max-width: 85%; font-size: 13px; line-height: 1.4; word-break: break-all; }
+        .msg-me { background: #007fff; color: #fff; align-self: flex-end; }
+        .msg-other { background: #2a2d32; color: #fff; align-self: flex-start; }
+        .chat-input-area { padding: 10px; background: #1a1c20; border-top: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 8px; }
+        .chat-row { display: flex; gap: 5px; }
+        .chat-input-area input[type="text"] { flex: 1; padding: 8px; background: #222; border: 1px solid #3a3f47; border-radius: 4px; color: #fff; outline: none; }
+        .chat-input-area button { padding: 8px 15px; background: #2ea44f; border: none; color: #fff; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .file-label { display: inline-block; background: #444; text-align: center; padding: 5px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .file-link { color: #ff9800; text-decoration: underline; display: block; font-weight: bold; margin-top: 4px; }
     </style>
 </head>
 <body>
 
-   
+    
 
     <div class="meeting-container">
         <div class="sidebar">
-             <div class="top-bar">
+            <div class="top-bar">
                 <div class="controls">
                     <input type="text" id="roomIdInput" placeholder="Enter Class Room ID">
                     <button id="joinBtn">Join Class</button>
@@ -45,18 +62,50 @@
                 <video id="localVideo" autoplay playsinline muted></video>
                 <div class="label">You (Student)</div>
             </div>
+        
              <button id="raiseHandBtn" class="raise-btn">Raise Hand ✋</button>
+             <div id="statusLabel" class="status-muted">🔇 Muted by Teacher</div>
+            
         </div>
+        
         <div class="main-display" id="mainArea">
             <video id="teacherVideo" autoplay playsinline></video>
         </div>
+
+        <div class="chat-panel" id="chatPanel">
+            <div class="chat-header">Classroom Chat Board</div>
+            <div class="chat-messages" id="chatWindow"></div>
+            <div class="chat-input-area">
+                <div class="chat-row">
+                    <input type="text" id="msgInput" placeholder="Type a message...">
+                    <button id="sendMsgBtn">Send</button>
+                </div>
+                <label class="file-label">
+                    📁 Share File / Notes (PDF, Image)
+                    <input type="file" id="fileInput" style="display: none;">
+                </label>
+            </div>
+        </div>
     </div>
+
+    
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
         let localStream;
         let teacherPc;
         const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19020' }] };
+        const chatPanel = document.getElementById('chatPanel');
+
+        // Automatic Global Sync Event Channel
+        socket.on('chat-state-changed', ({ open }) => {
+            if (open) {
+                chatPanel.classList.add('open');
+            } else {
+                chatPanel.classList.remove('open');
+            }
+        });
 
         document.getElementById('joinBtn').onclick = async () => {
             const roomId = document.getElementById('roomIdInput').value;
@@ -65,30 +114,85 @@
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             document.getElementById('localVideo').srcObject = localStream;
             
-            // শুরুতে স্টুডেন্টের নিজের অডিও মিউট বা ডিজেবল থাকবে
-            localStream.getAudioTracks()[0].enabled = false;
+            if(localStream.getAudioTracks().length > 0) {
+                localStream.getAudioTracks()[0].enabled = false; 
+            }
 
             document.getElementById('roomDisplay').innerText = `Joined Room: ${roomId}`;
             document.getElementById('raiseHandBtn').style.display = 'block';
+            document.getElementById('statusLabel').style.display = 'block';
 
             socket.emit('join-room', { roomId, role: 'student' });
         };
 
+        // Text Message Execution Block
+        document.getElementById('sendMsgBtn').onclick = sendTextMessage;
+        document.getElementById('msgInput').onkeypress = (e) => { if (e.key === 'Enter') sendTextMessage(); };
+
+        function sendTextMessage() {
+            const input = document.getElementById('msgInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const name = `Student (${socket.id ? socket.id.substring(0,4) : 'User'})`;
+            const data = { sender: name, text: text };
+            socket.emit('send-message', data);
+            appendMsg(data, 'msg-me');
+            input.value = '';
+        }
+
+        // File Broadcast Execution Block
+        document.getElementById('fileInput').onchange = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) return alert("File size must be under 10MB");
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const name = `Student (${socket.id ? socket.id.substring(0,4) : 'User'})`;
+                const fileData = {
+                    sender: name,
+                    fileName: file.name,
+                    fileBuffer: evt.target.result
+                };
+                socket.emit('share-file', fileData);
+                appendFile(fileData, 'msg-me');
+            };
+            reader.readAsDataURL(file);
+        };
+
+        // UI Event Listeners
+        socket.on('receive-message', (data) => { appendMsg(data, 'msg-other'); });
+        socket.on('receive-file', (data) => { appendFile(data, 'msg-other'); });
+
+        function appendMsg(data, className) {
+            const win = document.getElementById('chatWindow');
+            const div = document.createElement('div');
+            div.className = `msg-block ${className}`;
+            div.innerHTML = `<strong>${data.sender}:</strong> ${data.text}`;
+            win.appendChild(div);
+            win.scrollTop = win.scrollHeight;
+        }
+
+        function appendFile(data, className) {
+            const win = document.getElementById('chatWindow');
+            const div = document.createElement('div');
+            div.className = `msg-block ${className}`;
+            div.innerHTML = `<strong>${data.sender} Shared:</strong> <a class="file-link" href="${data.fileBuffer}" download="${data.fileName}">📁 ${data.fileName}</a>`;
+            win.appendChild(div);
+            win.scrollTop = win.scrollHeight;
+        }
+
         document.getElementById('raiseHandBtn').onclick = function() {
             socket.emit('raise-hand');
-            this.innerText = "Hand Raised ✋ Waiting...";
+            this.innerText = "Hand Raised ✋ (Waiting for Teacher...)";
             this.disabled = true;
             this.style.background = '#555';
             this.style.color = '#fff';
         };
 
-        socket.on('all-users', ({ teacherId }) => {
-            if (teacherId) setupTeacherConnection(teacherId);
-        });
-
-        socket.on('teacher-connected', (teacherId) => {
-            setupTeacherConnection(teacherId);
-        });
+        socket.on('all-users', ({ teacherId }) => { if (teacherId) setupTeacherConnection(teacherId); });
+        socket.on('teacher-connected', (teacherId) => { setupTeacherConnection(teacherId); });
 
         socket.on('signal', async (data) => {
             if (data.signal.offer) {
@@ -102,24 +206,42 @@
         });
 
         socket.on('allowed-to-talk', () => {
-            localStream.getAudioTracks()[0].enabled = true; // মাইক অ্যাক্টিভেট হলো
-            alert("Teacher has allowed you to talk! Your microphone is now live.");
+            if(localStream && localStream.getAudioTracks().length > 0) {
+                localStream.getAudioTracks()[0].enabled = true; 
+            }
             document.getElementById('raiseHandBtn').style.display = 'none';
+            const statusLabel = document.getElementById('statusLabel');
+            statusLabel.innerText = "🎙️ Teacher is listening";
+            statusLabel.className = "status-live";
+            statusLabel.style.display = 'block';
+        });
+
+        socket.on('force-mute', () => {
+            if(localStream && localStream.getAudioTracks().length > 0) {
+                localStream.getAudioTracks()[0].enabled = false; 
+            }
+            
+            const raiseBtn = document.getElementById('raiseHandBtn');
+            raiseBtn.style.display = 'block';
+            raiseBtn.innerText = "Raise Hand ✋";
+            raiseBtn.disabled = false;
+            raiseBtn.style.background = '#ff9800';
+            raiseBtn.style.color = 'black';
+            
+            const statusLabel = document.getElementById('statusLabel');
+            statusLabel.innerText = "🔇 Muted by Teacher";
+            statusLabel.className = "status-muted";
+            statusLabel.style.display = 'block';
         });
 
         socket.on('teacher-disconnected', () => {
-            alert("Teacher has left the classroom.");
             document.getElementById('teacherVideo').srcObject = null;
         });
 
         function setupTeacherConnection(teacherId) {
             teacherPc = new RTCPeerConnection(servers);
             localStream.getTracks().forEach(track => teacherPc.addTrack(track, localStream));
-
-            teacherPc.ontrack = (event) => {
-                document.getElementById('teacherVideo').srcObject = event.streams[0];
-            };
-
+            teacherPc.ontrack = (event) => { document.getElementById('teacherVideo').srcObject = event.streams[0]; };
             teacherPc.onicecandidate = (event) => {
                 if (event.candidate) socket.emit('signal', { target: teacherId, signal: { candidate: event.candidate } });
             };
