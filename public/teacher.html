@@ -17,7 +17,39 @@
         .master-chat-btn { position: absolute; right: 20px; top: 22px; padding: 10px 15px; background: #ff9800; color: #000; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; }
 
         .meeting-container { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; position: relative; }
-        .sidebar { width: 15%; background: #161719; border-right: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 5px; padding: 3px; overflow-y: auto; }
+        .sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100vh; /* or your desired height */
+    width: 15%;  /* optional */
+    background: #1e1e1e;
+}
+
+.top-bar {
+    flex-shrink: 0; /* Prevent shrinking */
+    padding: 10px;
+    border-bottom: 1px solid #444;
+}
+
+.studentgrid {
+    flex: 1;              /* Take remaining height */
+    overflow-y: auto;     /* Vertical scroll */
+    padding: 10px;
+}
+
+/* Optional scrollbar styling */
+.studentgrid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.studentgrid::-webkit-scrollbar-thumb {
+    background: #666;
+    border-radius: 10px;
+}
+
+.studentgrid::-webkit-scrollbar-track {
+    background: #222;
+}
         .student-card { position: relative; width: 100%; background: #222; border-radius: 8px; border: 2px solid #3e424b; overflow: hidden; }
         .student-card video { width: 100%; object-fit: cover; aspect-ratio: 4/3; }
         .student-label { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); padding: 2px 6px; font-size: 11px; border-radius: 4px; }
@@ -55,7 +87,7 @@
     
 
     <div class="meeting-container">
-        <div class="sidebar" id="studentGrid">
+        <div class="sidebar">
 
             <div class="top-bar">
                 <div class="controls" style="margin-top: 10px;">
@@ -66,6 +98,9 @@
                     <button  id="masterChatBtn" style="display: none;">Open Chat Board 💬</button>
                 </div>
                 <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px;"></h4>
+            </div>
+            <div class="studentgrid" id="studentGrid">
+
             </div>
         </div>
         
@@ -110,13 +145,13 @@
                 masterChatBtn.innerText = "Close Chat Board ✖";
                 masterChatBtn.style.background = "#ea4335";
                 isChatPanelOpen = true;
-                socket.emit('toggle-room-chat', { open: true }); // Notify server to open for students
+                socket.emit('toggle-room-chat', { open: true }); 
             } else {
                 chatPanel.classList.remove('open');
                 masterChatBtn.innerText = "Open Chat Board 💬";
                 masterChatBtn.style.background = "#ff9800";
                 isChatPanelOpen = false;
-                socket.emit('toggle-room-chat', { open: false }); // Notify server to close for students
+                socket.emit('toggle-room-chat', { open: false }); 
             }
         };
 
@@ -194,44 +229,64 @@
         document.getElementById('muteAllBtn').onclick = function() { socket.emit('mute-all-students'); };
         document.getElementById('unmuteAllBtn').onclick = function() { socket.emit('unmute-all-students'); };
 
+        // --- FIXED SCREEN SHARE EVENT HANDLER ---
         document.getElementById('shareBtn').onclick = async function() {
             if (!isScreenSharing) {
                 try {
                     screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                     const videoTrack = screenStream.getVideoTracks()[0];
+                    
+                    // Swap tracks with all peers
                     for (let userId in peerConnections) {
                         const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
                         if (sender) sender.replaceTrack(videoTrack);
                     }
+                    
                     const localVideo = document.getElementById('localVideo');
                     localVideo.srcObject = screenStream;
                     localVideo.classList.remove('mirror');
-                    document.getElementById('screenLabel').innerText = "Your Screen (Sharing Screen...)";
+                    
                     this.innerText = "Stop Sharing ❌";
                     this.style.background = "#ea4335";
                     isScreenSharing = true;
+                    
+                    // Handle user clicking native browser "Stop Sharing" bar
                     videoTrack.onended = () => { stopScreenShare(); };
-                } catch (error) {}
+                } catch (error) {
+                    console.error("Error starting screen share:", error);
+                }
             } else {
                 stopScreenShare();
             }
         };
 
+        // --- FIXED STOP SCREEN SHARE FUNCTION ---
         function stopScreenShare() {
             if (!isScreenSharing) return;
+            
+            // Since we never closed the camera track, grab the old video track
             const videoTrack = localStream.getVideoTracks()[0];
+            
+            // Replace track back for all connected peers
             for (let userId in peerConnections) {
                 const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
                 if (sender) sender.replaceTrack(videoTrack);
             }
+            
+            // Reset local UI video element back to the original camera stream
             const localVideo = document.getElementById('localVideo');
             localVideo.srcObject = localStream;
             localVideo.classList.add('mirror');
-            document.getElementById('screenLabel').innerText = "Your Screen (Teacher Camera)";
+            
             const shareBtn = document.getElementById('shareBtn');
             shareBtn.innerText = "Share Screen 🖥️";
             shareBtn.style.background = "#007fff";
-            screenStream.getTracks().forEach(track => track.stop());
+            
+            // Stop all screen tracks cleanly
+            if (screenStream) {
+                screenStream.getTracks().forEach(track => track.stop());
+            }
+            
             isScreenSharing = false;
         }
 
