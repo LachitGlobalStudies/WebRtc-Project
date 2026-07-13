@@ -314,11 +314,19 @@
             else if (data.signal.candidate) { try { await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){} }
         });
 
-        socket.on('student-raised-hand', (studentId) => {
+       socket.on('student-raised-hand', (studentId) => {
             const btn = document.getElementById(`mic-${studentId}`);
-            if (btn && studentMicStatus[studentId] !== 'unmuted') {
-                btn.innerText = "✋ Hand Raised";
-                btn.className = "mic-control-btn hand-raised";
+            const card = document.getElementById(`card-${studentId}`);
+            const grid = document.getElementById('studentGrid');
+            
+            if (btn && studentMicStatus[studentId] !== 'unmuted') { 
+                btn.innerText = "✋ Hand Raised"; 
+                btn.className = "mic-control-btn hand-raised"; 
+                
+                // Student card-ti jodi thake, tokhon sheti list-er top-e (shurute) niye jabe
+                if (card && grid) {
+                    grid.prepend(card);
+                }
             }
         });
 
