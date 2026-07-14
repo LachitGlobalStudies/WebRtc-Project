@@ -1,6 +1,7 @@
 const express = require('express');
 const app = express();
 const http = require('http').createServer(app);
+const { spawn } = require('child_process'); // Required for streaming to YouTube
 const io = require('socket.io')(http, {
     cors: { origin: "*" },
     maxHttpBufferSize: 1e7 // 10MB Limit
@@ -10,6 +11,7 @@ app.use(express.static('public'));
 
 const roomTeachers = {};
 const roomChatState = {}; 
+const activeStreams = {}; // Tracks active FFmpeg processes per room
 
 io.on('connection', (socket) => {
     
@@ -39,8 +41,11 @@ io.on('connection', (socket) => {
             }
         }
 
+        // Send all users to the newly joined client
         socket.emit('all-users', { users: otherUsers, teacherId: roomTeachers[roomId] });
-        socket.to(roomId).emit('user-joined', { userId: socket.id, role: role });
+        
+        // Notify others and force an update of the total participant count
+        io.to(roomId).emit('user-joined', { userId: socket.id, role: role, count: clients ? clients.size : 1 });
 
         socket.on('signal', (data) => {
             socket.to(data.target).emit('signal', {
@@ -49,14 +54,71 @@ io.on('connection', (socket) => {
             });
         });
 
+        // --- YouTube Livestream Event Channels ---
+        socket.on('start-youtube-stream', ({ streamKey }) => {
+            if (socket.role !== 'teacher') return;
+            const currentRoom = socket.roomId;
+
+            if (activeStreams[currentRoom]) {
+                return socket.emit('stream-error', 'Stream already running!');
+            }
+
+            const youtubeUrl = `rtmp://a.rtmp.youtube.com/live2/${streamKey}`;
+            
+            // Spawn FFmpeg to convert incoming WebM chunks into a standard RTMP FLV format for YouTube
+            const ffmpeg = spawn('ffmpeg', [
+                '-i', '-',                // Read input from standard input (stdin)
+                '-c:v', 'libx264',        // Encode video to H.264
+                '-preset', 'veryfast',    // Encoding speed profile
+                '-b:v', '2500k',          // Target video bitrate
+                '-maxrate', '2500k',
+                '-bufsize', '5000k',
+                '-pix_fmt', 'yuv420p',    // Color space requirement for modern video players
+                '-g', '50',               // Keyframe interval (2-second interval at 25fps)
+                '-c:a', 'aac',            // Encode audio to AAC
+                '-b:a', '128k',           // Audio bitrate
+                '-ar', '44100',           // Audio sample rate
+                '-f', 'flv',              // YouTube accepts FLV over RTMP
+                youtubeUrl
+            ]);
+
+            ffmpeg.on('close', (code) => {
+                console.log(`FFmpeg process closed with code ${code}`);
+                delete activeStreams[currentRoom];
+            });
+
+            ffmpeg.stderr.on('data', (data) => {
+                // Keep this for server-side debugging logs if configuration fails
+                console.log('FFmpeg Log:', data.toString());
+            });
+
+            activeStreams[currentRoom] = ffmpeg;
+            socket.emit('stream-started');
+        });
+
+        socket.on('stream-chunk', (chunk) => {
+            const currentRoom = socket.roomId;
+            if (activeStreams[currentRoom]) {
+                // Pipe raw buffer bits straight into FFmpeg stdin
+                activeStreams[currentRoom].stdin.write(chunk);
+            }
+        });
+
+        socket.on('stop-youtube-stream', () => {
+            const currentRoom = socket.roomId;
+            if (activeStreams[currentRoom]) {
+                activeStreams[currentRoom].stdin.end();
+                delete activeStreams[currentRoom];
+                socket.emit('stream-stopped');
+            }
+        });
+
         // --- Realtime Whiteboard Draw Transmission ---
         socket.on('draw-data', (data) => {
             const currentRoom = socket.roomId;
-            // Teacher-er drawing data shob student-der kache forward hobe
             socket.to(currentRoom).emit('incoming-draw', data);
         });
 
-        // --- Whiteboard Clear Action ---
         socket.on('clear-board', () => {
             const currentRoom = socket.roomId;
             socket.to(currentRoom).emit('incoming-clear');
@@ -122,11 +184,19 @@ io.on('connection', (socket) => {
         socket.on('disconnect', () => {
             const currentRoom = socket.roomId;
             if (socket.role === 'teacher') {
+                if (activeStreams[currentRoom]) {
+                    activeStreams[currentRoom].stdin.end();
+                    delete activeStreams[currentRoom];
+                }
                 delete roomTeachers[currentRoom];
                 delete roomChatState[currentRoom];
                 socket.to(currentRoom).emit('teacher-disconnected');
             } else {
                 socket.to(currentRoom).emit('user-left', socket.id);
+                
+                // Recalculate room size for the remaining counter update
+                const clients = io.sockets.adapter.rooms.get(currentRoom);
+                io.to(currentRoom).emit('room-count-update', { count: clients ? clients.size : 0 });
             }
         });
     });

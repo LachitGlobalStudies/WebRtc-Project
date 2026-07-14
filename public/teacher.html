@@ -12,45 +12,47 @@
         #shareBtn { background: #007fff; }
         #muteAllBtn { background: #ea4335; }
         #unmuteAllBtn { background: #2ea44f; }
+        #youtubeStreamBtn { background: #ff0000; color: white; }
         
-        /* Master Toggle Button Style */
         .master-chat-btn { position: absolute; right: 20px; top: 22px; padding: 10px 15px; background: #ff9800; color: #000; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; }
 
         .meeting-container { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; position: relative; }
         .sidebar {
-    display: flex;
-    flex-direction: column;
-    height: 100vh; /* or your desired height */
-    width: 15%;  /* optional */
-    background: #1e1e1e;
-}
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 15%; 
+            background: #1e1e1e;
+        }
 
-.top-bar {
-    flex-shrink: 0; /* Prevent shrinking */
-    padding: 10px;
-    border-bottom: 1px solid #444;
-}
+        .top-bar {
+            flex-shrink: 0;
+            padding: 10px;
+            border-bottom: 1px solid #444;
+        }
 
-.studentgrid {
-    flex: 1;              /* Take remaining height */
-    overflow-y: auto;     /* Vertical scroll */
-    padding: 10px;
-}
+        /* Active Participants Header style placement counter layout */
+        .counter-header {
+            padding: 10px;
+            background: #2a2d32;
+            text-align: center;
+            font-size: 14px;
+            font-weight: bold;
+            color: #2ea44f;
+            border-bottom: 1px solid #3e424b;
+        }
 
-/* Optional scrollbar styling */
-.studentgrid::-webkit-scrollbar {
-    width: 8px;
-}
+        .studentgrid {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
 
-.studentgrid::-webkit-scrollbar-thumb {
-    background: #666;
-    border-radius: 10px;
-}
+        .studentgrid::-webkit-scrollbar { width: 8px; }
+        .studentgrid::-webkit-scrollbar-thumb { background: #666; border-radius: 10px; }
+        .studentgrid::-webkit-scrollbar-track { background: #222; }
 
-.studentgrid::-webkit-scrollbar-track {
-    background: #222;
-}
-        .student-card { position: relative; width: 100%; background: #222; border-radius: 8px; border: 2px solid #3e424b; overflow: hidden; }
+        .student-card { position: relative; width: 100%; background: #222; border-radius: 8px; border: 2px solid #3e424b; overflow: hidden; margin-bottom: 10px; }
         .student-card video { width: 100%; object-fit: cover; aspect-ratio: 4/3; }
         .student-label { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); padding: 2px 6px; font-size: 11px; border-radius: 4px; }
         
@@ -66,7 +68,6 @@
         .mirror { transform: scaleX(-1); }
         .role-label { position: absolute; top: 35px; left: 45px; background: #2ea44f; padding: 5px 12px; font-weight: bold; border-radius: 6px; z-index: 10; }
 
-        /* Sync Dynamic Layout Chat Panel */
         .chat-panel { width: 0; min-width: 0; max-width: 28%; background: #161719; border-left: 0 solid #2a2d32; display: flex; flex-direction: column; transition: 0.3s; overflow: hidden; }
         .chat-panel.open { width: 28%; min-width: 280px; border-left: 1px solid #2a2d32; }
         .chat-header { padding: 15px; background: #1a1c20; font-weight: bold; text-align: center; border-bottom: 1px solid #2a2d32; color: #ff9800; }
@@ -84,24 +85,25 @@
 </head>
 <body>
 
-    
-
     <div class="meeting-container">
         <div class="sidebar">
-
             <div class="top-bar">
                 <div class="controls" style="margin-top: 10px;">
                     <button id="createBtn">Start & Create Classroom</button>
                     <button id="shareBtn" style="display: none;">Share Screen 🖥️</button>
+                    <button id="youtubeStreamBtn" style="display: none;">Stream to YouTube 🎥</button>
                     <button id="muteAllBtn" style="display: none;">Mute All Students 🎙️❌</button>
                     <button id="unmuteAllBtn" style="display: none;">Unmute All Students 🎙️✅</button>
-                    <button  id="masterChatBtn" style="display: none;">Open Chat Board 💬</button>
+                    <button id="masterChatBtn" style="display: none;">Open Chat Board 💬</button>
                 </div>
                 <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px;"></h4>
             </div>
-            <div class="studentgrid" id="studentGrid">
 
+            <div id="participantCounter" class="counter-header" style="display: none;">
+                Total Class Attendees: 1
             </div>
+
+            <div class="studentgrid" id="studentGrid"></div>
         </div>
         
         <div class="main-display" id="mainArea">
@@ -129,15 +131,24 @@
         const socket = io();
         let localStream;
         let screenStream;
+        let mediaRecorder; 
         let isScreenSharing = false;
+        let isLiveStreaming = false;
         let isChatPanelOpen = false;
         const peerConnections = {};
         const studentMicStatus = {}; 
         const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19020' }] };
 
-        // Master Control Button Function for Teacher
         const chatPanel = document.getElementById('chatPanel');
         const masterChatBtn = document.getElementById('masterChatBtn');
+        const participantCounter = document.getElementById('participantCounter');
+
+        // Function to dynamically update live attendee counter text markup
+        function updateCountUI(count) {
+            if(count !== undefined) {
+                participantCounter.innerText = `Total Class Attendees: ${count}`;
+            }
+        }
 
         masterChatBtn.onclick = () => {
             if (!isChatPanelOpen) {
@@ -165,12 +176,68 @@
             socket.emit('join-room', { roomId, role: 'teacher' });
             this.style.display = 'none';
             document.getElementById('shareBtn').style.display = 'inline-block';
+            document.getElementById('youtubeStreamBtn').style.display = 'inline-block';
             document.getElementById('muteAllBtn').style.display = 'inline-block';
             document.getElementById('unmuteAllBtn').style.display = 'inline-block';
             masterChatBtn.style.display = 'inline-block';
+            participantCounter.style.display = 'block';
         };
 
-        // Text Message Broadcast Pipeline
+        // --- YouTube MediaRecorder Implementation Pipeline ---
+        document.getElementById('youtubeStreamBtn').onclick = function() {
+            if (!isLiveStreaming) {
+                const streamKey = prompt("Please enter your YouTube Stream Key:");
+                if (!streamKey) return alert("Stream Key is required to push media live!");
+
+                socket.emit('start-youtube-stream', { streamKey });
+            } else {
+                socket.emit('stop-youtube-stream');
+            }
+        };
+
+        socket.on('stream-started', () => {
+            isLiveStreaming = true;
+            const btn = document.getElementById('youtubeStreamBtn');
+            btn.innerText = "Stop YouTube Stream 🛑";
+            btn.style.background = "#333";
+
+            // Record either screen share stream or standard local camera output
+            const trackingStream = isScreenSharing ? screenStream : localStream;
+            
+            // Collect chunks into low-latency clusters every 1 second (1000ms timeslices)
+            mediaRecorder = new MediaRecorder(trackingStream, {
+                mimeType: 'video/webm;codecs=vp8,opus',
+                videoBitsPerSecond: 2500000
+            });
+
+            mediaRecorder.ondataavailable = async (e) => {
+                if (e.data && e.data.size > 0) {
+                    socket.emit('stream-chunk', e.data);
+                }
+            };
+
+            mediaRecorder.start(1000); 
+        });
+
+        socket.on('stream-stopped', () => {
+            cleanupStreaming();
+        });
+
+        socket.on('stream-error', (err) => {
+            alert(err);
+            cleanupStreaming();
+        });
+
+        function cleanupStreaming() {
+            isLiveStreaming = false;
+            const btn = document.getElementById('youtubeStreamBtn');
+            btn.innerText = "Stream to YouTube 🎥";
+            btn.style.background = "#ff0000";
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+            }
+        }
+
         document.getElementById('sendMsgBtn').onclick = sendTextMessage;
         document.getElementById('msgInput').onkeypress = (e) => { if (e.key === 'Enter') sendTextMessage(); };
 
@@ -185,7 +252,6 @@
             input.value = '';
         }
 
-        // File Sharing Broadcast Pipeline
         document.getElementById('fileInput').onchange = function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -204,7 +270,6 @@
             reader.readAsDataURL(file);
         };
 
-        // Network Socket Event Receivers
         socket.on('receive-message', (data) => { appendMsg(data, 'msg-other'); });
         socket.on('receive-file', (data) => { appendFile(data, 'msg-other'); });
 
@@ -229,14 +294,12 @@
         document.getElementById('muteAllBtn').onclick = function() { socket.emit('mute-all-students'); };
         document.getElementById('unmuteAllBtn').onclick = function() { socket.emit('unmute-all-students'); };
 
-        // --- FIXED SCREEN SHARE EVENT HANDLER ---
         document.getElementById('shareBtn').onclick = async function() {
             if (!isScreenSharing) {
                 try {
                     screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                     const videoTrack = screenStream.getVideoTracks()[0];
                     
-                    // Swap tracks with all peers
                     for (let userId in peerConnections) {
                         const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
                         if (sender) sender.replaceTrack(videoTrack);
@@ -249,8 +312,15 @@
                     this.innerText = "Stop Sharing ❌";
                     this.style.background = "#ea4335";
                     isScreenSharing = true;
+
+                    // If YouTube stream is active, dynamically restart MediaRecorder to grab the new screen layout track elements
+                    if (isLiveStreaming && mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                        mediaRecorder = new MediaRecorder(screenStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
+                        mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) socket.emit('stream-chunk', e.data); };
+                        mediaRecorder.start(1000);
+                    }
                     
-                    // Handle user clicking native browser "Stop Sharing" bar
                     videoTrack.onended = () => { stopScreenShare(); };
                 } catch (error) {
                     console.error("Error starting screen share:", error);
@@ -260,20 +330,16 @@
             }
         };
 
-        // --- FIXED STOP SCREEN SHARE FUNCTION ---
         function stopScreenShare() {
             if (!isScreenSharing) return;
             
-            // Since we never closed the camera track, grab the old video track
             const videoTrack = localStream.getVideoTracks()[0];
             
-            // Replace track back for all connected peers
             for (let userId in peerConnections) {
                 const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
                 if (sender) sender.replaceTrack(videoTrack);
             }
             
-            // Reset local UI video element back to the original camera stream
             const localVideo = document.getElementById('localVideo');
             localVideo.srcObject = localStream;
             localVideo.classList.add('mirror');
@@ -282,23 +348,37 @@
             shareBtn.innerText = "Share Screen 🖥️";
             shareBtn.style.background = "#007fff";
             
-            // Stop all screen tracks cleanly
             if (screenStream) {
                 screenStream.getTracks().forEach(track => track.stop());
             }
             
             isScreenSharing = false;
+
+            // Revert YouTube stream pipeline recorder framework back to target original local webcam capture configurations
+            if (isLiveStreaming && mediaRecorder) {
+                mediaRecorder.stop();
+                mediaRecorder = new MediaRecorder(localStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
+                mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) socket.emit('stream-chunk', e.data); };
+                mediaRecorder.start(1000);
+            }
         }
 
-        socket.on('all-users', ({ users }) => {
+        // Handle Active Room Counter sync packets
+        socket.on('all-users', ({ users, count }) => {
+            updateCountUI(count);
             users.forEach(user => { if (user.role === 'student') createPeerConnection(user.id); });
         });
 
-        socket.on('user-joined', ({ userId, role }) => {
+        socket.on('user-joined', ({ userId, role, count }) => {
+            updateCountUI(count);
             if (role === 'student') {
                 const pc = createPeerConnection(userId);
                 initiateCall(pc, userId);
             }
+        });
+
+        socket.on('room-count-update', ({ count }) => {
+            updateCountUI(count);
         });
 
         async function initiateCall(pc, userId) {
@@ -314,7 +394,7 @@
             else if (data.signal.candidate) { try { await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){} }
         });
 
-       socket.on('student-raised-hand', (studentId) => {
+        socket.on('student-raised-hand', (studentId) => {
             const btn = document.getElementById(`mic-${studentId}`);
             const card = document.getElementById(`card-${studentId}`);
             const grid = document.getElementById('studentGrid');
@@ -322,8 +402,6 @@
             if (btn && studentMicStatus[studentId] !== 'unmuted') { 
                 btn.innerText = "✋ Hand Raised"; 
                 btn.className = "mic-control-btn hand-raised"; 
-                
-                // Student card-ti jodi thake, tokhon sheti list-er top-e (shurute) niye jabe
                 if (card && grid) {
                     grid.prepend(card);
                 }
