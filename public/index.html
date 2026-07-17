@@ -22,6 +22,10 @@
         .main-display video { width: 100%; height: 100%; object-fit: cover; background: #222; border-radius: 12px; }
         .role-label { position: absolute; top: 35px; left: 45px; background: #e02424; padding: 5px 12px; font-weight: bold; border-radius: 6px; }
         
+        /* Fullscreen Custom Button Styling */
+        .fs-btn { position: absolute; bottom: 20px; right: 20px; padding: 10px 16px; background: rgba(0, 0, 0, 0.75); color: white; border: 1px solid #444; border-radius: 30px; cursor: pointer; z-index: 10; font-weight: bold; font-size: 14px; transition: 0.2s; }
+        .fs-btn:hover { background: #007fff; border-color: #007fff; }
+
         .action-bar { height: 70px; background: #1a1c20; display: flex; justify-content: center; align-items: center; border-top: 1px solid #2a2d32; gap: 15px; }
         .raise-btn { padding: 12px 30px; font-size: 15px; font-weight: bold; border: none; border-radius: 30px; background: #ff9800; color: black; cursor: pointer; display: none; }
         #statusLabel { font-size: 14px; padding: 10px 20px; border-radius: 20px; font-weight: bold; display: none; }
@@ -47,8 +51,6 @@
 </head>
 <body>
 
-    
-
     <div class="meeting-container">
         <div class="sidebar">
             <div class="top-bar">
@@ -70,6 +72,8 @@
         
         <div class="main-display" id="mainArea">
             <video id="teacherVideo" autoplay playsinline></video>
+            <!-- Dedicated Fullscreen Trigger (Will behave smartly for Mobile/Desktop) -->
+            <button id="fullscreenBtn" class="fs-btn">📺 Full Screen</button>
         </div>
 
         <div class="chat-panel" id="chatPanel">
@@ -87,8 +91,6 @@
             </div>
         </div>
     </div>
-
-    
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
@@ -245,6 +247,71 @@
             teacherPc.onicecandidate = (event) => {
                 if (event.candidate) socket.emit('signal', { target: teacherId, signal: { candidate: event.candidate } });
             };
+        }
+
+        // ==========================================
+        // SMART FULLSCREEN LOGIC (Android & Desktop)
+        // ==========================================
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const teacherVideo = document.getElementById('teacherVideo');
+
+        // Check Device Type
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        if (isMobile) {
+            // Android/Mobile Behavior: Tap to Fullscreen + Double Tap Support
+            fullscreenBtn.onclick = () => {
+                triggerFullscreen(teacherVideo);
+            };
+
+            // Double Tap on video element directly for Mobile Convenience
+            let lastTap = 0;
+            teacherVideo.addEventListener('touchend', function (e) {
+                const currentTime = new Date().getTime();
+                const tapLength = currentTime - lastTap;
+                if (tapLength < 300 && tapLength > 0) {
+                    triggerFullscreen(teacherVideo);
+                    e.preventDefault();
+                }
+                lastTap = currentTime;
+            });
+        } else {
+            // Desktop/PC Behavior: Standard Fullscreen Button Click + Double Click Support
+            fullscreenBtn.onclick = () => {
+                triggerFullscreen(teacherVideo);
+            };
+
+            // Double Click on Video for PC UI standard
+            teacherVideo.ondblclick = () => {
+                triggerFullscreen(teacherVideo);
+            };
+        }
+
+        // Cross-Browser Fullscreen Controller Function
+        function triggerFullscreen(element) {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.mozFullScreenElement && !document.msFullscreenElement) {
+                // Request Fullscreen based on supported methods
+                if (element.requestFullscreen) {
+                    element.requestFullscreen();
+                } else if (element.webkitRequestFullscreen) { /* Android Chrome / Safari / iOS */
+                    element.webkitRequestFullscreen();
+                } else if (element.mozRequestFullScreen) {
+                    element.mozRequestFullScreen();
+                } else if (element.msRequestFullscreen) {
+                    element.msRequestFullscreen();
+                }
+            } else {
+                // Exit Fullscreen if already active
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
         }
     </script>
 </body>
