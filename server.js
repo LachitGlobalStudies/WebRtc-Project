@@ -54,6 +54,17 @@ io.on('connection', (socket) => {
             });
         });
 
+        // ==========================================
+        // 🚀 NEW: Android Native Screen Sharing Channel
+        // ==========================================
+        socket.on('screenDataChunk', (chunk) => {
+            const currentRoom = socket.roomId;
+            if (socket.role === 'teacher' && currentRoom) {
+                // App theke asha raw byte chunk shorashori room-er student-der kache broadcast hobe
+                socket.to(currentRoom).emit('streamToStudent', chunk);
+            }
+        });
+
         // --- YouTube Livestream Event Channels ---
         socket.on('start-youtube-stream', ({ streamKey }) => {
             if (socket.role !== 'teacher') return;
@@ -88,7 +99,6 @@ io.on('connection', (socket) => {
             });
 
             ffmpeg.stderr.on('data', (data) => {
-                // Keep this for server-side debugging logs if configuration fails
                 console.log('FFmpeg Log:', data.toString());
             });
 
@@ -99,7 +109,6 @@ io.on('connection', (socket) => {
         socket.on('stream-chunk', (chunk) => {
             const currentRoom = socket.roomId;
             if (activeStreams[currentRoom]) {
-                // Pipe raw buffer bits straight into FFmpeg stdin
                 activeStreams[currentRoom].stdin.write(chunk);
             }
         });
@@ -194,7 +203,6 @@ io.on('connection', (socket) => {
             } else {
                 socket.to(currentRoom).emit('user-left', socket.id);
                 
-                // Recalculate room size for the remaining counter update
                 const clients = io.sockets.adapter.rooms.get(currentRoom);
                 io.to(currentRoom).emit('room-count-update', { count: clients ? clients.size : 0 });
             }
