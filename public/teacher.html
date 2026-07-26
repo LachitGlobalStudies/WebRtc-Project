@@ -20,6 +20,8 @@
         .top-bar { 
             padding: 10px; 
             text-align: center; 
+            width: 15%; 
+            min-width: 80px;
             background: #1a1c20; 
             border-bottom: 1px solid #2a2d32; 
         }
@@ -29,6 +31,8 @@
             flex-wrap: wrap;
             justify-content: center;
             gap: 5px;
+            width: 100%; 
+            min-width: 80px;
             padding: 5px 0;
         }
         
@@ -81,7 +85,7 @@
         .sidebar {
             display: flex;
             flex-direction: column;
-            width: 15%; 
+            width: 100%; 
             min-width: 80px;
             background: #1e1e1e;
             overflow: hidden;
@@ -91,6 +95,7 @@
             padding: 8px;
             background: #2a2d32;
             text-align: center;
+            width: 100%;
             font-size: 12px;
             font-weight: bold;
             color: #2ea44f;
@@ -101,6 +106,7 @@
         .studentgrid {
             flex: 1;
             overflow-y: auto;
+            width: 100%;
             padding: 5px;
         }
         
@@ -322,26 +328,28 @@
     </style>
 </head>
 <body>
-    <div class="top-bar">
-        <div class="controls">
-            <button id="createBtn">📚 Start Class</button>
-            <button id="shareBtn" style="display: none;">🖥️ Share Screen</button>
-            <button id="androidScreenShareBtn" style="display: none;">📱 Screen Share</button>
-            <button id="youtubeStreamBtn" style="display: none;">🎥 Stream</button>
-            <button id="muteAllBtn" style="display: none;">🔇 All</button>
-            <button id="unmuteAllBtn" style="display: none;">🎙️ All</button>
-            <button id="masterChatBtn" style="display: none;" class="master-chat-btn">💬 Chat</button>
-        </div>
-        <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px; font-size: 14px;"></h4>
-    </div>
+    
 
     <div class="meeting-container">
-        <div class="sidebar">
-            <div id="participantCounter" class="counter-header" style="display: none;">
-                👥 Attendees: 1
+        <div class="top-bar">
+            <div class="controls">
+                <button id="createBtn">📚 Start Class</button>
+                <button id="shareBtn" style="display: none;">🖥️ Share Screen</button>
+                <button id="androidScreenShareBtn" style="display: none;">📱 Screen Share</button>
+                <button id="youtubeStreamBtn" style="display: none;">🎥 Stream</button>
+                <button id="muteAllBtn" style="display: none;">🔇 All</button>
+                <button id="unmuteAllBtn" style="display: none;">🎙️ All</button>
+                <button id="masterChatBtn" style="display: none;" class="master-chat-btn">💬 Chat</button>
             </div>
-            <div class="studentgrid" id="studentGrid"></div>
-        </div>
+            <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px; font-size: 14px;"></h4>
+            <div class="sidebar">
+                 <div id="participantCounter" class="counter-header" style="display: none;">
+                👥 Attendees: 1
+             </div>
+                  <div class="studentgrid" id="studentGrid"></div>
+             </div>
+         </div>
+        
         
         <div class="main-display" id="mainArea">
             <video id="localVideo" class="mirror" autoplay playsinline muted></video>
