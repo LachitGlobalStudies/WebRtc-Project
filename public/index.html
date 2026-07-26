@@ -33,11 +33,17 @@
             border-radius: 12px;
         }
 
+        /* অ্যান্ড্রয়েড ও মোবাইল ফুলস্ক্রিন মোডে ভিডিওটি যেন পুরো স্ক্রিন জুড়ে ছড়িয়ে যায় */
         .video-wrapper video {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            object-fit: cover; /* contain এর বদলে cover দিলে কালো দাগ চলে যাবে এবং স্ক্রিন ফিল হবে */
             background: #000;
+        }
+
+        /* যদি কখনো স্ক্রিন শেয়ারের এলিমেন্ট তৈরি হয়, সেটির জন্যও */
+        .video-wrapper video.screen-shared {
+            object-fit: contain; /* স্ক্রিন শেয়ারের লেখা যেন কেটে না যায় সেজন্য এটি contain রাখাই ভালো, তবে চাইলে cover করতে পারেন */
         }
 
         .role-label { position: absolute; top: 35px; left: 45px; background: #e02424; padding: 5px 12px; font-weight: bold; border-radius: 6px; z-index: 5; }
@@ -241,14 +247,16 @@
         // Receive screen share from teacher
         let screenShareVideo = null;
 
-        socket.on('screen-share-chunk', (data) => {
+       socket.on('screen-share-chunk', (data) => {
             if (!screenShareVideo) {
                 screenShareVideo = document.createElement('video');
                 screenShareVideo.autoplay = true;
                 screenShareVideo.playsInline = true;
                 screenShareVideo.style.width = '100%';
                 screenShareVideo.style.height = '100%';
-                screenShareVideo.style.objectFit = 'contain';
+                
+                // স্ক্রিন শেয়ারের জন্য রেশিও ঠিক রাখতে dynamic class ব্যবহার করছি
+                screenShareVideo.style.objectFit = 'contain'; 
                 
                 const videoWrapper = document.getElementById('videoWrapper');
                 const teacherVideo = document.getElementById('teacherVideo');
