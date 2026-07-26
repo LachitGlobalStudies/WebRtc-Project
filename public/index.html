@@ -193,7 +193,48 @@
             this.style.background = '#555';
             this.style.color = '#fff';
         };
+// Add to student panel script
 
+// Receive screen share from teacher (Android)
+let screenShareVideo = null;
+
+socket.on('screen-share-chunk', (data) => {
+    // Create video element if not exists
+    if (!screenShareVideo) {
+        screenShareVideo = document.createElement('video');
+        screenShareVideo.autoplay = true;
+        screenShareVideo.playsInline = true;
+        screenShareVideo.style.width = '100%';
+        screenShareVideo.style.height = '100%';
+        screenShareVideo.style.objectFit = 'contain';
+        
+        // Replace teacher video with screen share
+        const mainArea = document.getElementById('mainArea');
+        const teacherVideo = document.getElementById('teacherVideo');
+        if (teacherVideo) {
+            teacherVideo.style.display = 'none';
+        }
+        mainArea.appendChild(screenShareVideo);
+    }
+    
+    // Display the frame
+    if (data.chunk) {
+        screenShareVideo.src = data.chunk;
+    }
+});
+
+socket.on('screen-share-stopped', () => {
+    // Remove screen share and show teacher video again
+    if (screenShareVideo) {
+        screenShareVideo.remove();
+        screenShareVideo = null;
+        
+        const teacherVideo = document.getElementById('teacherVideo');
+        if (teacherVideo) {
+            teacherVideo.style.display = 'block';
+        }
+    }
+});
         socket.on('all-users', ({ teacherId }) => { if (teacherId) setupTeacherConnection(teacherId); });
         socket.on('teacher-connected', (teacherId) => { setupTeacherConnection(teacherId); });
 

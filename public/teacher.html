@@ -2,124 +2,363 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Teacher Panel - Virtual Classroom</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #111214; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .top-bar { padding: 15px; text-align: center; background: #1a1c20; border-bottom: 1px solid #2a2d32; position: relative; }
-        .controls button { padding: 10px 20px; font-size: 14px; border: none; border-radius: 6px; background: #2ea44f; color: white; cursor: pointer; font-weight: bold; margin: 5px; }
+        body { 
+            font-family: -apple-system, 'Segoe UI', Arial, sans-serif; 
+            background: #111214; 
+            color: #fff; 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        
+        .top-bar { 
+            padding: 10px; 
+            text-align: center; 
+            background: #1a1c20; 
+            border-bottom: 1px solid #2a2d32; 
+        }
+        
+        .controls { 
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 5px;
+            padding: 5px 0;
+        }
+        
+        .controls button { 
+            padding: 10px 15px; 
+            font-size: 13px; 
+            border: none; 
+            border-radius: 8px; 
+            background: #2ea44f; 
+            color: white; 
+            cursor: pointer; 
+            font-weight: bold; 
+            min-height: 44px;
+            touch-action: manipulation;
+            flex: 1;
+            min-width: 80px;
+            max-width: 160px;
+        }
+        
+        #androidScreenShareBtn { 
+            background: #9c27b0; 
+            display: none;
+            flex: 2;
+            min-width: 120px;
+            max-width: 200px;
+        }
+        
         #shareBtn { background: #007fff; }
         #muteAllBtn { background: #ea4335; }
         #unmuteAllBtn { background: #2ea44f; }
-        #youtubeStreamBtn { background: #ff0000; color: white; }
+        #youtubeStreamBtn { background: #ff0000; }
         
-        .master-chat-btn { position: absolute; right: 20px; top: 22px; padding: 10px 15px; background: #ff9800; color: #000; border: none; font-weight: bold; border-radius: 6px; cursor: pointer; }
-
-        .meeting-container { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; position: relative; }
+        .master-chat-btn { 
+            background: #ff9800; 
+            color: #000; 
+            border: none; 
+            font-weight: bold; 
+            border-radius: 8px; 
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+        
+        .meeting-container { 
+            display: flex; 
+            flex: 1; 
+            height: calc(100vh - 80px); 
+            overflow: hidden; 
+        }
+        
         .sidebar {
             display: flex;
             flex-direction: column;
-            height: 100vh;
             width: 15%; 
+            min-width: 80px;
             background: #1e1e1e;
+            overflow: hidden;
         }
-
-        .top-bar {
-            flex-shrink: 0;
-            padding: 10px;
-            border-bottom: 1px solid #444;
-        }
-
-        /* Active Participants Header style placement counter layout */
+        
         .counter-header {
-            padding: 10px;
+            padding: 8px;
             background: #2a2d32;
             text-align: center;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
             color: #2ea44f;
             border-bottom: 1px solid #3e424b;
+            flex-shrink: 0;
         }
-
+        
         .studentgrid {
             flex: 1;
             overflow-y: auto;
-            padding: 10px;
+            padding: 5px;
         }
-
-        .studentgrid::-webkit-scrollbar { width: 8px; }
-        .studentgrid::-webkit-scrollbar-thumb { background: #666; border-radius: 10px; }
-        .studentgrid::-webkit-scrollbar-track { background: #222; }
-
-        .student-card { position: relative; width: 100%; background: #222; border-radius: 8px; border: 2px solid #3e424b; overflow: hidden; margin-bottom: 10px; }
-        .student-card video { width: 100%; object-fit: cover; aspect-ratio: 4/3; }
-        .student-label { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); padding: 2px 6px; font-size: 11px; border-radius: 4px; }
         
-        .mic-control-btn { position: absolute; top: 5px; right: 5px; border: none; padding: 6px 12px; font-size: 12px; font-weight: bold; border-radius: 4px; cursor: pointer; color: white; transition: 0.2s; z-index: 20; }
+        .studentgrid::-webkit-scrollbar { width: 4px; }
+        .studentgrid::-webkit-scrollbar-thumb { background: #666; border-radius: 4px; }
+        
+        .student-card { 
+            position: relative; 
+            width: 100%; 
+            background: #222; 
+            border-radius: 8px; 
+            border: 2px solid #3e424b; 
+            overflow: hidden; 
+            margin-bottom: 8px;
+        }
+        
+        .student-card video { 
+            width: 100%; 
+            object-fit: cover; 
+            aspect-ratio: 4/3; 
+        }
+        
+        .student-label { 
+            position: absolute; 
+            bottom: 5px; 
+            left: 5px; 
+            background: rgba(0,0,0,0.6); 
+            padding: 2px 6px; 
+            font-size: 10px; 
+            border-radius: 4px; 
+        }
+        
+        .mic-control-btn { 
+            position: absolute; 
+            top: 5px; 
+            right: 5px; 
+            border: none; 
+            padding: 6px 10px; 
+            font-size: 11px; 
+            font-weight: bold; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            color: white; 
+            transition: 0.2s; 
+            z-index: 20;
+            min-height: 32px;
+        }
+        
         .mic-off { background: #ea4335; } 
         .mic-on { background: #2ea44f; }  
         .hand-raised { background: #ff9800; color: #000; animation: blink 1s infinite; box-shadow: 0 0 10px #ff9800; }
-
+        
         @keyframes blink { 50% { opacity: 0.4; } }
-
-        .main-display { flex: 1; display: flex; justify-content: center; align-items: center; background: #0e0f11; padding: 2px; position: relative; }
-        .main-display video { width: 100%; height: 100%; object-fit: cover; background: #222; border-radius: 12px; }
+        
+        .main-display { 
+            flex: 1; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background: #0e0f11; 
+            padding: 5px; 
+            position: relative; 
+        }
+        
+        .main-display video { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: cover; 
+            background: #222; 
+            border-radius: 12px; 
+        }
+        
         .mirror { transform: scaleX(-1); }
-        .role-label { position: absolute; top: 35px; left: 45px; background: #2ea44f; padding: 5px 12px; font-weight: bold; border-radius: 6px; z-index: 10; }
-
-        .chat-panel { width: 0; min-width: 0; max-width: 28%; background: #161719; border-left: 0 solid #2a2d32; display: flex; flex-direction: column; transition: 0.3s; overflow: hidden; }
-        .chat-panel.open { width: 28%; min-width: 280px; border-left: 1px solid #2a2d32; }
-        .chat-header { padding: 15px; background: #1a1c20; font-weight: bold; text-align: center; border-bottom: 1px solid #2a2d32; color: #ff9800; }
-        .chat-messages { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
-        .msg-block { padding: 8px 12px; border-radius: 6px; max-width: 85%; font-size: 13px; line-height: 1.4; word-break: break-all; }
+        
+        .role-label { 
+            position: absolute; 
+            top: 10px; 
+            left: 10px; 
+            background: #2ea44f; 
+            padding: 4px 10px; 
+            font-weight: bold; 
+            border-radius: 6px; 
+            z-index: 10; 
+            font-size: 12px;
+        }
+        
+        .chat-panel { 
+            width: 0; 
+            min-width: 0; 
+            max-width: 28%; 
+            background: #161719; 
+            border-left: 0 solid #2a2d32; 
+            display: flex; 
+            flex-direction: column; 
+            transition: 0.3s; 
+            overflow: hidden; 
+        }
+        
+        .chat-panel.open { 
+            width: 28%; 
+            min-width: 250px; 
+            border-left: 1px solid #2a2d32; 
+        }
+        
+        .chat-header { 
+            padding: 12px; 
+            background: #1a1c20; 
+            font-weight: bold; 
+            text-align: center; 
+            border-bottom: 1px solid #2a2d32; 
+            color: #ff9800; 
+            font-size: 14px;
+        }
+        
+        .chat-messages { 
+            flex: 1; 
+            padding: 10px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+        }
+        
+        .msg-block { 
+            padding: 6px 10px; 
+            border-radius: 6px; 
+            max-width: 85%; 
+            font-size: 12px; 
+            line-height: 1.4; 
+            word-break: break-all; 
+        }
+        
         .msg-me { background: #007fff; color: #fff; align-self: flex-end; }
         .msg-other { background: #2a2d32; color: #fff; align-self: flex-start; }
-        .chat-input-area { padding: 10px; background: #1a1c20; border-top: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 8px; }
+        
+        .chat-input-area { 
+            padding: 8px; 
+            background: #1a1c20; 
+            border-top: 1px solid #2a2d32; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 5px; 
+        }
+        
         .chat-row { display: flex; gap: 5px; }
-        .chat-input-area input[type="text"] { flex: 1; padding: 8px; background: #222; border: 1px solid #3a3f47; border-radius: 4px; color: #fff; outline: none; }
-        .chat-input-area button { padding: 8px 15px; background: #2ea44f; border: none; color: #fff; font-weight: bold; border-radius: 4px; cursor: pointer; }
-        .file-label { display: inline-block; background: #444; text-align: center; padding: 5px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .chat-input-area input[type="text"] { 
+            flex: 1; 
+            padding: 8px; 
+            background: #222; 
+            border: 1px solid #3a3f47; 
+            border-radius: 4px; 
+            color: #fff; 
+            outline: none; 
+            font-size: 14px;
+            min-height: 40px;
+        }
+        
+        .chat-input-area button { 
+            padding: 8px 12px; 
+            background: #2ea44f; 
+            border: none; 
+            color: #fff; 
+            font-weight: bold; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            min-height: 40px;
+        }
+        
+        .file-label { 
+            display: inline-block; 
+            background: #444; 
+            text-align: center; 
+            padding: 6px; 
+            font-size: 12px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold;
+        }
+        
         .file-link { color: #ff9800; text-decoration: underline; display: block; font-weight: bold; margin-top: 4px; }
+        
+        /* Android Screen Share Status */
+        .screen-share-status {
+            position: absolute;
+            top: 50px;
+            right: 10px;
+            background: rgba(156, 39, 176, 0.9);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            display: none;
+            z-index: 20;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar { width: 0; min-width: 0; overflow: hidden; }
+            .chat-panel.open { width: 100%; min-width: 100%; }
+            .controls button { 
+                font-size: 11px; 
+                padding: 8px 10px; 
+                min-height: 36px;
+                min-width: 60px;
+                flex: 1;
+            }
+            #androidScreenShareBtn {
+                font-size: 11px;
+                padding: 8px 10px;
+                min-height: 36px;
+            }
+        }
     </style>
 </head>
 <body>
+    <div class="top-bar">
+        <div class="controls">
+            <button id="createBtn">📚 Start Class</button>
+            <button id="shareBtn" style="display: none;">🖥️ Share Screen</button>
+            <button id="androidScreenShareBtn" style="display: none;">📱 Screen Share</button>
+            <button id="youtubeStreamBtn" style="display: none;">🎥 Stream</button>
+            <button id="muteAllBtn" style="display: none;">🔇 All</button>
+            <button id="unmuteAllBtn" style="display: none;">🎙️ All</button>
+            <button id="masterChatBtn" style="display: none;" class="master-chat-btn">💬 Chat</button>
+        </div>
+        <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px; font-size: 14px;"></h4>
+    </div>
 
     <div class="meeting-container">
         <div class="sidebar">
-            <div class="top-bar">
-                <div class="controls" style="margin-top: 10px;">
-                    <button id="createBtn">Start & Create Classroom</button>
-                    <button id="shareBtn" style="display: none;">Share Screen 🖥️</button>
-                    <button id="youtubeStreamBtn" style="display: none;">Stream to YouTube 🎥</button>
-                    <button id="muteAllBtn" style="display: none;">Mute All Students 🎙️❌</button>
-                    <button id="unmuteAllBtn" style="display: none;">Unmute All Students 🎙️✅</button>
-                    <button id="masterChatBtn" style="display: none;">Open Chat Board 💬</button>
-                </div>
-                <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px;"></h4>
-            </div>
-
             <div id="participantCounter" class="counter-header" style="display: none;">
-                Total Class Attendees: 1
+                👥 Attendees: 1
             </div>
-
             <div class="studentgrid" id="studentGrid"></div>
         </div>
         
         <div class="main-display" id="mainArea">
             <video id="localVideo" class="mirror" autoplay playsinline muted></video>
+            <div class="role-label">👨‍🏫 Teacher</div>
+            <div class="screen-share-status" id="screenShareStatus">📱 Screen Sharing</div>
         </div>
 
         <div class="chat-panel" id="chatPanel">
-            <div class="chat-header">Classroom Sync Chat (Live)</div>
+            <div class="chat-header">💬 Class Chat</div>
             <div class="chat-messages" id="chatWindow"></div>
             <div class="chat-input-area">
                 <div class="chat-row">
-                    <input type="text" id="msgInput" placeholder="Type a message...">
+                    <input type="text" id="msgInput" placeholder="Type message...">
                     <button id="sendMsgBtn">Send</button>
                 </div>
                 <label class="file-label">
-                    📁 Share File / Notes (PDF, Image)
+                    📁 Share File
                     <input type="file" id="fileInput" style="display: none;">
                 </label>
             </div>
@@ -131,64 +370,327 @@
         const socket = io();
         let localStream;
         let screenStream;
-        let mediaRecorder; 
+        let mediaRecorder;
         let isScreenSharing = false;
         let isLiveStreaming = false;
         let isChatPanelOpen = false;
+        let isAndroid = false;
+        let screenShareInterval = null;
         const peerConnections = {};
-        const studentMicStatus = {}; 
-        const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19020' }] };
+        const studentMicStatus = {};
+        const servers = { 
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                {
+                    urls: 'turn:openrelay.metered.ca:80',
+                    username: 'openrelayproject',
+                    credential: 'openrelayproject'
+                }
+            ] 
+        };
 
         const chatPanel = document.getElementById('chatPanel');
         const masterChatBtn = document.getElementById('masterChatBtn');
         const participantCounter = document.getElementById('participantCounter');
+        const screenShareStatus = document.getElementById('screenShareStatus');
 
-        // Function to dynamically update live attendee counter text markup
+        // Detect Android device
+        socket.on('device-detected', (data) => {
+            if (data.isAndroid) {
+                isAndroid = true;
+                console.log('Android device detected - screen sharing enabled');
+                document.getElementById('androidScreenShareBtn').style.display = 'block';
+                // Hide regular share button on Android
+                document.getElementById('shareBtn').style.display = 'none';
+            }
+        });
+
+        // Screen share status events
+        socket.on('screen-share-started', () => {
+            screenShareStatus.style.display = 'block';
+        });
+
+        socket.on('screen-share-stopped', () => {
+            screenShareStatus.style.display = 'none';
+        });
+
+        // Update count
         function updateCountUI(count) {
             if(count !== undefined) {
-                participantCounter.innerText = `Total Class Attendees: ${count}`;
+                participantCounter.innerText = `👥 Attendees: ${count}`;
             }
         }
 
+        // Chat toggle
         masterChatBtn.onclick = () => {
             if (!isChatPanelOpen) {
                 chatPanel.classList.add('open');
-                masterChatBtn.innerText = "Close Chat Board ✖";
+                masterChatBtn.innerText = "✖ Close";
                 masterChatBtn.style.background = "#ea4335";
                 isChatPanelOpen = true;
-                socket.emit('toggle-room-chat', { open: true }); 
+                socket.emit('toggle-room-chat', { open: true });
             } else {
                 chatPanel.classList.remove('open');
-                masterChatBtn.innerText = "Open Chat Board 💬";
+                masterChatBtn.innerText = "💬 Chat";
                 masterChatBtn.style.background = "#ff9800";
                 isChatPanelOpen = false;
-                socket.emit('toggle-room-chat', { open: false }); 
+                socket.emit('toggle-room-chat', { open: false });
             }
         };
 
+        // Create classroom
         document.getElementById('createBtn').onclick = async function() {
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            document.getElementById('localVideo').srcObject = localStream;
-            
-            const roomId = Math.random().toString(36).substring(2, 9);
-            document.getElementById('roomDisplay').innerText = `Class Room ID: ${roomId}`;
-            
-            socket.emit('join-room', { roomId, role: 'teacher' });
-            this.style.display = 'none';
-            document.getElementById('shareBtn').style.display = 'inline-block';
-            document.getElementById('youtubeStreamBtn').style.display = 'inline-block';
-            document.getElementById('muteAllBtn').style.display = 'inline-block';
-            document.getElementById('unmuteAllBtn').style.display = 'inline-block';
-            masterChatBtn.style.display = 'inline-block';
-            participantCounter.style.display = 'block';
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, 
+                    audio: true 
+                });
+                document.getElementById('localVideo').srcObject = localStream;
+                
+                const roomId = Math.random().toString(36).substring(2, 9);
+                document.getElementById('roomDisplay').innerText = `📌 Room ID: ${roomId}`;
+                
+                socket.emit('join-room', { roomId, role: 'teacher' });
+                this.style.display = 'none';
+                
+                // Show appropriate share buttons
+                if (isAndroid) {
+                    document.getElementById('androidScreenShareBtn').style.display = 'block';
+                } else {
+                    document.getElementById('shareBtn').style.display = 'inline-block';
+                }
+                
+                document.getElementById('youtubeStreamBtn').style.display = 'inline-block';
+                document.getElementById('muteAllBtn').style.display = 'inline-block';
+                document.getElementById('unmuteAllBtn').style.display = 'inline-block';
+                masterChatBtn.style.display = 'inline-block';
+                participantCounter.style.display = 'block';
+            } catch (error) {
+                console.error('Camera error:', error);
+                alert('Please grant camera permission to continue');
+            }
         };
 
-        // --- YouTube MediaRecorder Implementation Pipeline ---
+        // ==========================================
+        // ANDROID SCREEN SHARING (Works on Chrome)
+        // ==========================================
+        
+        document.getElementById('androidScreenShareBtn').onclick = async function() {
+            if (!isScreenSharing) {
+                try {
+                    // Request screen capture
+                    const screenStream = await navigator.mediaDevices.getDisplayMedia({
+                        video: {
+                            width: { ideal: 640 },
+                            height: { ideal: 480 },
+                            frameRate: { ideal: 30 }
+                        },
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true
+                        }
+                    });
+
+                    // Store the stream
+                    window.androidScreenStream = screenStream;
+                    
+                    // Update UI
+                    this.innerText = "📱 Stop Sharing";
+                    this.style.background = "#f44336";
+                    isScreenSharing = true;
+                    screenShareStatus.style.display = 'block';
+
+                    // Notify server
+                    socket.emit('start-screen-share');
+
+                    // Start capturing frames
+                    captureScreenFrames(screenStream);
+
+                    // Handle stop from Android
+                    screenStream.getVideoTracks()[0].onended = () => {
+                        stopAndroidScreenShare();
+                    };
+
+                } catch (error) {
+                    console.error('Android screen share error:', error);
+                    alert('Screen sharing failed. Make sure to grant permission when prompted.');
+                }
+            } else {
+                stopAndroidScreenShare();
+            }
+        };
+
+        // Capture screen frames and send via Socket.IO
+        function captureScreenFrames(stream) {
+            const video = document.createElement('video');
+            video.srcObject = stream;
+            video.play();
+            
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Set canvas size
+            canvas.width = 640;
+            canvas.height = 480;
+            
+            let frameCount = 0;
+            
+            // Clear any existing interval
+            if (screenShareInterval) {
+                clearInterval(screenShareInterval);
+            }
+            
+            // Send frames at 15fps
+            screenShareInterval = setInterval(() => {
+                if (!isScreenSharing || video.paused || video.ended) {
+                    return;
+                }
+                
+                try {
+                    // Draw video frame to canvas
+                    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // Get frame as JPEG (smaller than PNG)
+                    const frameData = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    // Send frame to server (broadcast to students)
+                    socket.emit('screen-share-chunk', {
+                        chunk: frameData,
+                        lastChunk: false,
+                        frame: frameCount++
+                    });
+                } catch (error) {
+                    console.error('Frame capture error:', error);
+                }
+            }, 66); // ~15fps
+        }
+
+        function stopAndroidScreenShare() {
+            if (!isScreenSharing) return;
+            
+            // Clear interval
+            if (screenShareInterval) {
+                clearInterval(screenShareInterval);
+                screenShareInterval = null;
+            }
+            
+            // Stop screen stream
+            if (window.androidScreenStream) {
+                window.androidScreenStream.getTracks().forEach(track => track.stop());
+                window.androidScreenStream = null;
+            }
+            
+            // Update UI
+            const btn = document.getElementById('androidScreenShareBtn');
+            btn.innerText = "📱 Screen Share";
+            btn.style.background = "#9c27b0";
+            isScreenSharing = false;
+            screenShareStatus.style.display = 'none';
+            
+            // Notify server
+            socket.emit('stop-screen-share');
+        }
+
+        // ==========================================
+        // REGULAR SCREEN SHARING (Desktop)
+        // ==========================================
+        
+        document.getElementById('shareBtn').onclick = async function() {
+            if (!isScreenSharing) {
+                try {
+                    screenStream = await navigator.mediaDevices.getDisplayMedia({ 
+                        video: true,
+                        audio: true 
+                    });
+                    
+                    const videoTrack = screenStream.getVideoTracks()[0];
+                    
+                    for (let userId in peerConnections) {
+                        const sender = peerConnections[userId].getSenders()
+                            .find(s => s.track && s.track.kind === 'video');
+                        if (sender) sender.replaceTrack(videoTrack);
+                    }
+                    
+                    const localVideo = document.getElementById('localVideo');
+                    localVideo.srcObject = screenStream;
+                    localVideo.classList.remove('mirror');
+                    
+                    this.innerText = "❌ Stop";
+                    this.style.background = "#ea4335";
+                    isScreenSharing = true;
+
+                    if (isLiveStreaming && mediaRecorder) {
+                        mediaRecorder.stop();
+                        mediaRecorder = new MediaRecorder(screenStream, {
+                            mimeType: 'video/webm;codecs=vp8,opus',
+                            videoBitsPerSecond: 2500000
+                        });
+                        mediaRecorder.ondataavailable = (e) => {
+                            if (e.data && e.data.size > 0) {
+                                socket.emit('stream-chunk', e.data);
+                            }
+                        };
+                        mediaRecorder.start(1000);
+                    }
+                    
+                    videoTrack.onended = () => { stopScreenShare(); };
+                } catch (error) {
+                    console.error("Screen share error:", error);
+                }
+            } else {
+                stopScreenShare();
+            }
+        };
+
+        function stopScreenShare() {
+            if (!isScreenSharing) return;
+            
+            const videoTrack = localStream.getVideoTracks()[0];
+            
+            for (let userId in peerConnections) {
+                const sender = peerConnections[userId].getSenders()
+                    .find(s => s.track && s.track.kind === 'video');
+                if (sender) sender.replaceTrack(videoTrack);
+            }
+            
+            const localVideo = document.getElementById('localVideo');
+            localVideo.srcObject = localStream;
+            localVideo.classList.add('mirror');
+            
+            const shareBtn = document.getElementById('shareBtn');
+            shareBtn.innerText = "🖥️ Share Screen";
+            shareBtn.style.background = "#007fff";
+            
+            if (screenStream) {
+                screenStream.getTracks().forEach(track => track.stop());
+            }
+            
+            isScreenSharing = false;
+
+            if (isLiveStreaming && mediaRecorder) {
+                mediaRecorder.stop();
+                mediaRecorder = new MediaRecorder(localStream, {
+                    mimeType: 'video/webm;codecs=vp8,opus',
+                    videoBitsPerSecond: 2500000
+                });
+                mediaRecorder.ondataavailable = (e) => {
+                    if (e.data && e.data.size > 0) {
+                        socket.emit('stream-chunk', e.data);
+                    }
+                };
+                mediaRecorder.start(1000);
+            }
+        }
+
+        // ==========================================
+        // YOUTUBE STREAMING
+        // ==========================================
+        
         document.getElementById('youtubeStreamBtn').onclick = function() {
             if (!isLiveStreaming) {
-                const streamKey = prompt("Please enter your YouTube Stream Key:");
-                if (!streamKey) return alert("Stream Key is required to push media live!");
-
+                const streamKey = prompt("Enter YouTube Stream Key:");
+                if (!streamKey) return alert("Stream Key required!");
                 socket.emit('start-youtube-stream', { streamKey });
             } else {
                 socket.emit('stop-youtube-stream');
@@ -198,48 +700,43 @@
         socket.on('stream-started', () => {
             isLiveStreaming = true;
             const btn = document.getElementById('youtubeStreamBtn');
-            btn.innerText = "Stop YouTube Stream 🛑";
+            btn.innerText = "⏹️ Stop Stream";
             btn.style.background = "#333";
 
-            // Record either screen share stream or standard local camera output
             const trackingStream = isScreenSharing ? screenStream : localStream;
             
-            // Collect chunks into low-latency clusters every 1 second (1000ms timeslices)
             mediaRecorder = new MediaRecorder(trackingStream, {
                 mimeType: 'video/webm;codecs=vp8,opus',
                 videoBitsPerSecond: 2500000
             });
 
-            mediaRecorder.ondataavailable = async (e) => {
+            mediaRecorder.ondataavailable = (e) => {
                 if (e.data && e.data.size > 0) {
                     socket.emit('stream-chunk', e.data);
                 }
             };
 
-            mediaRecorder.start(1000); 
+            mediaRecorder.start(1000);
         });
 
         socket.on('stream-stopped', () => {
-            cleanupStreaming();
-        });
-
-        socket.on('stream-error', (err) => {
-            alert(err);
-            cleanupStreaming();
-        });
-
-        function cleanupStreaming() {
             isLiveStreaming = false;
             const btn = document.getElementById('youtubeStreamBtn');
-            btn.innerText = "Stream to YouTube 🎥";
+            btn.innerText = "🎥 Stream";
             btn.style.background = "#ff0000";
             if (mediaRecorder && mediaRecorder.state !== 'inactive') {
                 mediaRecorder.stop();
             }
-        }
+        });
 
+        // ==========================================
+        // CHAT SYSTEM
+        // ==========================================
+        
         document.getElementById('sendMsgBtn').onclick = sendTextMessage;
-        document.getElementById('msgInput').onkeypress = (e) => { if (e.key === 'Enter') sendTextMessage(); };
+        document.getElementById('msgInput').onkeypress = (e) => {
+            if (e.key === 'Enter') sendTextMessage();
+        };
 
         function sendTextMessage() {
             const input = document.getElementById('msgInput');
@@ -255,7 +752,10 @@
         document.getElementById('fileInput').onchange = function(e) {
             const file = e.target.files[0];
             if (!file) return;
-            if (file.size > 10 * 1024 * 1024) return alert("File size must be under 10MB");
+            if (file.size > 10 * 1024 * 1024) {
+                alert("File size must be under 10MB");
+                return;
+            }
 
             const reader = new FileReader();
             reader.onload = function(evt) {
@@ -291,82 +791,27 @@
             win.scrollTop = win.scrollHeight;
         }
 
-        document.getElementById('muteAllBtn').onclick = function() { socket.emit('mute-all-students'); };
-        document.getElementById('unmuteAllBtn').onclick = function() { socket.emit('unmute-all-students'); };
-
-        document.getElementById('shareBtn').onclick = async function() {
-            if (!isScreenSharing) {
-                try {
-                    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                    const videoTrack = screenStream.getVideoTracks()[0];
-                    
-                    for (let userId in peerConnections) {
-                        const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
-                        if (sender) sender.replaceTrack(videoTrack);
-                    }
-                    
-                    const localVideo = document.getElementById('localVideo');
-                    localVideo.srcObject = screenStream;
-                    localVideo.classList.remove('mirror');
-                    
-                    this.innerText = "Stop Sharing ❌";
-                    this.style.background = "#ea4335";
-                    isScreenSharing = true;
-
-                    // If YouTube stream is active, dynamically restart MediaRecorder to grab the new screen layout track elements
-                    if (isLiveStreaming && mediaRecorder && mediaRecorder.state !== 'inactive') {
-                        mediaRecorder.stop();
-                        mediaRecorder = new MediaRecorder(screenStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
-                        mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) socket.emit('stream-chunk', e.data); };
-                        mediaRecorder.start(1000);
-                    }
-                    
-                    videoTrack.onended = () => { stopScreenShare(); };
-                } catch (error) {
-                    console.error("Error starting screen share:", error);
-                }
-            } else {
-                stopScreenShare();
-            }
+        // ==========================================
+        // STUDENT MANAGEMENT
+        // ==========================================
+        
+        document.getElementById('muteAllBtn').onclick = function() { 
+            socket.emit('mute-all-students'); 
+        };
+        
+        document.getElementById('unmuteAllBtn').onclick = function() { 
+            socket.emit('unmute-all-students'); 
         };
 
-        function stopScreenShare() {
-            if (!isScreenSharing) return;
-            
-            const videoTrack = localStream.getVideoTracks()[0];
-            
-            for (let userId in peerConnections) {
-                const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
-                if (sender) sender.replaceTrack(videoTrack);
-            }
-            
-            const localVideo = document.getElementById('localVideo');
-            localVideo.srcObject = localStream;
-            localVideo.classList.add('mirror');
-            
-            const shareBtn = document.getElementById('shareBtn');
-            shareBtn.innerText = "Share Screen 🖥️";
-            shareBtn.style.background = "#007fff";
-            
-            if (screenStream) {
-                screenStream.getTracks().forEach(track => track.stop());
-            }
-            
-            isScreenSharing = false;
-
-            // Revert YouTube stream pipeline recorder framework back to target original local webcam capture configurations
-            if (isLiveStreaming && mediaRecorder) {
-                mediaRecorder.stop();
-                mediaRecorder = new MediaRecorder(localStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
-                mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) socket.emit('stream-chunk', e.data); };
-                mediaRecorder.start(1000);
-            }
-        }
-
-        // Handle Active Room Counter sync packets
+        // ==========================================
+        // WEBRTC CONNECTIONS
+        // ==========================================
+        
         socket.on('all-users', ({ users, count }) => {
             updateCountUI(count);
-            users.forEach(user => { if (user.role === 'student') createPeerConnection(user.id); });
+            users.forEach(user => {
+                if (user.role === 'student') createPeerConnection(user.id);
+            });
         });
 
         socket.on('user-joined', ({ userId, role, count }) => {
@@ -382,16 +827,27 @@
         });
 
         async function initiateCall(pc, userId) {
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            socket.emit('signal', { target: userId, signal: { offer } });
+            try {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                socket.emit('signal', { target: userId, signal: { offer } });
+            } catch (error) {
+                console.error('Initiate call error:', error);
+            }
         }
 
         socket.on('signal', async (data) => {
             let pc = peerConnections[data.sender];
             if (!pc) return;
-            if (data.signal.answer) await pc.setRemoteDescription(new RTCSessionDescription(data.signal.answer));
-            else if (data.signal.candidate) { try { await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){} }
+            try {
+                if (data.signal.answer) {
+                    await pc.setRemoteDescription(new RTCSessionDescription(data.signal.answer));
+                } else if (data.signal.candidate) {
+                    await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
+                }
+            } catch (error) {
+                console.error('Signal error:', error);
+            }
         });
 
         socket.on('student-raised-hand', (studentId) => {
@@ -399,9 +855,9 @@
             const card = document.getElementById(`card-${studentId}`);
             const grid = document.getElementById('studentGrid');
             
-            if (btn && studentMicStatus[studentId] !== 'unmuted') { 
-                btn.innerText = "✋ Hand Raised"; 
-                btn.className = "mic-control-btn hand-raised"; 
+            if (btn && studentMicStatus[studentId] !== 'unmuted') {
+                btn.innerText = "✋ Hand Raised";
+                btn.className = "mic-control-btn hand-raised";
                 if (card && grid) {
                     grid.prepend(card);
                 }
@@ -411,20 +867,29 @@
         socket.on('single-student-unmuted-ui', (studentId) => {
             studentMicStatus[studentId] = 'unmuted';
             const btn = document.getElementById(`mic-${studentId}`);
-            if (btn) { btn.innerText = "Live 🎙️"; btn.className = "mic-control-btn mic-on"; }
+            if (btn) {
+                btn.innerText = "🎙️ Live";
+                btn.className = "mic-control-btn mic-on";
+            }
         });
 
         socket.on('single-student-muted-ui', (studentId) => {
             studentMicStatus[studentId] = 'muted';
             const btn = document.getElementById(`mic-${studentId}`);
-            if (btn) { btn.innerText = "Muted 🔇"; btn.className = "mic-control-btn mic-off"; }
+            if (btn) {
+                btn.innerText = "🔇 Muted";
+                btn.className = "mic-control-btn mic-off";
+            }
         });
 
         socket.on('all-students-muted-ui', () => {
             for (let userId in studentMicStatus) {
                 studentMicStatus[userId] = 'muted';
                 const btn = document.getElementById(`mic-${userId}`);
-                if (btn) { btn.innerText = "Muted 🔇"; btn.className = "mic-control-btn mic-off"; }
+                if (btn) {
+                    btn.innerText = "🔇 Muted";
+                    btn.className = "mic-control-btn mic-off";
+                }
             }
         });
 
@@ -432,7 +897,10 @@
             for (let userId in studentMicStatus) {
                 studentMicStatus[userId] = 'unmuted';
                 const btn = document.getElementById(`mic-${userId}`);
-                if (btn) { btn.innerText = "Live 🎙️"; btn.className = "mic-control-btn mic-on"; }
+                if (btn) {
+                    btn.innerText = "🎙️ Live";
+                    btn.className = "mic-control-btn mic-on";
+                }
             }
         });
 
@@ -447,11 +915,17 @@
         function createPeerConnection(userId) {
             const pc = new RTCPeerConnection(servers);
             peerConnections[userId] = pc;
-            studentMicStatus[userId] = 'muted'; 
+            studentMicStatus[userId] = 'muted';
             
-            const currentStream = isScreenSharing ? screenStream : localStream;
-            currentStream.getVideoTracks().forEach(track => pc.addTrack(track, currentStream));
-            localStream.getAudioTracks().forEach(track => pc.addTrack(track, localStream));
+            const currentStream = isScreenSharing && screenStream ? screenStream : localStream;
+            if (currentStream) {
+                currentStream.getVideoTracks().forEach(track => {
+                    pc.addTrack(track, currentStream);
+                });
+                localStream.getAudioTracks().forEach(track => {
+                    pc.addTrack(track, localStream);
+                });
+            }
 
             pc.ontrack = (event) => {
                 if (document.getElementById(`card-${userId}`)) return;
@@ -462,7 +936,8 @@
                 card.id = `card-${userId}`;
 
                 const video = document.createElement('video');
-                video.autoplay = true; video.playsInline = true;
+                video.autoplay = true;
+                video.playsInline = true;
                 video.srcObject = event.streams[0];
 
                 const label = document.createElement('div');
@@ -472,7 +947,7 @@
                 const micBtn = document.createElement('button');
                 micBtn.className = 'mic-control-btn mic-off';
                 micBtn.id = `mic-${userId}`;
-                micBtn.innerText = "Muted 🔇";
+                micBtn.innerText = "🔇 Muted";
                 
                 micBtn.onclick = () => {
                     if (studentMicStatus[userId] === 'muted') {
@@ -489,8 +964,14 @@
             };
 
             pc.onicecandidate = (event) => {
-                if (event.candidate) socket.emit('signal', { target: userId, signal: { candidate: event.candidate } });
+                if (event.candidate) {
+                    socket.emit('signal', { 
+                        target: userId, 
+                        signal: { candidate: event.candidate } 
+                    });
+                }
             };
+            
             return pc;
         }
     </script>
