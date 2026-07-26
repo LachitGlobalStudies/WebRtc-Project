@@ -103,6 +103,11 @@ io.on('connection', (socket) => {
                 activeStreams[currentRoom].stdin.write(chunk);
             }
         });
+        socket.on('teacher-screen-chunk', (chunk) => {
+            const currentRoom = socket.roomId;
+            // রুমে থাকা সব স্টুডেন্টদের কাছে স্ক্রিনের ভিডিও চাঙ্ক পাঠিয়ে দিন
+            socket.to(currentRoom).emit('incoming-teacher-screen', chunk);
+        });
 
         socket.on('stop-youtube-stream', () => {
             const currentRoom = socket.roomId;
