@@ -109,6 +109,55 @@
         .chat-input-area button { padding: 8px 15px; background: #2ea44f; border: none; color: #fff; font-weight: bold; border-radius: 4px; cursor: pointer; }
         .file-label { display: inline-block; background: #444; text-align: center; padding: 5px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .file-link { color: #ff9800; text-decoration: underline; display: block; font-weight: bold; margin-top: 4px; }
+        /* Mobile Responsive Styles */
+        @media screen and (max-width: 768px) {
+            body {
+                height: 100vh;
+                overflow: auto;
+            }
+            
+            .meeting-container {
+                flex-direction: column;
+                height: auto;
+            }
+
+            /* সাইডবার বা স্টুডেন্ট লিস্ট মোবাইলে উপরে চলে যাবে এবং স্ক্রিন অনুযায়ী জায়গা নেবে */
+            .sidebar {
+                width: 100% !important;
+                height: 200px;
+                flex-direction: row;
+                overflow-x: auto;
+                overflow-y: hidden;
+            }
+
+            .studentgrid {
+                display: flex;
+                flex-direction: row;
+                gap: 10px;
+            }
+
+            .student-card, .my-video-card {
+                min-width: 120px;
+                width: 120px;
+                margin-bottom: 0;
+            }
+
+            /* মেইন ডিসপ্লে বা ভিডিওর সাইজ মোবাইলের জন্য ফিক্স করা */
+            .main-display {
+                width: 100%;
+                height: calc(100vh - 300px);
+                min-height: 250px;
+            }
+
+            /* মোবাইল স্ক্রিনে চ্যাট প্যানেল ফুল স্ক্রিন বা মানানসই উইডথ পাবে */
+            .chat-panel.open {
+                width: 90% !important;
+                max-width: 90% !important;
+                height: 350px !important;
+                right: 5% !important;
+                bottom: 20px !important;
+            }
+        }
     </style>
 </head>
 <body>
