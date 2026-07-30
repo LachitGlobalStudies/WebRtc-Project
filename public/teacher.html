@@ -17,97 +17,90 @@
         overflow: hidden; 
     }
 
-    /* Top Bar & Controls */
-    .top-bar { 
-        padding: 2px; 
-        height: 30%;
-        text-align: center; 
-        background: #2a2d32;  
-        border-bottom: 1px solid #2a2d32; 
+    /* Meeting Layout & Sidebar */
+    .meeting-container { 
+        display: flex; 
+        flex: 1; 
+        height: 100vh; 
+        overflow: hidden; 
         position: relative; 
-        flex-shrink: 0;
     }
     
+    .sidebar { 
+        width: 260px; 
+        background: #161719; 
+        border-right: 1px solid #2a2d32; 
+        display: flex; 
+        flex-direction: column; 
+        height: 100%; 
+        flex-shrink: 0;
+        overflow: hidden; /* Prevent sidebar from scrolling as a whole */
+    }
+
+    /* Top Part: Tools (Scrollable Independently) */
+    .tools-top-part { 
+        padding: 10px; 
+        max-height: 45%; 
+        background: #2a2d32;  
+        border-bottom: 1px solid #3e424b; 
+        position: relative; 
+        flex-shrink: 0;
+        overflow-y: auto; 
+    }
+
+    .tools-top-part::-webkit-scrollbar { width: 5px; }
+    .tools-top-part::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+    .tools-top-part::-webkit-scrollbar-track { background: #222; }
+    
+    .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
     .controls button { 
-        padding: 5px 10px; 
-        font-size: 14px; 
+        width: 100%;
+        padding: 8px 10px; 
+        font-size: 13px; 
         border: none; 
         border-radius: 6px; 
         background: #2ea44f; 
         color: white; 
         cursor: pointer; 
         font-weight: bold; 
-        margin: 4px; 
     }
     
     #shareBtn { background: #007fff; }
     #muteAllBtn { background: #ea4335; }
     #unmuteAllBtn { background: #2ea44f; }
     #youtubeStreamBtn { background: #ff0000; color: white; }
-    
-    .master-chat-btn { 
-        position: absolute; 
-        right: 20px; 
-        top: 22px; 
-        padding: 10px 15px; 
-        background: #ff9800; 
-        color: #000; 
-        border: none; 
-        font-weight: bold; 
-        border-radius: 6px; 
-        cursor: pointer; 
-    }
+    #masterChatBtn { background: #ff9800; color: #000; }
 
-    /* Meeting Layout & Sidebar */
-    .meeting-container { 
-        display: flex; 
-        flex: 1; 
-        height: calc(100vh - 140px); 
-        overflow: hidden; 
-        position: relative; 
-    }
-    
-    .sidebar { 
-        width: 220px; 
-        background: #161719; 
-        border-right: 1px solid #2a2d32; 
-        display: flex; 
-        flex-direction: column; 
-        gap: 8px; 
-        padding: 10px; 
-        height: 100%; 
-        overflow-y: auto; 
-        flex-shrink: 0;
-    }
-    
-    .sidebar::-webkit-scrollbar { width: 6px; }
-    .sidebar::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-    .sidebar::-webkit-scrollbar-track { background: #222; }
-
-    /* Counter Header & Student Grid */
+    /* Counter Header & Student Grid (Scrollable Independently) */
     .counter-header { 
-        padding: 10px; 
-        background: #2a2d32; 
+        padding: 8px 10px; 
+        background: #1e2024; 
         text-align: center; 
-        font-size: 14px; 
+        font-size: 13px; 
         font-weight: bold; 
         color: #2ea44f; 
         border-bottom: 1px solid #3e424b; 
-        border-radius: 4px;
+        flex-shrink: 0;
     }
 
-    .studentgrid { 
+    .studentgrid-bottom-part { 
         flex: 1; 
         overflow-y: auto; 
-        padding: 5px; 
+        overflow-x: hidden;
+        padding: 8px; 
         display: flex;
         flex-direction: column;
         gap: 10px;
     }
 
-    .studentgrid::-webkit-scrollbar { width: 8px; }
-    .studentgrid::-webkit-scrollbar-thumb { background: #666; border-radius: 10px; }
-    .studentgrid::-webkit-scrollbar-track { background: #222; }
+    .studentgrid-bottom-part::-webkit-scrollbar { width: 6px; }
+    .studentgrid-bottom-part::-webkit-scrollbar-thumb { background: #666; border-radius: 10px; }
+    .studentgrid-bottom-part::-webkit-scrollbar-track { background: #222; }
 
     .student-card { 
         position: relative; 
@@ -116,6 +109,7 @@
         border-radius: 8px; 
         border: 2px solid #3e424b; 
         overflow: hidden; 
+        flex-shrink: 0;
     }
     
     .student-card video { 
@@ -163,7 +157,7 @@
         justify-content: center; 
         align-items: center; 
         background: #0e0f11; 
-        padding: 2px; 
+        padding: 4px; 
         position: relative; 
         overflow: hidden; 
     }
@@ -180,8 +174,8 @@
     
     .role-label { 
         position: absolute; 
-        top: 35px; 
-        left: 45px; 
+        top: 15px; 
+        left: 15px; 
         background: #2ea44f; 
         padding: 5px 12px; 
         font-weight: bold; 
@@ -230,69 +224,100 @@
     .file-label { display: inline-block; background: #444; text-align: center; padding: 5px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; }
     .file-link { color: #ff9800; text-decoration: underline; display: block; font-weight: bold; margin-top: 4px; }
 
-    /* Mobile & Landscape Responsive Styles */
+    /* ==========================================
+       MOBILE RESPONSIVE STYLES (Portrait & Landscape)
+       ========================================== */
     @media screen and (max-width: 768px) {
-        body { height: 100vh; overflow: auto; }
+        body { height: 100vh; overflow: hidden; }
         
-        .meeting-container { flex-direction: column; height: auto; }
-        .top-bar{
-            padding: 2px; 
-            height: 30%;
-            text-align: center; 
-            background: #2a2d32;  
-            border-bottom: 1px solid #2a2d32; 
-            position: relative; 
-            flex-shrink: 0;  
+        .meeting-container { 
+            flex-direction: column; 
+            height: 100vh; 
         }
+
+        /* Sidebar relocates to bottom/top, split into horizontal scrolling rows */
         .sidebar {
             width: 100% !important;
-            height: 200px;
-            flex-direction: row;
-            overflow-x: auto;
-            overflow-y: hidden;
+            height: 190px !important;
+            flex-direction: row !important;
+            border-right: none;
+            border-top: 1px solid #2a2d32;
+            order: 2; /* Place below main video */
         }
 
-        .studentgrid {
-            display: flex;
-            flex-direction: row;
-            gap: 10px;
+        /* Tools part becomes horizontally scrollable on mobile */
+        .tools-top-part {
+            width: 45% !important;
+            max-height: 100% !important;
+            height: 100% !important;
+            overflow-y: auto !important;
+            overflow-x: hidden;
+            border-bottom: none;
+            border-right: 1px solid #3e424b;
+            flex-shrink: 0;
         }
 
-        .student-card, .my-video-card {
-            min-width: 120px;
-            width: 120px;
-            margin-bottom: 0;
+        .controls {
+            flex-direction: column;
+        }
+
+        /* Student Grid container wrapper */
+        .sidebar > div:nth-child(2), 
+        .sidebar > #participantCounter {
+            display: none !important; /* Hide counter to save space on mobile, or integrate neatly */
+        }
+
+        /* Student Grid part becomes horizontally scrollable */
+        .studentgrid-bottom-part {
+            width: 55% !important;
+            height: 100% !important;
+            flex-direction: row !important;
+            overflow-x: auto !important;
+            overflow-y: hidden !important;
+            align-items: center;
+            padding: 5px;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        .student-card {
+            min-width: 110px !important;
+            width: 110px !important;
+            height: auto;
         }
 
         .main-display {
-            width: 100%;
-            height: calc(100vh - 300px);
-            min-height: 250px;
+            width: 100% !important;
+            height: calc(100vh - 190px) !important;
+            order: 1; /* Main video stays on top */
         }
 
         .chat-panel.open {
             width: 90% !important;
             max-width: 90% !important;
-            height: 350px !important;
+            height: 320px !important;
             right: 5% !important;
-            bottom: 20px !important;
+            bottom: 200px !important;
         }
     }
 
-    @media screen and (max-height: 600px) and (orientation: landscape) {
+    /* Mobile Landscape Specific Adjustments */
+    @media screen and (max-height: 550px) and (orientation: landscape) {
         .sidebar {
-            width: 250px;
-            height: 100vh;
-            overflow-y: auto !important;
+            height: 140px !important;
         }
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
+        .main-display {
+            height: calc(100vh - 140px) !important;
+        }
+        .tools-top-part {
+            width: 40% !important;
+        }
+        .studentgrid-bottom-part {
+            width: 60% !important;
         }
         .controls button {
-            width: 100%;
-            margin: 2px 0;
+            padding: 4px 8px;
+            font-size: 11px;
         }
     }
 </style>
@@ -301,8 +326,8 @@
 
     <div class="meeting-container">
         <div class="sidebar">
-            <div class="top-bar">
-                <div class="controls" style="margin-top: 10px;">
+            <div class="tools-top-part">
+                <div class="controls">
                     <button id="createBtn">Start & Create Classroom</button>
                     <button id="shareBtn" style="display: none;">Share Screen 🖥️</button>
                     <button id="youtubeStreamBtn" style="display: none;">Stream to YouTube 🎥</button>
@@ -310,14 +335,14 @@
                     <button id="unmuteAllBtn" style="display: none;">Unmute All Students 🎙️✅</button>
                     <button id="masterChatBtn" style="display: none;">Open Chat Board 💬</button>
                 </div>
-                <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px;"></h4>
+                <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px; font-size: 12px; text-align: center;"></h4>
             </div>
 
             <div id="participantCounter" class="counter-header" style="display: none;">
                 Total Class Attendees: 1
             </div>
 
-            <div class="studentgrid" id="studentGrid"></div>
+            <div class="studentgrid-bottom-part" id="studentGrid"></div>
         </div>
         
         <div class="main-display" id="mainArea">
