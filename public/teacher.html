@@ -235,39 +235,60 @@
         
         .meeting-container { flex-direction: column; height: auto; }
 
-        .sidebar {
-            width: 100% !important;
-            height: 200px;
-            flex-direction: row;
-            overflow-x: auto;
-            overflow-y: hidden;
-        }
+        /* Sidebar Layout Fix */
+    .sidebar { 
+        width: 240px; 
+        background: #161719; 
+        border-right: 1px solid #2a2d32; 
+        display: flex; 
+        flex-direction: column; 
+        height: 100%; 
+        overflow: hidden; /* সাইডবার পুরোটা আটকে থাকবে, ভেতরের সেকশন আলাদা স্ক্রোল হবে */
+        flex-shrink: 0;
+    }
 
-        .studentgrid {
-            display: flex;
-            flex-direction: row;
-            gap: 10px;
-        }
+    .sidebar .top-bar {
+        padding: 10px;
+        background: #1a1c20;
+        border-bottom: 1px solid #2a2d32;
+        flex-shrink: 0;
+        max-height: 45vh; /* টুলসগুলো বেশি বড় হলে যেন সাইডবারের অর্ধেকটার বেশি জায়গা না নেয় */
+        overflow-y: auto;  /* টুলস বা কন্ট্রোল বেশি হলে শুধু টুলস সেকশনটি স্ক্রোল হবে */
+    }
 
-        .student-card, .my-video-card {
-            min-width: 120px;
-            width: 120px;
-            margin-bottom: 0;
-        }
+    .sidebar .top-bar::-webkit-scrollbar {
+        width: 4px;
+    }
+    .sidebar .top-bar::-webkit-scrollbar-thumb {
+        background: #555;
+        border-radius: 4px;
+    }
 
-        .main-display {
-            width: 100%;
-            height: calc(100vh - 300px);
-            min-height: 250px;
-        }
+    /* Active Participants Header */
+    .counter-header { 
+        padding: 8px; 
+        background: #2a2d32; 
+        text-align: center; 
+        font-size: 13px; 
+        font-weight: bold; 
+        color: #2ea44f; 
+        border-bottom: 1px solid #3e424b; 
+        flex-shrink: 0;
+    }
 
-        .chat-panel.open {
-            width: 90% !important;
-            max-width: 90% !important;
-            height: 350px !important;
-            right: 5% !important;
-            bottom: 20px !important;
-        }
+    /* Student Grid Area - બાકી থাকা ফুল জায়গাটুকু নিয়ে স্ক্রোল করবে */
+    .studentgrid { 
+        flex: 1; 
+        overflow-y: auto; 
+        padding: 10px; 
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .studentgrid::-webkit-scrollbar { width: 6px; }
+    .studentgrid::-webkit-scrollbar-thumb { background: #666; border-radius: 10px; }
+    .studentgrid::-webkit-scrollbar-track { background: #222; }
     }
 
     @media screen and (max-height: 600px) and (orientation: landscape) {
