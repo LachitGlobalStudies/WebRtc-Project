@@ -57,10 +57,11 @@ io.on('connection', (socket) => {
         // ==========================================
         // 🚀 NEW: Android Native Screen Sharing Channel
         // ==========================================
+      // Listen for screen data chunks from the teacher (Android device)
         socket.on('screenDataChunk', (chunk) => {
             const currentRoom = socket.roomId;
             if (socket.role === 'teacher' && currentRoom) {
-                // App theke asha raw byte chunk shorashori room-er student-der kache broadcast hobe
+                // Broadcast raw frame chunk to all students in the room
                 socket.to(currentRoom).emit('streamToStudent', chunk);
             }
         });
@@ -194,7 +195,31 @@ io.on('connection', (socket) => {
             socket.to(currentRoom).emit('allowed-to-talk');
             socket.emit('all-students-unmuted-ui');
         });
+        // Android Native App Screen Share Chunks
+        socket.on('screenDataChunk', (data) => {
+            const targetRoom = (data && data.roomId) ? data.roomId : socket.roomId;
+            const chunkData = (data && data.chunk) ? data.chunk : data;
 
+            if (targetRoom) {
+                // স্টুডেন্টদের কাছে 'incoming-teacher-screen' বা 'screen-share-chunk' যে কোনো একটি নামে পাঠাতে পারেন
+                socket.to(targetRoom).emit('screen-share-chunk', { chunk: chunkData });
+            }
+        });
+
+        // Desktop Screen Share Chunks
+        socket.on('teacher-screen-chunk', (chunk) => {
+            const targetRoom = socket.roomId;
+            if (targetRoom) {
+                socket.to(targetRoom).emit('incoming-teacher-screen', chunk);
+            }
+        });
+
+        socket.on('stop-android-screen', (data) => {
+            const targetRoom = (data && data.roomId) ? data.roomId : socket.roomId;
+            if (targetRoom) {
+                socket.to(targetRoom).emit('teacher-screen-stopped');
+            }
+        });
         socket.on('disconnect', () => {
             const currentRoom = socket.roomId;
             if (socket.role === 'teacher') {

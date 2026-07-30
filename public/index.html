@@ -245,17 +245,16 @@
         };
 
         // Receive screen share from teacher
+       // index.html এর স্ক্রিপ্ট সেকশন
         let screenShareVideo = null;
 
-       socket.on('screen-share-chunk', (data) => {
+        socket.on('screen-share-chunk', (data) => {
             if (!screenShareVideo) {
                 screenShareVideo = document.createElement('video');
                 screenShareVideo.autoplay = true;
                 screenShareVideo.playsInline = true;
                 screenShareVideo.style.width = '100%';
                 screenShareVideo.style.height = '100%';
-                
-                // স্ক্রিন শেয়ারের জন্য রেশিও ঠিক রাখতে dynamic class ব্যবহার করছি
                 screenShareVideo.style.objectFit = 'contain'; 
                 
                 const videoWrapper = document.getElementById('videoWrapper');
@@ -266,8 +265,22 @@
                 videoWrapper.insertBefore(screenShareVideo, chatPanel);
             }
             
-            if (data.chunk) {
-                screenShareVideo.src = data.chunk;
+            // ডাটা যদি অবজেক্ট বা ডিরেক্ট স্ট্রিং হয় তা হ্যান্ডেল করা
+            const imageSrc = (typeof data === 'object' && data.chunk) ? data.chunk : data;
+            if (imageSrc) {
+                screenShareVideo.src = imageSrc;
+            }
+        });
+
+        socket.on('teacher-screen-stopped', () => {
+            if (screenShareVideo) {
+                screenShareVideo.remove();
+                screenShareVideo = null;
+                
+                const teacherVideo = document.getElementById('teacherVideo');
+                if (teacherVideo) {
+                    teacherVideo.style.display = 'block';
+                }
             }
         });
 
