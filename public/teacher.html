@@ -158,6 +158,42 @@
                 bottom: 20px !important;
             }
         }
+        /* Sidebar for Teacher Controls */
+        .sidebar { 
+            width: 220px; 
+            background: #161719; 
+            border-right: 1px solid #2a2d32; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+            padding: 10px; 
+            height: 100vh; /* ফুল হাইট ফিক্সড রাখা হলো */
+            overflow-y: auto; /* কন্টেন্ট বেশি হলে ভার্টিক্যাল স্ক্রোল এনে দিবে */
+        }
+        
+        .sidebar::-webkit-scrollbar { 
+            width: 6px; 
+        }
+        .sidebar::-webkit-scrollbar-thumb { 
+            background: #444; 
+            border-radius: 4px; 
+        }
+        @media screen and (max-height: 600px) and (orientation: landscape) {
+            .sidebar {
+                width: 250px;
+                height: 100vh;
+                overflow-y: auto !important;
+            }
+            .controls {
+                display: flex;
+                flex-direction: column;
+                gap: 5px;
+            }
+            .controls button {
+                width: 100%;
+                margin: 2px 0;
+            }
+        }
     </style>
 </head>
 <body>
