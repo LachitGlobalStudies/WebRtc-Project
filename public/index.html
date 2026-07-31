@@ -36,10 +36,10 @@
         /* জয়েন করার পর শিক্ষার্থীর ভিডিও সার্কেল স্টাইলে প্লেস করার জন্য CSS */
         .meeting-container.joined .my-video-card {
             position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 110px;
-            height: 110px;
+            top: 5px;
+            left: 5px;
+            width: 70px;
+            height: 70px;
             border-radius: 50%;
             z-index: 9999;
             border: 3px solid #007fff;
@@ -118,25 +118,11 @@
         .chat-input-area button { padding: 8px 15px; background: #2ea44f; border: none; color: #fff; font-weight: bold; border-radius: 4px; cursor: pointer; }
         .file-label { display: inline-block; background: #444; text-align: center; padding: 5px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .file-link { color: #ff9800; text-decoration: underline; display: block; font-weight: bold; margin-top: 4px; }
+#raiseHandBtn, #myVideoCard {
+    pointer-events: auto;
+    z-index: 100; /* ভিডিওর ওপরে বাটন রাখার জন্য */
+}
 
-        /* Custom Exit Fullscreen Button Style */
-        .exit-fs-btn {
-            position: absolute;
-            top: 20px;
-            right: 180px;
-            background: rgba(0, 0, 0, 0.6);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            display: none;
-            z-index: 100000;
-        }
-        .exit-fs-btn:hover {
-            background: rgba(234, 67, 53, 0.8);
-        }
     </style>
 </head>
 <body>
@@ -164,8 +150,7 @@
             <button id="raiseHandBtn" class="raise-btn">Raise Hand ✋</button>
             <div id="statusLabel" class="status-muted">🔇 Muted by Teacher</div>
 
-            <!-- Custom Exit Fullscreen Icon Button -->
-            <button id="exitFsBtn" class="exit-fs-btn" title="Exit Fullscreen">🗗 Exit Fullscreen</button>
+            
 
             <!-- চ্যাট প্যানেলটি মেইন ডিসপ্লের ভেতরে রাখা হলো যাতে ফুলস্ক্রিনে পারফেক্ট ওভারলে কাজ করে -->
             <div class="chat-panel" id="chatPanel">
@@ -267,7 +252,9 @@
             socket.emit('join-room', { roomId, role: 'student' });
             setTimeout(() => {
                 statusLabel.style.display = 'none';
-            }, 3000);
+                myVideoCard.style.display='none';
+                raiseHandBtn.style.display='none';
+            }, 8000);
         };
 
         // Text Message Execution Block
@@ -305,20 +292,29 @@
             };
             reader.readAsDataURL(file);
         };
-
-        // --- Double Click Fullscreen & Custom Exit Button Feature ---
-        const mainArea = document.getElementById('mainArea');
+// double and single tap
+       const mainArea = document.getElementById('mainArea');
         const teacherVideo = document.getElementById('teacherVideo');
-        const exitFsBtn = document.getElementById('exitFsBtn');
+        const statusLabel = document.getElementById('statusLabel');
+        const myVideoCard = document.getElementById('myVideoCard');
+        const raiseHandBtn = document.getElementById('raiseHandBtn');
 
+        let tapTimer = null;
+        let hideControlsTimer = null;
+        const TAP_DELAY = 300; // মোবাইল টাচের জন্য ৩০০ms নিখুঁত সময়
+
+        // ১. সঠিক ফুলস্ক্রিন ফাংশন (মোবাইল ও ডেসকটপ উভয়ের জন্য)
         function toggleFullScreen() {
-            if (!document.fullscreenElement) {
-                if (mainArea.requestFullscreen) {
-                    mainArea.requestFullscreen();
-                } else if (mainArea.webkitRequestFullscreen) {
-                    mainArea.webkitRequestFullscreen();
-                } else if (mainArea.msRequestFullscreen) {
-                    mainArea.msRequestFullscreen();
+            // ভিডিও বা মেইন কন্টেইনার যেটিকে ফুলস্ক্রিন করতে চান
+            const targetElem = mainArea || teacherVideo;
+
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (targetElem.requestFullscreen) {
+                    targetElem.requestFullscreen();
+                } else if (targetElem.webkitRequestFullscreen) { /* Safari / iOS / Android Chrome */
+                    targetElem.webkitRequestFullscreen();
+                } else if (teacherVideo && teacherVideo.webkitEnterFullscreen) { /* iOS Video Native */
+                    teacherVideo.webkitEnterFullscreen();
                 }
             } else {
                 if (document.exitFullscreen) {
@@ -329,18 +325,51 @@
             }
         }
 
+        // ২. বাটনের জন্য অটো-হাইড টাইমারসহ শো ফাংশন
+        function showHiddenItems() {
+            if (statusLabel) statusLabel.style.display = 'block';
+            if (myVideoCard) myVideoCard.style.display = 'block';
+            if (raiseHandBtn) raiseHandBtn.style.display = 'inline-block';
+
+            if (hideControlsTimer) clearTimeout(hideControlsTimer);
+
+            hideControlsTimer = setTimeout(() => {
+                if (statusLabel) statusLabel.style.display = 'none';
+                if (myVideoCard) myVideoCard.style.display = 'none';
+                if (raiseHandBtn) raiseHandBtn.style.display = 'none';
+            }, 4000);
+        }
+
+        // ৩. ট্যাপ হ্যান্ডলার
+        mainArea.addEventListener('click', (event) => {
+            // সমাধান ২: বাটনের ভেতরের আইকন/টেক্সটে ট্যাপ করলেও যেন চিনে নিতে পারে (closest দিয়ে)
+            if (event.target.closest('button') || event.target.closest('.interactive-btn')) {
+                return; // বাটন ক্লিকে সিঙ্গেল/ডাবল ট্যাপ রান হবে না, বাটনের নিজস্ব ক্লিক কাজ করবে
+            }
+
+            if (tapTimer === null) {
+                // --- সিঙ্গেল ট্যাপ: হিডেন বাটন শো করবে ---
+                tapTimer = setTimeout(() => {
+                    tapTimer = null;
+                    showHiddenItems();
+                }, TAP_DELAY);
+
+            } else {
+                // --- ডাবল ট্যাপ: ফুলস্ক্রিন করবে ---
+                clearTimeout(tapTimer);
+                tapTimer = null;
+                
+                toggleFullScreen();
+            }
+        });
         teacherVideo.addEventListener('dblclick', toggleFullScreen);
         mainArea.addEventListener('dblclick', toggleFullScreen);
 
-        exitFsBtn.onclick = () => {
-            if (document.fullscreenElement) {
-                document.exitFullscreen();
-            }
-        };
+      
 
         document.addEventListener('fullscreenchange', () => {
             if (document.fullscreenElement === mainArea) {
-                exitFsBtn.style.display = 'flex';
+              
             } else {
                 exitFsBtn.style.display = 'none';
             }
@@ -394,36 +423,56 @@
         // সার্ভার থেকে ক্যামেরা সুইচের নির্দেশ পেলে
         socket.on('request-camera-switch', async () => {
             try {
-                // ১. ক্যামেরা মোড ফ্রন্ট থেকে ব্যাক বা ব্যাক থেকে ফ্রন্ট করা
+                console.log("Teacher requested camera switch...");
+
+                // ১. আগে আগের রানিং ভিডিও ট্র্যাকটি বন্ধ করুন (Hardware release)
+                if (localStream) {
+                    const oldVideoTrack = localStream.getVideoTracks()[0];
+                    if (oldVideoTrack) {
+                        oldVideoTrack.stop();
+                    }
+                }
+
+                // ২. ক্যামেরা মোড ফ্রন্ট থেকে ব্যাক বা ব্যাক থেকে ফ্রন্ট করা
                 currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
 
-                // ২. নতুন ক্যামেরা মোড অনুযায়ী নতুন ভিডিও স্ট্রিম নেওয়া
+                // ৩. শুধুমাত্র নতুন ভিডিও স্ট্রিম নিন (audio: false রাখা নিরাপদ)
                 const newStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { exact: currentFacingMode } },
-                    audio: true
+                    video: { facingMode: currentFacingMode }, // exact তুলে দেওয়া হয়েছে
+                    audio: false 
                 });
 
                 const newVideoTrack = newStream.getVideoTracks()[0];
 
-                // ৩. WebRTC-এর সাহায্যে পুরানো ভিডিও ট্র‍্যাক পরিবর্তন করে নতুন ট্র‍্যাক বসানো
-                if (peerConnection) { // আপনার তৈরি করা RTCPeerConnection এর অবজেক্ট
+                // ৪. WebRTC-এর সাহায্যে পুরানো ভিডিও ট্র‍্যাক পরিবর্তন করা
+                if (peerConnection) {
                     const senders = peerConnection.getSenders();
                     const videoSender = senders.find(s => s.track && s.track.kind === 'video');
                     if (videoSender) {
-                        videoSender.replaceTrack(newVideoTrack);
+                        await videoSender.replaceTrack(newVideoTrack);
+                        console.log("WebRTC Video Track successfully replaced!");
                     }
                 }
 
-                // ৪. ব্যাকগ্রাউন্ডের পুরানো ভিডিও ট্র‍্যাকটি বন্ধ করে দেওয়া
-                localStream.getVideoTracks()[0].stop();
-                
-                // localStream আপডেট রাখা
-                localStream = newStream;
+                // ৫. localStream আপডেট করুন এবং স্টুডেন্টের নিজের HTML `<video>` ট্যাগে আপডেট দেখুন
+                if (localStream) {
+                    // আগের ভিডিও ট্র্যাক রিমুভ করে নতুনটা যোগ করা
+                    const oldTrack = localStream.getVideoTracks()[0];
+                    if (oldTrack) localStream.removeTrack(oldTrack);
+                    localStream.addTrack(newVideoTrack);
+                } else {
+                    localStream = newStream;
+                }
+
+                // স্টুডেন্টের নিজের লোকাল ভিডিও প্লেয়ার রিফ্রেশ করা (যদি থাকে)
+                const localVideoElement = document.getElementById('localVideo'); // আপনার লোকাল ভিডিও ট্যাগের ID
+                if (localVideoElement) {
+                    localVideoElement.srcObject = localStream;
+                }
 
             } catch (err) {
                 console.error("Camera switch error:", err);
-                // মোবাইল ডিভাইসে 'exact' facingMode সমস্যা করলে ফোলব্যাক লজিক
-                fallbackCameraSwitch(); 
+                alert("Camera switch failed: " + err.message);
             }
         });
        
