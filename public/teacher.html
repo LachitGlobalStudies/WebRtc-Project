@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Panel - Virtual Classroom</title>
-   <style>
+<style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     
     body { 
@@ -17,90 +17,82 @@
         overflow: hidden; 
     }
 
-    /* Meeting Layout & Sidebar */
-    .meeting-container { 
-        display: flex; 
-        flex: 1; 
-        height: 100vh; 
-        overflow: hidden; 
-        position: relative; 
-    }
-    
-    .sidebar { 
-        width: 260px; 
-        background: #161719; 
-        border-right: 1px solid #2a2d32; 
-        display: flex; 
-        flex-direction: column; 
-        height: 100%; 
-        flex-shrink: 0;
-        overflow: hidden; /* Prevent sidebar from scrolling as a whole */
-    }
-
-    /* Top Part: Tools (Scrollable Independently) */
-    .tools-top-part { 
-        padding: 10px; 
-        max-height: 45%; 
-        background: #2a2d32;  
-        border-bottom: 1px solid #3e424b; 
+    /* Tools Bar & Controls */
+    .tools-bar { 
+        padding: 15px; 
+        text-align: center; 
+        background: #1a1c20; 
+        border-bottom: 1px solid #2a2d32; 
         position: relative; 
         flex-shrink: 0;
-        overflow-y: auto; 
     }
-
-    .tools-top-part::-webkit-scrollbar { width: 5px; }
-    .tools-top-part::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-    .tools-top-part::-webkit-scrollbar-track { background: #222; }
     
-    .controls {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-
     .controls button { 
-        width: 100%;
-        padding: 8px 10px; 
-        font-size: 13px; 
+        padding: 5px 10px; 
+        font-size: 14px; 
         border: none; 
         border-radius: 6px; 
         background: #2ea44f; 
         color: white; 
         cursor: pointer; 
         font-weight: bold; 
+        margin: 5px; 
     }
     
     #shareBtn { background: #007fff; }
     #muteAllBtn { background: #ea4335; }
     #unmuteAllBtn { background: #2ea44f; }
     #youtubeStreamBtn { background: #ff0000; color: white; }
-    #masterChatBtn { background: #ff9800; color: #000; }
-
-    /* Counter Header & Student Grid (Scrollable Independently) */
-    .counter-header { 
-        padding: 8px 10px; 
-        background: #1e2024; 
-        text-align: center; 
-        font-size: 13px; 
+    
+    .master-chat-btn { 
+        position: absolute; 
+        right: 20px; 
+        top: 22px; 
+        padding: 10px 15px; 
+        background: #ff9800; 
+        color: #000; 
+        border: none; 
         font-weight: bold; 
-        color: #2ea44f; 
-        border-bottom: 1px solid #3e424b; 
-        flex-shrink: 0;
+        border-radius: 6px; 
+        cursor: pointer; 
     }
 
-    .studentgrid-bottom-part { 
+    /* Meeting Layout & Sidebar */
+    .meeting-container { 
+        display: flex; 
+        flex: 1; 
+        height: calc(100vh - 140px); 
+        overflow: hidden; 
+        position: relative; 
+    }
+    
+    .sidebar { 
+        width: 220px; 
+        background: #161719; 
+        border-right: 1px solid #2a2d32; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 8px; 
+        padding: 10px; 
+        height: 100%; 
+        overflow-y: auto; 
+        flex-shrink: 0;
+    }
+    
+    .sidebar::-webkit-scrollbar { width: 6px; }
+    .sidebar::-webkit-scrollbar-thumb { background: #90f169; border-radius: 4px; }
+    .sidebar::-webkit-scrollbar-track { background: #ffffff; }
+
+   /* Student Grid Structure Fix */
+    .studentgrid { 
         flex: 1; 
         overflow-y: auto; 
-        overflow-x: hidden;
-        padding: 8px; 
+        padding: 5px; 
         display: flex;
         flex-direction: column;
         gap: 10px;
+        height: 100%;
     }
-
-    .studentgrid-bottom-part::-webkit-scrollbar { width: 6px; }
-    .studentgrid-bottom-part::-webkit-scrollbar-thumb { background: #666; border-radius: 10px; }
-    .studentgrid-bottom-part::-webkit-scrollbar-track { background: #222; }
 
     .student-card { 
         position: relative; 
@@ -109,16 +101,22 @@
         border-radius: 8px; 
         border: 2px solid #3e424b; 
         overflow: hidden; 
-        flex-shrink: 0;
+        flex-shrink: 0; 
+        cursor: pointer;
     }
-    
+
     .student-card video { 
         width: 100%; 
-        object-fit: cover; 
+        height: auto;
         aspect-ratio: 4/3; 
         display: block;
+        object-fit: cover;
     }
-    
+
+    .studentgrid::-webkit-scrollbar { width: 8px; }
+    .studentgrid::-webkit-scrollbar-thumb { background: #90fc82; border-radius: 10px; }
+    .studentgrid::-webkit-scrollbar-track { background: #ffffff; }
+
     .student-label { 
         position: absolute; 
         bottom: 5px; 
@@ -127,6 +125,45 @@
         padding: 2px 6px; 
         font-size: 11px; 
         border-radius: 4px; 
+    }
+
+    /* Camera Switch Button Overlay */
+    .cam-switch-btn {
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        padding: 8px 14px;
+        border-radius: 20px;
+        font-size: 14px;
+        font-weight: bold;
+        cursor: pointer;
+        z-index: 50;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: background 0.2s;
+    }
+
+    .cam-switch-btn:hover {
+        background: rgba(0, 127, 255, 0.8);
+    }
+
+    .main-display-label {
+        position: absolute;
+        bottom: 15px;
+        left: 15px;
+        background: rgba(0, 0, 0, 0.7);
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: bold;
+        z-index: 10;
+    }
+
+    /* Swapped Card Outline */
+    .student-card.swapped-teacher {
+        border-color: #ff9800;
     }
     
     .mic-control-btn { 
@@ -157,7 +194,7 @@
         justify-content: center; 
         align-items: center; 
         background: #0e0f11; 
-        padding: 4px; 
+        padding: 2px; 
         position: relative; 
         overflow: hidden; 
     }
@@ -169,13 +206,34 @@
         background: #222; 
         border-radius: 12px; 
     }
-    
+
+    #participantCounter.counter-header {
+        position: absolute; 
+        top: 15px;          
+        left: 15px;         
+        z-index: 10;        
+        width: 50px;        
+        height: 50px;       
+        background-color: rgba(255, 255, 255, 0.9); 
+        border-radius: 50%; 
+        display: none;
+        justify-content: center;
+        align-items: center;
+        color: rgb(255, 0, 0);
+        font-size: 24px;
+        font-weight: bold;
+        font-family: sans-serif;
+        overflow: hidden;
+        text-align: center;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+    }
+        
     .mirror { transform: scaleX(-1); }
     
     .role-label { 
         position: absolute; 
-        top: 15px; 
-        left: 15px; 
+        top: 35px; 
+        left: 45px; 
         background: #2ea44f; 
         padding: 5px 12px; 
         font-weight: bold; 
@@ -224,100 +282,184 @@
     .file-label { display: inline-block; background: #444; text-align: center; padding: 5px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; }
     .file-link { color: #ff9800; text-decoration: underline; display: block; font-weight: bold; margin-top: 4px; }
 
-    /* ==========================================
-       MOBILE RESPONSIVE STYLES (Portrait & Landscape)
-       ========================================== */
+    /* Mobile & Landscape Responsive Styles */
     @media screen and (max-width: 768px) {
-        body { height: 100vh; overflow: hidden; }
+        body { height: 100vh; overflow: auto; }
         
         .meeting-container { 
             flex-direction: column; 
-            height: 100vh; 
+            height: auto; 
         }
 
-        /* Sidebar relocates to bottom/top, split into horizontal scrolling rows */
         .sidebar {
-            width: 100% !important;
-            height: 190px !important;
-            flex-direction: row !important;
-            border-right: none;
-            border-top: 1px solid #2a2d32;
-            order: 2; /* Place below main video */
+            display: flex;
+            flex-direction: row;
+            width: 100%;
+            height: 250px;
+            box-sizing: border-box;
+            overflow: hidden;
         }
-
-        /* Tools part becomes horizontally scrollable on mobile */
-        .tools-top-part {
-            width: 45% !important;
-            max-height: 100% !important;
-            height: 100% !important;
-            overflow-y: auto !important;
-            overflow-x: hidden;
-            border-bottom: none;
-            border-right: 1px solid #3e424b;
-            flex-shrink: 0;
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb { background: #90f169; border-radius: 4px; }
+        .sidebar::-webkit-scrollbar-track { background: #ffffff; }
+        .tools-bar {
+            width: 40%;
+            height: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+            display: flex;
         }
 
         .controls {
-            flex-direction: column;
-        }
-
-        /* Student Grid container wrapper */
-        .sidebar > div:nth-child(2), 
-        .sidebar > #participantCounter {
-            display: none !important; /* Hide counter to save space on mobile, or integrate neatly */
-        }
-
-        /* Student Grid part becomes horizontally scrollable */
-        .studentgrid-bottom-part {
-            width: 55% !important;
-            height: 100% !important;
-            flex-direction: row !important;
-            overflow-x: auto !important;
-            overflow-y: hidden !important;
+            display: flex;
+            flex-direction: row;
             align-items: center;
-            padding: 5px;
-            gap: 8px;
+            gap: 10px;
+            width: 100%;
+            height: 100%;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .controls::-webkit-scrollbar { width: 6px; }
+        .controls::-webkit-scrollbar-thumb { background: #90f169; border-radius: 4px; }
+        .controls::-webkit-scrollbar-track { background: #ffffff; }
+        .controls button {
+            flex: 0 0 auto;
+        }
+
+        .counter-header {
+            width: 20%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 10px;
+            box-sizing: border-box;
             flex-shrink: 0;
         }
 
+        .studentgrid {
+            width: 40%;
+            height: 100%;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            gap: 10px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .controls::-webkit-scrollbar,
+        .studentgrid::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .controls::-webkit-scrollbar-thumb,
+        .studentgrid::-webkit-scrollbar { width: 8px; }
+        .studentgrid::-webkit-scrollbar-thumb { background: #90fc82; border-radius: 10px; }
+        .studentgrid::-webkit-scrollbar-track { background: #ffffff; }
+
         .student-card {
-            min-width: 110px !important;
-            width: 110px !important;
-            height: auto;
+            min-width: 130px;
+            width: 90%;
+            flex-shrink: 0;
+            margin-bottom: 0;
         }
 
         .main-display {
-            width: 100% !important;
-            height: calc(100vh - 190px) !important;
-            order: 1; /* Main video stays on top */
+            width: 100%;
+            height: calc(100vh - 250px);
+            min-height: 300px;
         }
 
         .chat-panel.open {
             width: 90% !important;
             max-width: 90% !important;
-            height: 320px !important;
+            height: 350px !important;
             right: 5% !important;
-            bottom: 200px !important;
+            bottom: 20px !important;
         }
     }
 
-    /* Mobile Landscape Specific Adjustments */
-    @media screen and (max-height: 550px) and (orientation: landscape) {
+    @media screen and (max-height: 600px) and (orientation: landscape) {
+        .meeting-container {
+            flex-direction: row;
+            height: calc(100vh - 70px);
+        }
         .sidebar {
-            height: 140px !important;
+            display: flex;
+            flex-direction: column;
+            width: 250px;
+            height: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+         }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb { background: #90f169; border-radius: 4px; }
+        .sidebar::-webkit-scrollbar-track { background: #ffffff; }
+        .tools-bar {
+            width: 100%;
+            height: 40%;
+            box-sizing: border-box;
+            overflow: hidden;
+            display: flex;
         }
-        .main-display {
-            height: calc(100vh - 140px) !important;
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            overflow-y: auto;
+            white-space: nowrap;
+            padding: 10px;
+            box-sizing: border-box;
         }
-        .tools-top-part {
-            width: 40% !important;
-        }
-        .studentgrid-bottom-part {
-            width: 60% !important;
-        }
+
         .controls button {
-            padding: 4px 8px;
-            font-size: 11px;
+            flex: 0 0 auto;
+        }
+        
+        .studentgrid {
+            width: 100%;
+            height: 40%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            overflow-x: hidden;
+            overflow-y: auto;
+            white-space: nowrap;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+
+        .controls::-webkit-scrollbar,
+        .studentgrid::-webkit-scrollbar { width: 8px; }
+        .studentgrid::-webkit-scrollbar-thumb { background: #90fc82; border-radius: 10px; }
+        .studentgrid::-webkit-scrollbar-track { background: #ffffff; }
+
+        .controls::-webkit-scrollbar-thumb,
+        .studentgrid::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+
+        .student-card {
+            min-width: 130px;
+            width: 100%;
+            flex-shrink: 0;
+            margin-bottom: 0;
         }
     }
 </style>
@@ -326,8 +468,9 @@
 
     <div class="meeting-container">
         <div class="sidebar">
-            <div class="tools-top-part">
+            <div class="tools-bar">
                 <div class="controls">
+                    <input type="text" id="customRoomIdInput" placeholder="Enter your Room ID" style="padding: 8px; margin: 5px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff;">
                     <button id="createBtn">Start & Create Classroom</button>
                     <button id="shareBtn" style="display: none;">Share Screen 🖥️</button>
                     <button id="youtubeStreamBtn" style="display: none;">Stream to YouTube 🎥</button>
@@ -335,18 +478,24 @@
                     <button id="unmuteAllBtn" style="display: none;">Unmute All Students 🎙️✅</button>
                     <button id="masterChatBtn" style="display: none;">Open Chat Board 💬</button>
                 </div>
-                <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px; font-size: 12px; text-align: center;"></h4>
             </div>
 
-            <div id="participantCounter" class="counter-header" style="display: none;">
-                Total Class Attendees: 1
-            </div>
-
-            <div class="studentgrid-bottom-part" id="studentGrid"></div>
+            <div class="studentgrid" id="studentGrid"></div>
         </div>
         
         <div class="main-display" id="mainArea">
-            <video id="localVideo" class="mirror" autoplay playsinline muted></video>
+            <!-- Participant Count Header Badge -->
+            <div id="participantCounter" class="counter-header">0</div>
+
+            <video id="localVideo" autoplay playsinline class="mirror"></video>
+            
+            <!-- teacher and selected student camera switch buttons -->
+            <div class="cam-controls-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 10px; z-index: 50;">
+                <button id="camSwitchBtn" class="cam-switch-btn" style="display: none;">📷 My Camera</button>
+                <button id="studentCamSwitchBtn" class="cam-switch-btn" style="display: none; background: #ff9800; color: #000;">📷 Student's Camera</button>
+            </div>
+
+            <div id="mainDisplayLabel" class="main-display-label" style="display: none;">Teacher (You)</div>
         </div>
 
         <div class="chat-panel" id="chatPanel">
@@ -377,26 +526,31 @@
         const peerConnections = {};
         const studentMicStatus = {}; 
         const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19020' }] };
-
+        let currentCamFacingMode = "user"; // "user" (front) or "environment" (back)
+        let activeSwappedStudentId = null; // null = Teacher is in main display
+        const studentCamSwitchBtn = document.getElementById('studentCamSwitchBtn');
+        const camSwitchBtn = document.getElementById('camSwitchBtn');
+        const mainDisplayLabel = document.getElementById('mainDisplayLabel');
         const chatPanel = document.getElementById('chatPanel');
         const masterChatBtn = document.getElementById('masterChatBtn');
         const participantCounter = document.getElementById('participantCounter');
+        const localVideo = document.getElementById('localVideo');
 
         // Function to dynamically update live attendee counter text markup
         function updateCountUI(count) {
-            if(count !== undefined) {
-                participantCounter.innerText = `Total Class Attendees: ${count}`;
+            if(count !== undefined && participantCounter) {
+                participantCounter.innerText = count;
+                participantCounter.style.display = 'flex';
             }
         }
 
-        // Helper function to generate a Dummy Video Stream if camera is unavailable or blocked
+        // Helper function to generate a Dummy Video Stream if camera is unavailable
         function createDummyStream() {
             const canvas = document.createElement('canvas');
             canvas.width = 640;
             canvas.height = 480;
             const ctx = canvas.getContext('2d');
             
-            // Draw an animated dummy placeholder on canvas
             let x = 0;
             function draw() {
                 ctx.fillStyle = '#1e1e1e';
@@ -414,15 +568,7 @@
             }
             draw();
 
-            const canvasStream = canvas.captureStream(30); // 30 FPS video stream
-            
-            // Try to get audio as well, if microphone fails, create a silent audio track fallback
-            try {
-                // Return combined canvas video stream (audio can be handled via WebRTC constraints or dummy audio track if needed)
-                return canvasStream;
-            } catch (e) {
-                return canvasStream;
-            }
+            return canvas.captureStream(30);
         }
 
         masterChatBtn.onclick = () => {
@@ -442,17 +588,22 @@
         };
 
         document.getElementById('createBtn').onclick = async function() {
+            const customInput = document.getElementById('customRoomIdInput');
+            const roomId = customInput ? customInput.value.trim() : "";
+
+            if (!roomId) {
+                alert("Please Enter a room id");
+                return;
+            }
+
             try {
-                // Attempt to get actual user media (Camera & Microphone)
                 localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             } catch (err) {
                 console.warn("Camera/Mic access denied or not found. Falling back to dummy video stream.", err);
-                alert("ক্যামেরা বা মাইক্রোফোন পাওয়া যায়নি বা অ্যাক্সেস দেওয়া হয়নি। তাই একটি ডামি ভিডিও স্ট্রিম চালু করা হলো।[cite: 1]");
+                alert("Your camera and microphone is not accessible , a dummy video will play");
                 
-                // Fallback: Generate dummy video stream
                 localStream = createDummyStream();
                 
-                // Attempt to get audio separately if possible, otherwise ignore
                 try {
                     const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     audioStream.getAudioTracks().forEach(track => localStream.addTrack(track));
@@ -461,32 +612,27 @@
                 }
             }
             
-
-            document.getElementById('localVideo').srcObject = localStream;
+            localVideo.srcObject = localStream;
             
-            const roomId = Math.random().toString(36).substring(2, 9);
-            document.getElementById('roomDisplay').innerText = `Class Room ID: ${roomId}`;
             const joinLink = `${window.location.origin}/index.html?room=${roomId}`;
-    
-            
+
             let linkDisplay = document.getElementById('shareLinkDisplay');
             if(!linkDisplay) {
                 linkDisplay = document.createElement('div');
                 linkDisplay.id = 'shareLinkDisplay';
-                linkDisplay.style.cssText = "margin-top: 10px; display: flex; flex-direction: column; align-items: center; gap: 5px;";
-                document.querySelector('.sidebar .top-bar').appendChild(linkDisplay);
+                linkDisplay.style.cssText = "margin-top: 10px; display: flex; flex-direction: row; align-items: center; gap: 5px;";
+                document.querySelector('.sidebar .tools-bar .controls').appendChild(linkDisplay);
             }
 
             linkDisplay.innerHTML = `
-                <input type="text" id="copyLinkInput" value="${joinLink}" readonly style="width: 100%; padding: 4px; font-size: 11px; background: #111; color: #fff; border: 1px solid #444; border-radius: 4px; text-align: center;">
-                <button id="copyLinkBtn" style="padding: 5px 10px; font-size: 12px; background: #007fff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">📋 Copy Join Link</button>
+                <input type="text" id="copyLinkInput" value="${joinLink}" readonly style="display:none;width: 40%; padding: 4px; font-size: 11px; background: #111; color: #fff; border: 1px solid #444; border-radius: 4px; text-align: center;">
+                <button id="copyLinkBtn" style="padding: 10px 20px;font-size: 14px; border: none; border-radius: 6px; background: #2ea44f; color: white; cursor: pointer; font-weight: bold; margin: 5px;">📋 Copy Join Link</button>
             `;
 
-            // বাটনে ক্লিক করলে লিংকটি কপি হয়ে যাওয়ার ইভেন্ট
             document.getElementById('copyLinkBtn').onclick = () => {
                 const linkInput = document.getElementById('copyLinkInput');
                 linkInput.select();
-                linkInput.setSelectionRange(0, 99999); // মোবাইলের জন্য সাপোর্ট নিশ্চিত করতে
+                linkInput.setSelectionRange(0, 99999);
                 
                 navigator.clipboard.writeText(linkInput.value).then(() => {
                     document.getElementById('copyLinkBtn').innerText = "✅ Copied!";
@@ -496,22 +642,25 @@
                         document.getElementById('copyLinkBtn').style.background = "#007fff";
                     }, 2000);
                 }).catch(err => {
-                    alert("লিংক কপি করতে সমস্যা হয়েছে!");
+                    alert("লিংক কপি করতে সমস্যা হয়েছে!");
                 });
             };
-            // ---------------------------------------------
             
             socket.emit('join-room', { roomId, role: 'teacher' });
             this.style.display = 'none';
+            if(customInput) customInput.style.display = 'none';
             document.getElementById('shareBtn').style.display = 'inline-block';
             document.getElementById('youtubeStreamBtn').style.display = 'inline-block';
             document.getElementById('muteAllBtn').style.display = 'inline-block';
             document.getElementById('unmuteAllBtn').style.display = 'inline-block';
             masterChatBtn.style.display = 'inline-block';
-            participantCounter.style.display = 'block';
+            if(participantCounter) participantCounter.style.display = 'flex';
+            camSwitchBtn.style.display = 'inline-block'; 
+            studentCamSwitchBtn.style.display = 'none';   
+            mainDisplayLabel.style.display = 'block';      
         };
 
-        // --- YouTube MediaRecorder Implementation Pipeline ---
+        // --- YouTube Streaming Logic ---
         document.getElementById('youtubeStreamBtn').onclick = function() {
             if (!isLiveStreaming) {
                 const streamKey = prompt("Please enter your YouTube Stream Key:");
@@ -529,10 +678,8 @@
             btn.innerText = "Stop YouTube Stream 🛑";
             btn.style.background = "#333";
 
-            // Record either screen share stream or standard local camera output
             const trackingStream = isScreenSharing ? screenStream : localStream;
             
-            // Collect chunks into low-latency clusters every 1 second (1000ms timeslices)
             mediaRecorder = new MediaRecorder(trackingStream, {
                 mimeType: 'video/webm;codecs=vp8,opus',
                 videoBitsPerSecond: 2500000
@@ -633,7 +780,6 @@
                         if (sender) sender.replaceTrack(videoTrack);
                     }
                     
-                    const localVideo = document.getElementById('localVideo');
                     localVideo.srcObject = screenStream;
                     localVideo.classList.remove('mirror');
                     
@@ -641,7 +787,6 @@
                     this.style.background = "#ea4335";
                     isScreenSharing = true;
 
-                    // If YouTube stream is active, dynamically restart MediaRecorder to grab the new screen layout track elements
                     if (isLiveStreaming && mediaRecorder && mediaRecorder.state !== 'inactive') {
                         mediaRecorder.stop();
                         mediaRecorder = new MediaRecorder(screenStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
@@ -658,6 +803,113 @@
             }
         };
 
+        // ১. শিক্ষকের নিজের ক্যামেরা সুইচ করার বাটন লজিক
+        camSwitchBtn.onclick = async () => {
+            currentCamFacingMode = (currentCamFacingMode === "user") ? "environment" : "user";
+            try {
+                const newStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { exact: currentCamFacingMode } },
+                    audio: true
+                });
+                
+                const videoTrack = newStream.getVideoTracks()[0];
+                
+                for (let id in peerConnections) {
+                    const sender = peerConnections[id].getSenders().find(s => s.track && s.track.kind === 'video');
+                    if (sender) sender.replaceTrack(videoTrack);
+                }
+
+                if (localStream) {
+                    localStream.getVideoTracks().forEach(t => t.stop());
+                }
+                
+                localStream = newStream;
+
+                if (!activeSwappedStudentId) {
+                    localVideo.srcObject = localStream;
+                    if (currentCamFacingMode === "user") {
+                        localVideo.classList.add('mirror');
+                    } else {
+                        localVideo.classList.remove('mirror');
+                    }
+                }
+            } catch (err) {
+                alert("Teacher Camera switch failed or selected camera mode is unavailable.");
+                currentCamFacingMode = (currentCamFacingMode === "user") ? "environment" : "user";
+            }
+        };
+
+        // ২. মেইন ডিসপ্লেতে থাকা নির্বাচিত স্টুডেন্টের ক্যামেরা সুইচ করার বাটন লজিক
+        studentCamSwitchBtn.onclick = () => {
+            if (activeSwappedStudentId) {
+                socket.emit('switch-student-camera', { targetStudentId: activeSwappedStudentId });
+            } else {
+                alert("No student is currently selected in the main display!");
+            }
+        };
+
+        // ৩. Student to Main Display Swap Functions
+        function swapStudentToMain(studentId) {
+            const studentCard = document.getElementById(`card-${studentId}`);
+            if (!studentCard) return;
+
+            const studentVideo = studentCard.querySelector('video');
+            const studentLabel = studentCard.querySelector('.student-label');
+
+            if (activeSwappedStudentId && activeSwappedStudentId !== studentId) {
+                resetMainDisplay();
+            }
+
+            if (activeSwappedStudentId === studentId) {
+                resetMainDisplay();
+                return;
+            }
+
+            const studentStream = studentVideo.srcObject;
+            const teacherStream = localVideo.srcObject;
+
+            localVideo.srcObject = studentStream;
+            localVideo.classList.remove('mirror');
+
+            studentVideo.srcObject = teacherStream;
+            studentVideo.classList.add('mirror');
+
+            activeSwappedStudentId = studentId;
+            studentCard.classList.add('swapped-teacher');
+            if(studentLabel) studentLabel.innerText = "Teacher (You)";
+            mainDisplayLabel.innerText = `Student (${studentId.substring(0,4)})`;
+
+            studentCamSwitchBtn.style.display = 'inline-block';
+            camSwitchBtn.style.display='none';
+        }
+
+        function resetMainDisplay() {
+            if (!activeSwappedStudentId) return;
+
+            const studentCard = document.getElementById(`card-${activeSwappedStudentId}`);
+            if (studentCard) {
+                const studentVideo = studentCard.querySelector('video');
+                const studentLabel = studentCard.querySelector('.student-label');
+
+                const currentMainStream = localVideo.srcObject;
+                const currentCardStream = studentVideo.srcObject;
+
+                localVideo.srcObject = currentCardStream;
+                localVideo.classList.add('mirror');
+
+                studentVideo.srcObject = currentMainStream;
+                studentVideo.classList.remove('mirror');
+
+                studentCard.classList.remove('swapped-teacher');
+                if(studentLabel) studentLabel.innerText = `Student (${activeSwappedStudentId.substring(0,4)})`;
+            }
+
+            activeSwappedStudentId = null;
+            mainDisplayLabel.innerText = "Teacher (You)";
+            camSwitchBtn.style.display='inline-block'
+            studentCamSwitchBtn.style.display = 'none';
+        }
+
         function stopScreenShare() {
             if (!isScreenSharing) return;
             
@@ -668,7 +920,6 @@
                 if (sender) sender.replaceTrack(videoTrack);
             }
             
-            const localVideo = document.getElementById('localVideo');
             localVideo.srcObject = localStream;
             localVideo.classList.add('mirror');
             
@@ -682,7 +933,6 @@
             
             isScreenSharing = false;
 
-            // Revert YouTube stream pipeline recorder framework back to target original local webcam capture configurations
             if (isLiveStreaming && mediaRecorder) {
                 mediaRecorder.stop();
                 mediaRecorder = new MediaRecorder(localStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
@@ -765,6 +1015,10 @@
         });
 
         socket.on('user-left', (userId) => {
+            if (activeSwappedStudentId === userId) {
+                resetMainDisplay();
+            }
+            
             if (peerConnections[userId]) peerConnections[userId].close();
             delete peerConnections[userId];
             delete studentMicStatus[userId];
@@ -778,8 +1032,12 @@
             studentMicStatus[userId] = 'muted'; 
             
             const currentStream = isScreenSharing ? screenStream : localStream;
-            currentStream.getVideoTracks().forEach(track => pc.addTrack(track, currentStream));
-            localStream.getAudioTracks().forEach(track => pc.addTrack(track, localStream));
+            if (currentStream) {
+                currentStream.getVideoTracks().forEach(track => pc.addTrack(track, currentStream));
+            }
+            if (localStream) {
+                localStream.getAudioTracks().forEach(track => pc.addTrack(track, localStream));
+            }
 
             pc.ontrack = (event) => {
                 if (document.getElementById(`card-${userId}`)) return;
@@ -788,9 +1046,10 @@
                 const card = document.createElement('div');
                 card.className = 'student-card';
                 card.id = `card-${userId}`;
-
+                
                 const video = document.createElement('video');
-                video.autoplay = true; video.playsInline = true;
+                video.autoplay = true; 
+                video.playsInline = true;
                 video.srcObject = event.streams[0];
 
                 const label = document.createElement('div');
@@ -801,8 +1060,12 @@
                 micBtn.className = 'mic-control-btn mic-off';
                 micBtn.id = `mic-${userId}`;
                 micBtn.innerText = "Muted 🔇";
+
+                // Click event on card to swap video
+                video.onclick = () => swapStudentToMain(userId);
                 
-                micBtn.onclick = () => {
+                micBtn.onclick = (e) => {
+                    e.stopPropagation(); // Stop card click from triggering
                     if (studentMicStatus[userId] === 'muted') {
                         socket.emit('allow-student', userId);
                     } else {
