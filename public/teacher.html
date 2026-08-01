@@ -626,25 +626,35 @@
 
             linkDisplay.innerHTML = `
                 <input type="text" id="copyLinkInput" value="${joinLink}" readonly style="display:none;width: 40%; padding: 4px; font-size: 11px; background: #111; color: #fff; border: 1px solid #444; border-radius: 4px; text-align: center;">
-                <button id="copyLinkBtn" style="padding: 10px 20px;font-size: 14px; border: none; border-radius: 6px; background: #2ea44f; color: white; cursor: pointer; font-weight: bold; margin: 5px;">📋 Copy Join Link</button>
+                <button id="copyLinkBtn" style="padding: 10px 20px;font-size: 14px; border: none; border-radius: 6px; background: #2ea44f; color: white; cursor: pointer; font-weight: bold; margin: 5px;">📤 Share Join Link</button>
             `;
 
-            document.getElementById('copyLinkBtn').onclick = () => {
-                const linkInput = document.getElementById('copyLinkInput');
-                linkInput.select();
-                linkInput.setSelectionRange(0, 99999);
-                
-                navigator.clipboard.writeText(linkInput.value).then(() => {
-                    document.getElementById('copyLinkBtn').innerText = "✅ Copied!";
-                    document.getElementById('copyLinkBtn').style.background = "#2ea44f";
+           document.getElementById('copyLinkBtn').onclick = async () => {
+            const link = document.getElementById('copyLinkInput').value;
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({
+                        title: "LGS Live Tuition",
+                        text: "Join my live class",
+                        url: link
+                    });
+
+                    document.getElementById('copyLinkBtn').innerText = "✅ Shared!";
                     setTimeout(() => {
-                        document.getElementById('copyLinkBtn').innerText = "📋 Copy Join Link";
-                        document.getElementById('copyLinkBtn').style.background = "#007fff";
+                        document.getElementById('copyLinkBtn').innerText = "📤 Share Join Link";
                     }, 2000);
-                }).catch(err => {
-                    alert("লিংক কপি করতে সমস্যা হয়েছে!");
+
+                } catch (err) {
+                    console.log("Share cancelled");
+                }
+            } else {
+                // Fallback: Copy Link
+                navigator.clipboard.writeText(link).then(() => {
+                    alert("Sharing is not supported on this device.\nLink copied instead.");
                 });
-            };
+            }
+        };
             
             socket.emit('join-room', { roomId, role: 'teacher' });
             this.style.display = 'none';
@@ -1027,63 +1037,89 @@
         });
 
         function createPeerConnection(userId) {
-            const pc = new RTCPeerConnection(servers);
-            peerConnections[userId] = pc;
-            studentMicStatus[userId] = 'muted'; 
-            
-            const currentStream = isScreenSharing ? screenStream : localStream;
-            if (currentStream) {
-                currentStream.getVideoTracks().forEach(track => pc.addTrack(track, currentStream));
-            }
-            if (localStream) {
-                localStream.getAudioTracks().forEach(track => pc.addTrack(track, localStream));
-            }
-
-            pc.ontrack = (event) => {
-                if (document.getElementById(`card-${userId}`)) return;
+                const pc = new RTCPeerConnection(servers);
+                peerConnections[userId] = pc;
+                studentMicStatus[userId] = 'muted'; 
                 
-                const grid = document.getElementById('studentGrid');
-                const card = document.createElement('div');
-                card.className = 'student-card';
-                card.id = `card-${userId}`;
-                
-                const video = document.createElement('video');
-                video.autoplay = true; 
-                video.playsInline = true;
-                video.srcObject = event.streams[0];
+                const currentStream = isScreenSharing ? screenStream : localStream;
+                if (currentStream) {
+                    currentStream.getVideoTracks().forEach(track => pc.addTrack(track, currentStream));
+                }
+                if (localStream) {
+                    localStream.getAudioTracks().forEach(track => pc.addTrack(track, localStream));
+                }
 
-                const label = document.createElement('div');
-                label.className = 'student-label';
-                label.innerText = `Student (${userId.substring(0,4)})`;
+                // 👇 এই pc.ontrack অংশটি আপডেট করা হয়েছে 👇
+                pc.ontrack = (event) => {
+                    let card = document.getElementById(`card-${userId}`);
+                    
+                    // ১. স্টুডেন্টের কার্ড যদি না থাকে তবে নতুন কার্ড তৈরি করবে
+                    if (!card) {
+                        const grid = document.getElementById('studentGrid');
+                        card = document.createElement('div');
+                        card.className = 'student-card';
+                        card.id = `card-${userId}`;
+                        
+                        const video = document.createElement('video');
+                        video.autoplay = true; 
+                        video.playsInline = true;
+                        video.srcObject = event.streams[0];
 
-                const micBtn = document.createElement('button');
-                micBtn.className = 'mic-control-btn mic-off';
-                micBtn.id = `mic-${userId}`;
-                micBtn.innerText = "Muted 🔇";
+                        const label = document.createElement('div');
+                        label.className = 'student-label';
+                        label.innerText = `Student (${userId.substring(0,4)})`;
 
-                // Click event on card to swap video
-                video.onclick = () => swapStudentToMain(userId);
-                
-                micBtn.onclick = (e) => {
-                    e.stopPropagation(); // Stop card click from triggering
-                    if (studentMicStatus[userId] === 'muted') {
-                        socket.emit('allow-student', userId);
+                        const micBtn = document.createElement('button');
+                        micBtn.className = 'mic-control-btn mic-off';
+                        micBtn.id = `mic-${userId}`;
+                        micBtn.innerText = "Muted 🔇";
+
+                        // Click event on card to swap video
+                        video.onclick = () => swapStudentToMain(userId);
+                        
+                        micBtn.onclick = (e) => {
+                            e.stopPropagation(); // Stop card click from triggering
+                            if (studentMicStatus[userId] === 'muted') {
+                                socket.emit('allow-student', userId);
+                            } else {
+                                socket.emit('mute-student', userId);
+                            }
+                        };
+
+                        card.appendChild(video);
+                        card.appendChild(label);
+                        card.appendChild(micBtn);
+                        grid.appendChild(card);
                     } else {
-                        socket.emit('mute-student', userId);
+                        // ২. কার্ড আগেই থাকলে ভিডিও উপাদানটিতে স্ট্রিমটি আবার নিশ্চিত আপডেট করবে
+                        const video = card.querySelector('video');
+                        if (video && video.srcObject !== event.streams[0]) {
+                            video.srcObject = event.streams[0];
+                        }
+                    }
+
+                    // ৩. ক্যামেরা সুইচ করার পর যেন স্টুডেন্টের ভিডিও ফ্রিজ না হয়ে অটো প্লে হতে থাকে
+                    if (event.track) {
+                        event.track.onunmute = () => {
+                            const video = card.querySelector('video');
+                            if (video) {
+                                video.play().catch(e => console.log("Auto-play resume error:", e));
+                            }
+                            // স্টুডেন্ট যদি মেইন ডিসপ্লেতে সোয়াপ (Swap) করা থাকে
+                            if (activeSwappedStudentId === userId) {
+                                localVideo.play().catch(e => console.log("Main video play error:", e));
+                            }
+                        };
                     }
                 };
 
-                card.appendChild(video);
-                card.appendChild(label);
-                card.appendChild(micBtn);
-                grid.appendChild(card);
-            };
-
-            pc.onicecandidate = (event) => {
-                if (event.candidate) socket.emit('signal', { target: userId, signal: { candidate: event.candidate } });
-            };
-            return pc;
-        }
+                pc.onicecandidate = (event) => {
+                    if (event.candidate) socket.emit('signal', { target: userId, signal: { candidate: event.candidate } });
+                };
+                return pc;
+            }
+        // On Teacher side where remoteStream (student stream) is handled:
+    
     </script>
 </body>
 </html>

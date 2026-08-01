@@ -1,9 +1,23 @@
 const express = require('express');
+const cors = require('cors'); // CORS ইমপোর্ট করুন
 const app = express();
 const http = require('http').createServer(app);
-const { spawn } = require('child_process'); // Required for streaming to YouTube
+const { spawn } = require('child_process');
+// server.js-এ এই রুটটি যুক্ত করুন
+const path = require('path');
+
+app.get('/get-html-page', (req, res) => {
+    // public ফোল্ডারে থাকা index.html ফাইলটি পাঠাবে
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+// Express-এর জন্য CORS এনাবল করুন
+app.use(cors({ origin: "*" }));
+
 const io = require('socket.io')(http, {
-    cors: { origin: "*" },
+    cors: { 
+        origin: "*", // যেকোনো ডোমেইন থেকে এক্সেস এলাউ করবে
+        methods: ["GET", "POST"]
+    },
     maxHttpBufferSize: 1e7 // 10MB Limit
 });
 
@@ -11,7 +25,7 @@ app.use(express.static('public'));
 
 const roomTeachers = {};
 const roomChatState = {}; 
-const activeStreams = {}; // Tracks active FFmpeg processes per room
+const activeStreams = {};
 
 io.on('connection', (socket) => {
     
@@ -41,10 +55,7 @@ io.on('connection', (socket) => {
             }
         }
 
-        // Send all users to the newly joined client
         socket.emit('all-users', { users: otherUsers, teacherId: roomTeachers[roomId] });
-        
-        // Notify others and force an update of the total participant count
         io.to(roomId).emit('user-joined', { userId: socket.id, role: role, count: clients ? clients.size : 1 });
 
         socket.on('signal', (data) => {
@@ -54,18 +65,13 @@ io.on('connection', (socket) => {
             });
         });
 
-        // ==========================================
-        // 🚀 NEW: Android Native Screen Sharing Channel
-        // ==========================================
         socket.on('screenDataChunk', (chunk) => {
             const currentRoom = socket.roomId;
             if (socket.role === 'teacher' && currentRoom) {
-                // App theke asha raw byte chunk shorashori room-er student-der kache broadcast hobe
                 socket.to(currentRoom).emit('streamToStudent', chunk);
             }
         });
 
-        // --- YouTube Livestream Event Channels ---
         socket.on('start-youtube-stream', ({ streamKey }) => {
             if (socket.role !== 'teacher') return;
             const currentRoom = socket.roomId;
@@ -76,20 +82,19 @@ io.on('connection', (socket) => {
 
             const youtubeUrl = `rtmp://a.rtmp.youtube.com/live2/${streamKey}`;
             
-            // Spawn FFmpeg to convert incoming WebM chunks into a standard RTMP FLV format for YouTube
             const ffmpeg = spawn('ffmpeg', [
-                '-i', '-',                // Read input from standard input (stdin)
-                '-c:v', 'libx264',        // Encode video to H.264
-                '-preset', 'veryfast',    // Encoding speed profile
-                '-b:v', '2500k',          // Target video bitrate
+                '-i', '-',
+                '-c:v', 'libx264',
+                '-preset', 'veryfast',
+                '-b:v', '2500k',
                 '-maxrate', '2500k',
                 '-bufsize', '5000k',
-                '-pix_fmt', 'yuv420p',    // Color space requirement for modern video players
-                '-g', '50',               // Keyframe interval (2-second interval at 25fps)
-                '-c:a', 'aac',            // Encode audio to AAC
-                '-b:a', '128k',           // Audio bitrate
-                '-ar', '44100',           // Audio sample rate
-                '-f', 'flv',              // YouTube accepts FLV over RTMP
+                '-pix_fmt', 'yuv420p',
+                '-g', '50',
+                '-c:a', 'aac',
+                '-b:a', '128k',
+                '-ar', '44100',
+                '-f', 'flv',
                 youtubeUrl
             ]);
 
@@ -112,9 +117,9 @@ io.on('connection', (socket) => {
                 activeStreams[currentRoom].stdin.write(chunk);
             }
         });
+
         socket.on('teacher-screen-chunk', (chunk) => {
             const currentRoom = socket.roomId;
-            // রুমে থাকা সব স্টুডেন্টদের কাছে স্ক্রিনের ভিডিও চাঙ্ক পাঠিয়ে দিন
             socket.to(currentRoom).emit('incoming-teacher-screen', chunk);
         });
 
@@ -127,7 +132,6 @@ io.on('connection', (socket) => {
             }
         });
 
-        // --- Realtime Whiteboard Draw Transmission ---
         socket.on('draw-data', (data) => {
             const currentRoom = socket.roomId;
             socket.to(currentRoom).emit('incoming-draw', data);
@@ -194,9 +198,8 @@ io.on('connection', (socket) => {
             socket.to(currentRoom).emit('allowed-to-talk');
             socket.emit('all-students-unmuted-ui');
         });
-        // টিচার কোনো নির্দিষ্ট স্টুডেন্টের ক্যামেরা সুইচ করতে চাইলে
+
         socket.on('switch-student-camera', ({ targetStudentId }) => {
-            // শুধু ওই নির্দিষ্ট স্টুডেন্টের কাছে মেসেজ পাঠানো হচ্ছে
             io.to(targetStudentId).emit('request-camera-switch');
         });
 
@@ -220,6 +223,8 @@ io.on('connection', (socket) => {
     });
 });
 
-http.listen(3000, () => {
-    console.log('Server runs on http://localhost:3000');
+// Port Handling for Render
+const PORT = process.env.PORT || 3000;
+http.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });

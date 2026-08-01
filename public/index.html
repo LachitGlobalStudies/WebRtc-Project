@@ -173,7 +173,7 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        let currentCamFacingMode = "user"; // "user" = Front camera, "environment" = Back camera
+       let currentFacingMode = 'user'; // ডিফল্ট ক্যামেরা 'user' (Front Camera)
         let localStream;
         let teacherPc;
         const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19020' }] };
@@ -421,61 +421,67 @@
       
 
         // সার্ভার থেকে ক্যামেরা সুইচের নির্দেশ পেলে
-        socket.on('request-camera-switch', async () => {
-            try {
-                console.log("Teacher requested camera switch...");
 
-                // ১. আগে আগের রানিং ভিডিও ট্র্যাকটি বন্ধ করুন (Hardware release)
-                if (localStream) {
-                    const oldVideoTrack = localStream.getVideoTracks()[0];
-                    if (oldVideoTrack) {
-                        oldVideoTrack.stop();
+    // সার্ভার থেকে ক্যামেরা সুইচের নির্দেশ পেলে
+            socket.on('request-camera-switch', async () => {
+                try {
+                    console.log("Teacher requested camera switch...");
+
+                    // ১. ক্যামেরা মোড টগল করা (user <-> environment)
+                    currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+
+                    // ২. নতুন ক্যামেরা মোড অনুযায়ী নতুন ভিডিও স্ট্রিম নেওয়া (অডিও ছাড়া)
+                    const newStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: currentFacingMode },
+                        audio: false 
+                    });
+
+                    const newVideoTrack = newStream.getVideoTracks()[0];
+
+                    // ৩. আগে স্টুডেন্টের লোকাল প্রিভিউ আপডেট করা
+                    const localVideoElement = document.getElementById('localVideo');
+                    if (localVideoElement) {
+                        localVideoElement.srcObject = newStream;
+                        // ফ্রন্ট ক্যামেরা হলে মিরর করা, ব্যাক ক্যামেরা হলে স্বাভাবিক রাখা
+                        if (currentFacingMode === 'user') {
+                            localVideoElement.style.transform = 'scaleX(-1)';
+                        } else {
+                            localVideoElement.style.transform = 'scaleX(1)';
+                        }
                     }
-                }
 
-                // ২. ক্যামেরা মোড ফ্রন্ট থেকে ব্যাক বা ব্যাক থেকে ফ্রন্ট করা
-                currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
-
-                // ৩. শুধুমাত্র নতুন ভিডিও স্ট্রিম নিন (audio: false রাখা নিরাপদ)
-                const newStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: currentFacingMode }, // exact তুলে দেওয়া হয়েছে
-                    audio: false 
-                });
-
-                const newVideoTrack = newStream.getVideoTracks()[0];
-
-                // ৪. WebRTC-এর সাহায্যে পুরানো ভিডিও ট্র‍্যাক পরিবর্তন করা
-                if (peerConnection) {
-                    const senders = peerConnection.getSenders();
-                    const videoSender = senders.find(s => s.track && s.track.kind === 'video');
-                    if (videoSender) {
-                        await videoSender.replaceTrack(newVideoTrack);
-                        console.log("WebRTC Video Track successfully replaced!");
+                    // ৪. অতি গুরুত্বপূর্ণ: টিচারের সাথে কানেকশনে (teacherPc) ট্র্যাক রিপ্লেস করা
+                    if (teacherPc) {
+                        const senders = teacherPc.getSenders();
+                        // ভিডিও সেন্ডার খুঁজে বের করা
+                        const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+                        
+                        if (videoSender) {
+                            // নতুন ট্র্যাক দিয়ে পুরাতনটি রিপ্লেস করা (renegotiation ছাড়া)
+                            await videoSender.replaceTrack(newVideoTrack);
+                            console.log("Teacher connection video track successfully replaced!");
+                        }
                     }
-                }
 
-                // ৫. localStream আপডেট করুন এবং স্টুডেন্টের নিজের HTML `<video>` ট্যাগে আপডেট দেখুন
-                if (localStream) {
-                    // আগের ভিডিও ট্র্যাক রিমুভ করে নতুনটা যোগ করা
-                    const oldTrack = localStream.getVideoTracks()[0];
-                    if (oldTrack) localStream.removeTrack(oldTrack);
-                    localStream.addTrack(newVideoTrack);
-                } else {
-                    localStream = newStream;
-                }
+                    // ৫. পুরাতন ভিডিও ট্র্যাক হার্ডওয়্যার লেভেলে বন্ধ করা (নতুন স্ট্রিম চালু হওয়ার পর)
+                    if (localStream) {
+                        const oldVideoTrack = localStream.getVideoTracks()[0];
+                        if (oldVideoTrack) {
+                            oldVideoTrack.stop();
+                        }
+                        
+                        // localStream অবজেক্টে নতুন ট্র্যাক যোগ করে আপডেট রাখা (ভবিষ্যতের রেফারেন্সের জন্য)
+                        localStream.removeTrack(oldVideoTrack);
+                        localStream.addTrack(newVideoTrack);
+                    }
 
-                // স্টুডেন্টের নিজের লোকাল ভিডিও প্লেয়ার রিফ্রেশ করা (যদি থাকে)
-                const localVideoElement = document.getElementById('localVideo'); // আপনার লোকাল ভিডিও ট্যাগের ID
-                if (localVideoElement) {
-                    localVideoElement.srcObject = localStream;
+                } catch (err) {
+                    console.error("Camera switch error:", err);
+                    alert("Camera switch failed: " + err.message);
+                    // এরর হলে মোড আগের অবস্থায় ফিরিয়ে নেওয়া
+                    currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
                 }
-
-            } catch (err) {
-                console.error("Camera switch error:", err);
-                alert("Camera switch failed: " + err.message);
-            }
-        });
-       
+            });
         socket.on('allowed-to-talk', () => {
             if(localStream && localStream.getAudioTracks().length > 0) {
                 localStream.getAudioTracks()[0].enabled = true; 
@@ -507,6 +513,7 @@
             // ৩ সেকেন্ড (৩০০০ মিলিসেকেন্ড) পর নোটিফিকেশনটি হাইড বা গায়েব করার জন্য
             setTimeout(() => {
                 statusLabel.style.display = 'none';
+                raiseBtn.style.display='none';
             }, 3000);
         });
 
