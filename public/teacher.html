@@ -462,6 +462,18 @@
             margin-bottom: 0;
         }
     }
+
+    .meeting-container:fullscreen {
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+    }
+
+    .meeting-container:-webkit-full-screen {
+        width: 100vw;
+        height: 100vh;
+        background: #000;
+    }
 </style>
 </head>
 <body>
@@ -535,6 +547,36 @@
         const masterChatBtn = document.getElementById('masterChatBtn');
         const participantCounter = document.getElementById('participantCounter');
         const localVideo = document.getElementById('localVideo');
+        const meetingContainer = document.querySelector(".meeting-container");
+
+                // Toggle fullscreen
+        function toggleMeetingFullscreen() {
+            if (!document.fullscreenElement) {
+                meetingContainer.requestFullscreen().catch(err => {
+                    console.error("Fullscreen failed:", err);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        // Desktop - double click
+        localVideo.addEventListener("dblclick", toggleMeetingFullscreen);
+
+        // Mobile - double tap
+        let lastTap = 0;
+
+        localVideo.addEventListener("touchend", function (e) {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+
+            if (tapLength < 300 && tapLength > 0) {
+                e.preventDefault();
+                toggleMeetingFullscreen();
+            }
+
+            lastTap = currentTime;
+        });
 
         // Function to dynamically update live attendee counter text markup
         function updateCountUI(count) {
