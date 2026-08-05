@@ -17,51 +17,150 @@
         overflow: hidden; 
     }
 
-    /* Tools Bar & Controls */
+    /* ===========================
+       Welcome Screen Fixed
+    =========================== */
+    .welcome-container {
+        position: fixed;
+        inset: 0;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: linear-gradient(135deg, #0f172a, #1e3a8a, #2563eb);
+        z-index: 999999;
+        transition: 0.4s ease;
+    }
+
+    .welcome-container.hide {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+    }
+
+    .welcome-card {
+        width: 90%;
+        max-width: 480px;
+        padding: 45px 35px;
+        text-align: center;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, .12);
+        backdrop-filter: blur(18px);
+        border: 1px solid rgba(255, 255, 255, .18);
+        box-shadow: 0 20px 45px rgba(0, 0, 0, .4);
+        color: #fff;
+        animation: cardPop .5s ease;
+    }
+
+    .welcome-icon {
+        font-size: 60px;
+        margin-bottom: 15px;
+    }
+
+    .welcome-card h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 400;
+    }
+
+    .welcome-card h2 {
+        margin: 10px 0;
+        font-size: 34px;
+        color: #fff;
+        font-weight: 700;
+    }
+
+    .welcome-card p {
+        color: #dbeafe;
+        margin: 20px 0 30px;
+        line-height: 1.6;
+    }
+
+    .welcome-card .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .welcome-card .controls input {
+        padding: 15px;
+        border: none;
+        border-radius: 12px;
+        font-size: 16px;
+        outline: none;
+        width: 100%;
+        color: #000;
+    }
+
+    .welcome-card .controls button {
+        padding: 15px;
+        border: none;
+        border-radius: 12px;
+        background: #22c55e;
+        color: #fff;
+        font-size: 16px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: .3s;
+        width: 100%;
+    }
+
+    .welcome-card .controls button:hover {
+        background: #16a34a;
+        transform: translateY(-2px);
+    }
+
+    /* Tools Bar & Equal-Sized Controls */
     .tools-bar { 
-        padding: 15px; 
-        text-align: center; 
+        padding: 10px; 
         background: #1a1c20; 
         border-bottom: 1px solid #2a2d32; 
         position: relative; 
         flex-shrink: 0;
     }
     
-    .controls button { 
-        padding: 5px 10px; 
-        font-size: 14px; 
+    /* বাটনগুলোকে একই সাইজে আনার CSS Grid */
+    .sidebar .controls {
+        display: grid;
+        grid-template-columns: 1fr; /* একটির নিচে একটি সমান উইডথে বসবে */
+        gap: 8px;
+        width: 100%;
+    }
+
+    .sidebar .controls button { 
+        width: 100%;
+        height: 42px; /* সবকটি বাটনের উচ্চতা সমান */
+        padding: 0 10px; 
+        font-size: 13px; 
         border: none; 
         border-radius: 6px; 
         background: #2ea44f; 
         color: white; 
         cursor: pointer; 
         font-weight: bold; 
-        margin: 5px; 
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        box-sizing: border-box;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
     
     #shareBtn { background: #007fff; }
     #muteAllBtn { background: #ea4335; }
     #unmuteAllBtn { background: #2ea44f; }
     #youtubeStreamBtn { background: #ff0000; color: white; }
-    
-    .master-chat-btn { 
-        position: absolute; 
-        right: 20px; 
-        top: 22px; 
-        padding: 10px 15px; 
-        background: #ff9800; 
-        color: #000; 
-        border: none; 
-        font-weight: bold; 
-        border-radius: 6px; 
-        cursor: pointer; 
-    }
+    #masterChatBtn { background: #ff9800; color: #000; }
 
     /* Meeting Layout & Sidebar */
     .meeting-container { 
         display: flex; 
         flex: 1; 
-        height: calc(100vh - 140px); 
+        height: 100vh; 
         overflow: hidden; 
         position: relative; 
     }
@@ -83,7 +182,7 @@
     .sidebar::-webkit-scrollbar-thumb { background: #90f169; border-radius: 4px; }
     .sidebar::-webkit-scrollbar-track { background: #ffffff; }
 
-   /* Student Grid Structure Fix */
+    /* Student Grid Structure Fix */
     .studentgrid { 
         flex: 1; 
         overflow-y: auto; 
@@ -161,7 +260,6 @@
         z-index: 10;
     }
 
-    /* Swapped Card Outline */
     .student-card.swapped-teacher {
         border-color: #ff9800;
     }
@@ -229,17 +327,6 @@
     }
         
     .mirror { transform: scaleX(-1); }
-    
-    .role-label { 
-        position: absolute; 
-        top: 35px; 
-        left: 45px; 
-        background: #2ea44f; 
-        padding: 5px 12px; 
-        font-weight: bold; 
-        border-radius: 6px; 
-        z-index: 10; 
-    }
 
     /* Floating Chat Panel Overlay */
     .chat-panel { 
@@ -282,7 +369,7 @@
     .file-label { display: inline-block; background: #444; text-align: center; padding: 5px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; }
     .file-link { color: #ff9800; text-decoration: underline; display: block; font-weight: bold; margin-top: 4px; }
 
-    /* Mobile & Landscape Responsive Styles */
+    /* Responsive Styles (Mobile & Small Screens) */
     @media screen and (max-width: 768px) {
         body { height: 100vh; overflow: auto; }
         
@@ -293,211 +380,93 @@
 
         .sidebar {
             display: flex;
-            flex-direction: row;
+            flex-direction: column;
             width: 100%;
-            height: 250px;
+            height: auto;
+            max-height: 300px;
             box-sizing: border-box;
             overflow: hidden;
         }
-        .sidebar::-webkit-scrollbar { width: 6px; }
-        .sidebar::-webkit-scrollbar-thumb { background: #90f169; border-radius: 4px; }
-        .sidebar::-webkit-scrollbar-track { background: #ffffff; }
-        .tools-bar {
-            width: 40%;
-            height: 100%;
-            box-sizing: border-box;
-            overflow: hidden;
-            display: flex;
-        }
 
-        .controls {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            height: 100%;
-            overflow-x: auto;
-            overflow-y: hidden;
-            white-space: nowrap;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-        .controls::-webkit-scrollbar { width: 6px; }
-        .controls::-webkit-scrollbar-thumb { background: #90f169; border-radius: 4px; }
-        .controls::-webkit-scrollbar-track { background: #ffffff; }
-        .controls button {
-            flex: 0 0 auto;
-        }
-
-        .counter-header {
-            width: 20%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding: 10px;
-            box-sizing: border-box;
-            flex-shrink: 0;
+        .sidebar .controls {
+            grid-template-columns: repeat(2, 1fr); /* মোবাইলে পাশাপাশি ২টি করে সমান বাটন বসবে */
         }
 
         .studentgrid {
-            width: 40%;
+            width: 100%;
             height: 100%;
             display: flex;
             flex-direction: row;
             align-items: center;
             gap: 10px;
             overflow-x: auto;
-            overflow-y: hidden;
             white-space: nowrap;
-            padding: 10px;
-            box-sizing: border-box;
+            padding: 10px 0;
         }
-
-        .controls::-webkit-scrollbar,
-        .studentgrid::-webkit-scrollbar {
-            height: 6px;
-        }
-
-        .controls::-webkit-scrollbar-thumb,
-        .studentgrid::-webkit-scrollbar { width: 8px; }
-        .studentgrid::-webkit-scrollbar-thumb { background: #90fc82; border-radius: 10px; }
-        .studentgrid::-webkit-scrollbar-track { background: #ffffff; }
 
         .student-card {
             min-width: 130px;
             width: 90%;
             flex-shrink: 0;
-            margin-bottom: 0;
         }
 
         .main-display {
             width: 100%;
-            height: calc(100vh - 250px);
+            height: calc(100vh - 300px);
             min-height: 300px;
-        }
-
-        .chat-panel.open {
-            width: 90% !important;
-            max-width: 90% !important;
-            height: 350px !important;
-            right: 5% !important;
-            bottom: 20px !important;
-        }
-    }
-
-    @media screen and (max-height: 600px) and (orientation: landscape) {
-        .meeting-container {
-            flex-direction: row;
-            height: calc(100vh - 70px);
-        }
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            width: 250px;
-            height: 100%;
-            box-sizing: border-box;
-            overflow: hidden;
-         }
-        .sidebar::-webkit-scrollbar { width: 6px; }
-        .sidebar::-webkit-scrollbar-thumb { background: #90f169; border-radius: 4px; }
-        .sidebar::-webkit-scrollbar-track { background: #ffffff; }
-        .tools-bar {
-            width: 100%;
-            height: 40%;
-            box-sizing: border-box;
-            overflow: hidden;
-            display: flex;
-        }
-
-        .controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            width: 100%;
-            height: 100%;
-            overflow-x: hidden;
-            overflow-y: auto;
-            white-space: nowrap;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-
-        .controls button {
-            flex: 0 0 auto;
-        }
-        
-        .studentgrid {
-            width: 100%;
-            height: 40%;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            overflow-x: hidden;
-            overflow-y: auto;
-            white-space: nowrap;
-            padding: 10px;
-            box-sizing: border-box;
-        }
-
-        .controls::-webkit-scrollbar,
-        .studentgrid::-webkit-scrollbar { width: 8px; }
-        .studentgrid::-webkit-scrollbar-thumb { background: #90fc82; border-radius: 10px; }
-        .studentgrid::-webkit-scrollbar-track { background: #ffffff; }
-
-        .controls::-webkit-scrollbar-thumb,
-        .studentgrid::-webkit-scrollbar-thumb {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 3px;
-        }
-
-        .student-card {
-            min-width: 130px;
-            width: 100%;
-            flex-shrink: 0;
-            margin-bottom: 0;
         }
     }
 </style>
 </head>
 <body>
 
-    <div class="meeting-container">
+    <!-- 1. Welcome Container -->
+    <div class="welcome-container" id="welcomeScreen">
+        <div class="welcome-card">
+            <div class="welcome-icon">🎓</div>
+            <h1>Welcome to</h1>
+            <h2>Lachit Global Studies</h2>
+            <p>Create your live class and start teaching with your students in real time.</p>
+            <div class="controls">
+                <input type="text" id="customRoomIdInput" placeholder="Create Room ID" style="text-align: center;">
+                <button id="createBtn">Create Class </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. Main Meeting Layout -->
+    <div class="meeting-container" id="meetingContainer" style="display: none;">
         <div class="sidebar">
             <div class="tools-bar">
+                <!-- Controls Grid Section -->
                 <div class="controls">
-                    <input type="text" id="customRoomIdInput" placeholder="Enter your Room ID" style="padding: 8px; margin: 5px; border-radius: 4px; border: 1px solid #444; background: #222; color: #fff;">
-                    <button id="createBtn">Start & Create Classroom</button>
                     <button id="shareBtn" style="display: none;">Share Screen 🖥️</button>
-                    <button id="youtubeStreamBtn" style="display: none;">Stream to YouTube 🎥</button>
-                    <button id="muteAllBtn" style="display: none;">Mute All Students 🎙️❌</button>
-                    <button id="unmuteAllBtn" style="display: none;">Unmute All Students 🎙️✅</button>
-                    <button id="masterChatBtn" style="display: none;">Open Chat Board 💬</button>
+                    <button id="youtubeStreamBtn" style="display: none;">Stream YouTube 🎥</button>
+                    <button id="muteAllBtn" style="display: none;">Mute All 🎙️❌</button>
+                    <button id="unmuteAllBtn" style="display: none;">Unmute All 🎙️✅</button>
+                    <button id="masterChatBtn" style="display: none;">Chat Board 💬</button>
                 </div>
             </div>
-
             <div class="studentgrid" id="studentGrid"></div>
         </div>
+
+    <!-- Main Video Display -->
+    <div class="main-display" id="mainArea">
+        <div id="participantCounter" class="counter-header">0</div>
+        <video id="localVideo" autoplay playsinline class="mirror" muted="1"></video>
         
-        <div class="main-display" id="mainArea">
-            <!-- Participant Count Header Badge -->
-            <div id="participantCounter" class="counter-header">0</div>
-
-            <video id="localVideo" autoplay playsinline class="mirror"></video>
-            
-            <!-- teacher and selected student camera switch buttons -->
-            <div class="cam-controls-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 10px; z-index: 50;">
-                <button id="camSwitchBtn" class="cam-switch-btn" style="display: none;">📷 My Camera</button>
-                <button id="studentCamSwitchBtn" class="cam-switch-btn" style="display: none; background: #ff9800; color: #000;">📷 Student's Camera</button>
-            </div>
-
-            <div id="mainDisplayLabel" class="main-display-label" style="display: none;">Teacher (You)</div>
+        <!-- Updated Overlay Controls -->
+        <div class="cam-controls-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 50;">
+            <button id="toggleAudioBtn" class="cam-switch-btn" style="display: none;">🎙️ Mute Audio</button>
+            <button id="toggleVideoBtn" class="cam-switch-btn" style="display: none;">📹 Turn Off Video</button>
+            <button id="camSwitchBtn" class="cam-switch-btn" style="display: none;">📷 My Camera</button>
+            <button id="studentCamSwitchBtn" class="cam-switch-btn" style="display: none; background: #ff9800; color: #000;">📷 Student's Camera</button>
         </div>
 
+        <div id="mainDisplayLabel" class="main-display-label" style="display: none;">Teacher (You)</div>
+    </div>
+
+        <!-- Floating Chat Panel -->
         <div class="chat-panel" id="chatPanel">
             <div class="chat-header">Classroom Sync Chat (Live)</div>
             <div class="chat-messages" id="chatWindow"></div>
@@ -523,11 +492,13 @@
         let isScreenSharing = false;
         let isLiveStreaming = false;
         let isChatPanelOpen = false;
+        let overlayTimeout;
         const peerConnections = {};
         const studentMicStatus = {}; 
         const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19020' }] };
-        let currentCamFacingMode = "user"; // "user" (front) or "environment" (back)
-        let activeSwappedStudentId = null; // null = Teacher is in main display
+        let currentCamFacingMode = "user";
+        let activeSwappedStudentId = null;
+        
         const studentCamSwitchBtn = document.getElementById('studentCamSwitchBtn');
         const camSwitchBtn = document.getElementById('camSwitchBtn');
         const mainDisplayLabel = document.getElementById('mainDisplayLabel');
@@ -535,8 +506,88 @@
         const masterChatBtn = document.getElementById('masterChatBtn');
         const participantCounter = document.getElementById('participantCounter');
         const localVideo = document.getElementById('localVideo');
+        const meetingContainer = document.getElementById('meetingContainer');
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const toggleAudioBtn = document.getElementById('toggleAudioBtn');
+        const toggleVideoBtn = document.getElementById('toggleVideoBtn');
+        let isAudioMuted = false;
+        let isVideoStopped = false;
 
-        // Function to dynamically update live attendee counter text markup
+        function toggleMeetingFullscreen() {
+            if (!document.fullscreenElement) {
+                meetingContainer.requestFullscreen().catch(err => {
+                    console.error("Fullscreen failed:", err);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        }
+
+        let touchTimer = null;
+
+        // Desktop / Mouse Click Handling
+        localVideo.addEventListener("click", function (e) {
+            if (touchTimer === null) {
+                touchTimer = setTimeout(() => {
+                    touchTimer = null;
+                    // Single Click Event: Toggle Overlay
+                    const overlayControls = document.querySelector('.cam-controls-overlay');
+                    if (overlayControls.style.display === 'none' || overlayControls.style.display === '') {
+                        showOverlayControls();
+                    } else {
+                        overlayControls.style.display = 'none';
+                        clearTimeout(overlayTimeout);
+                    }
+                }, 300); // 300ms ওয়েট করবে ডাবল ক্লিক নিশ্চিত করতে
+            }
+        });
+
+        localVideo.addEventListener("dblclick", function (e) {
+            clearTimeout(touchTimer);
+            touchTimer = null;
+            // Double Click Event: Toggle Fullscreen
+            toggleMeetingFullscreen();
+        });
+
+        // Mobile Touch Handling
+        let lastTapTime = 0;
+        localVideo.addEventListener("touchend", function (e) {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
+            
+            if (tapLength < 300 && tapLength > 0) {
+                // Double Tap: Fullscreen Toggle
+                e.preventDefault();
+                clearTimeout(touchTimer);
+                touchTimer = null;
+                toggleMeetingFullscreen();
+            } else {
+                // Single Tap: Show Overlay Controls
+                touchTimer = setTimeout(() => {
+                    touchTimer = null;
+                    const overlayControls = document.querySelector('.cam-controls-overlay');
+                    if (overlayControls.style.display === 'none' || overlayControls.style.display === '') {
+                        showOverlayControls();
+                    } else {
+                        overlayControls.style.display = 'none';
+                        clearTimeout(overlayTimeout);
+                    }
+                }, 300);
+            }
+            lastTapTime = currentTime;
+        });
+
+        let lastTap = 0;
+        localVideo.addEventListener("touchend", function (e) {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTap;
+            if (tapLength < 300 && tapLength > 0) {
+                e.preventDefault();
+                toggleMeetingFullscreen();
+            }
+            lastTap = currentTime;
+        });
+
         function updateCountUI(count) {
             if(count !== undefined && participantCounter) {
                 participantCounter.innerText = count;
@@ -544,7 +595,6 @@
             }
         }
 
-        // Helper function to generate a Dummy Video Stream if camera is unavailable
         function createDummyStream() {
             const canvas = document.createElement('canvas');
             canvas.width = 640;
@@ -555,15 +605,12 @@
             function draw() {
                 ctx.fillStyle = '#1e1e1e';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
                 ctx.fillStyle = '#2ea44f';
                 ctx.font = '24px Arial';
                 ctx.fillText('Virtual Classroom - Dummy Camera Active', 50, 100);
-                
                 ctx.fillStyle = '#007fff';
                 ctx.fillRect(x, 200, 100, 100);
                 x = (x + 2) % canvas.width;
-                
                 requestAnimationFrame(draw);
             }
             draw();
@@ -574,19 +621,65 @@
         masterChatBtn.onclick = () => {
             if (!isChatPanelOpen) {
                 chatPanel.classList.add('open');
-                masterChatBtn.innerText = "Close Chat Board ✖";
+                masterChatBtn.innerText = "Close Chat ✖";
                 masterChatBtn.style.background = "#ea4335";
                 isChatPanelOpen = true;
                 socket.emit('toggle-room-chat', { open: true }); 
             } else {
                 chatPanel.classList.remove('open');
-                masterChatBtn.innerText = "Open Chat Board 💬";
+                masterChatBtn.innerText = "Chat Board 💬";
                 masterChatBtn.style.background = "#ff9800";
                 isChatPanelOpen = false;
                 socket.emit('toggle-room-chat', { open: false }); 
             }
         };
+        // Mute/Unmute Teacher Microphone
+        toggleAudioBtn.onclick = () => {
+            if (!localStream) return;
+            
+            const audioTracks = localStream.getAudioTracks();
+            if (audioTracks.length === 0) return;
 
+            isAudioMuted = !isAudioMuted;
+            
+            // Enable/Disable local audio tracks
+            audioTracks.forEach(track => {
+                track.enabled = !isAudioMuted;
+            });
+
+            // Update UI
+            if (isAudioMuted) {
+                toggleAudioBtn.innerText = "🔇 Unmute Audio";
+                toggleAudioBtn.style.background = "rgba(234, 67, 53, 0.85)"; // Red background
+            } else {
+                toggleAudioBtn.innerText = "🎙️ Mute Audio";
+                toggleAudioBtn.style.background = "rgba(0, 0, 0, 0.7)";
+            }
+        };
+
+        // Turn On/Off Teacher Video
+        toggleVideoBtn.onclick = () => {
+            if (!localStream) return;
+
+            const videoTracks = localStream.getVideoTracks();
+            if (videoTracks.length === 0) return;
+
+            isVideoStopped = !isVideoStopped;
+
+            // Enable/Disable local video tracks
+            videoTracks.forEach(track => {
+                track.enabled = !isVideoStopped;
+            });
+
+            // Update UI
+            if (isVideoStopped) {
+                toggleVideoBtn.innerText = "📷 Turn On Video";
+                toggleVideoBtn.style.background = "rgba(234, 67, 53, 0.85)"; // Red background
+            } else {
+                toggleVideoBtn.innerText = "📹 Turn Off Video";
+                toggleVideoBtn.style.background = "rgba(0, 0, 0, 0.7)";
+            }
+        };
         document.getElementById('createBtn').onclick = async function() {
             const customInput = document.getElementById('customRoomIdInput');
             const roomId = customInput ? customInput.value.trim() : "";
@@ -620,62 +713,67 @@
             if(!linkDisplay) {
                 linkDisplay = document.createElement('div');
                 linkDisplay.id = 'shareLinkDisplay';
-                linkDisplay.style.cssText = "margin-top: 10px; display: flex; flex-direction: row; align-items: center; gap: 5px;";
+                linkDisplay.style.cssText = "width: 100%; margin-top: 5px;";
                 document.querySelector('.sidebar .tools-bar .controls').appendChild(linkDisplay);
             }
 
             linkDisplay.innerHTML = `
-                <input type="text" id="copyLinkInput" value="${joinLink}" readonly style="display:none;width: 40%; padding: 4px; font-size: 11px; background: #111; color: #fff; border: 1px solid #444; border-radius: 4px; text-align: center;">
-                <button id="copyLinkBtn" style="padding: 10px 20px;font-size: 14px; border: none; border-radius: 6px; background: #2ea44f; color: white; cursor: pointer; font-weight: bold; margin: 5px;">📤 Share Join Link</button>
+                <input type="text" id="copyLinkInput" value="${joinLink}" readonly style="display:none;">
+                <button id="copyLinkBtn" style="width: 100%; height: 42px; background: #2ea44f; color: white; font-weight: bold; border-radius: 6px; border: none; cursor: pointer;">📤 Share Join Link</button>
             `;
 
-           document.getElementById('copyLinkBtn').onclick = async () => {
-            const link = document.getElementById('copyLinkInput').value;
+            document.getElementById('copyLinkBtn').onclick = async () => {
+                const link = document.getElementById('copyLinkInput').value;
 
-            if (navigator.share) {
-                try {
-                    await navigator.share({
-                        title: "LGS Live Tuition",
-                        text: "Join my live class",
-                        url: link
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: "LGS Live Tuition",
+                            text: "Join my live class",
+                            url: link
+                        });
+                        document.getElementById('copyLinkBtn').innerText = "✅ Shared!";
+                        setTimeout(() => {
+                            document.getElementById('copyLinkBtn').innerText = "📤 Share Join Link";
+                        }, 2000);
+                    } catch (err) {
+                        console.log("Share cancelled");
+                    }
+                } else {
+                    navigator.clipboard.writeText(link).then(() => {
+                        alert("Sharing is not supported on this device.\nLink copied instead.");
                     });
-
-                    document.getElementById('copyLinkBtn').innerText = "✅ Shared!";
-                    setTimeout(() => {
-                        document.getElementById('copyLinkBtn').innerText = "📤 Share Join Link";
-                    }, 2000);
-
-                } catch (err) {
-                    console.log("Share cancelled");
                 }
-            } else {
-                // Fallback: Copy Link
-                navigator.clipboard.writeText(link).then(() => {
-                    alert("Sharing is not supported on this device.\nLink copied instead.");
-                });
-            }
-        };
+            };
             
             socket.emit('join-room', { roomId, role: 'teacher' });
-            this.style.display = 'none';
-            if(customInput) customInput.style.display = 'none';
-            document.getElementById('shareBtn').style.display = 'inline-block';
-            document.getElementById('youtubeStreamBtn').style.display = 'inline-block';
-            document.getElementById('muteAllBtn').style.display = 'inline-block';
-            document.getElementById('unmuteAllBtn').style.display = 'inline-block';
-            masterChatBtn.style.display = 'inline-block';
+
+            welcomeScreen.classList.add('hide');
+            setTimeout(() => { welcomeScreen.style.display = 'none'; }, 400);
+            meetingContainer.style.display = 'flex';
+
+            document.getElementById('shareBtn').style.display = 'flex';
+            document.getElementById('youtubeStreamBtn').style.display = 'flex';
+            document.getElementById('muteAllBtn').style.display = 'flex';
+            document.getElementById('unmuteAllBtn').style.display = 'flex';
+            // Inside createBtn.onclick function (around line 370-380):
+            toggleAudioBtn.style.display = 'flex';
+            toggleVideoBtn.style.display = 'flex';
+            camSwitchBtn.style.display = 'flex';
+            masterChatBtn.style.display = 'flex';
             if(participantCounter) participantCounter.style.display = 'flex';
-            camSwitchBtn.style.display = 'inline-block'; 
+            camSwitchBtn.style.display = 'flex'; 
             studentCamSwitchBtn.style.display = 'none';   
-            mainDisplayLabel.style.display = 'block';      
+            mainDisplayLabel.style.display = 'block';  
+             socket.emit('join-room', { roomId, role: 'student' });
+            // প্রথমবার মিটিং তৈরি হলে Overlay দেখাবে এবং ৮ সেকেন্ড পর auto-hide হবে
+            resetOverlayTimeout();  
         };
 
-        // --- YouTube Streaming Logic ---
         document.getElementById('youtubeStreamBtn').onclick = function() {
             if (!isLiveStreaming) {
                 const streamKey = prompt("Please enter your YouTube Stream Key:");
                 if (!streamKey) return alert("Stream Key is required to push media live!");
-
                 socket.emit('start-youtube-stream', { streamKey });
             } else {
                 socket.emit('stop-youtube-stream');
@@ -685,42 +783,51 @@
         socket.on('stream-started', () => {
             isLiveStreaming = true;
             const btn = document.getElementById('youtubeStreamBtn');
-            btn.innerText = "Stop YouTube Stream 🛑";
+            btn.innerText = "Stop Stream 🛑";
             btn.style.background = "#333";
 
             const trackingStream = isScreenSharing ? screenStream : localStream;
-            
             mediaRecorder = new MediaRecorder(trackingStream, {
                 mimeType: 'video/webm;codecs=vp8,opus',
                 videoBitsPerSecond: 2500000
             });
 
             mediaRecorder.ondataavailable = async (e) => {
-                if (e.data && e.data.size > 0) {
-                    socket.emit('stream-chunk', e.data);
-                }
+                if (e.data && e.data.size > 0) socket.emit('stream-chunk', e.data);
             };
-
             mediaRecorder.start(1000); 
         });
 
-        socket.on('stream-stopped', () => {
-            cleanupStreaming();
-        });
+        socket.on('stream-stopped', () => { cleanupStreaming(); });
+        socket.on('stream-error', (err) => { alert(err); cleanupStreaming(); });
+      
 
-        socket.on('stream-error', (err) => {
-            alert(err);
-            cleanupStreaming();
-        });
+        // Overlay বাটনগুলো দেখানোর এবং ৮ সেকেন্ড পর অটো-হাইড করার ফাংশন
+        function showOverlayControls() {
+            const overlayControls = document.querySelector('.cam-controls-overlay');
+            if (overlayControls) {
+                overlayControls.style.display = 'flex';
+                mainDisplayLabel.style.display='flex';
+            }
+            resetOverlayTimeout();
+        }
 
+        function resetOverlayTimeout() {
+            clearTimeout(overlayTimeout);
+            overlayTimeout = setTimeout(() => {
+                const overlayControls = document.querySelector('.cam-controls-overlay');
+                if (overlayControls) {
+                    overlayControls.style.display = 'none';
+                    mainDisplayLabel.style.display='none';
+                }
+            }, 5000); // ৮ সেকেন্ড পর হাইড হবে
+        }
         function cleanupStreaming() {
             isLiveStreaming = false;
             const btn = document.getElementById('youtubeStreamBtn');
-            btn.innerText = "Stream to YouTube 🎥";
+            btn.innerText = "Stream YouTube 🎥";
             btn.style.background = "#ff0000";
-            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
-                mediaRecorder.stop();
-            }
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
         }
 
         document.getElementById('sendMsgBtn').onclick = sendTextMessage;
@@ -730,7 +837,6 @@
             const input = document.getElementById('msgInput');
             const text = input.value.trim();
             if (!text) return;
-
             const data = { sender: 'Teacher', text: text };
             socket.emit('send-message', data);
             appendMsg(data, 'msg-me');
@@ -813,7 +919,6 @@
             }
         };
 
-        // ১. শিক্ষকের নিজের ক্যামেরা সুইচ করার বাটন লজিক
         camSwitchBtn.onclick = async () => {
             currentCamFacingMode = (currentCamFacingMode === "user") ? "environment" : "user";
             try {
@@ -849,7 +954,6 @@
             }
         };
 
-        // ২. মেইন ডিসপ্লেতে থাকা নির্বাচিত স্টুডেন্টের ক্যামেরা সুইচ করার বাটন লজিক
         studentCamSwitchBtn.onclick = () => {
             if (activeSwappedStudentId) {
                 socket.emit('switch-student-camera', { targetStudentId: activeSwappedStudentId });
@@ -858,7 +962,6 @@
             }
         };
 
-        // ৩. Student to Main Display Swap Functions
         function swapStudentToMain(studentId) {
             const studentCard = document.getElementById(`card-${studentId}`);
             if (!studentCard) return;
@@ -889,7 +992,7 @@
             if(studentLabel) studentLabel.innerText = "Teacher (You)";
             mainDisplayLabel.innerText = `Student (${studentId.substring(0,4)})`;
 
-            studentCamSwitchBtn.style.display = 'inline-block';
+            studentCamSwitchBtn.style.display = 'flex';
             camSwitchBtn.style.display='none';
         }
 
@@ -916,7 +1019,7 @@
 
             activeSwappedStudentId = null;
             mainDisplayLabel.innerText = "Teacher (You)";
-            camSwitchBtn.style.display='inline-block'
+            camSwitchBtn.style.display='flex'
             studentCamSwitchBtn.style.display = 'none';
         }
 
@@ -951,7 +1054,6 @@
             }
         }
 
-        // Handle Active Room Counter sync packets
         socket.on('all-users', ({ users, count }) => {
             updateCountUI(count);
             users.forEach(user => { if (user.role === 'student') createPeerConnection(user.id); });
@@ -1037,89 +1139,81 @@
         });
 
         function createPeerConnection(userId) {
-                const pc = new RTCPeerConnection(servers);
-                peerConnections[userId] = pc;
-                studentMicStatus[userId] = 'muted'; 
-                
-                const currentStream = isScreenSharing ? screenStream : localStream;
-                if (currentStream) {
-                    currentStream.getVideoTracks().forEach(track => pc.addTrack(track, currentStream));
-                }
-                if (localStream) {
-                    localStream.getAudioTracks().forEach(track => pc.addTrack(track, localStream));
-                }
-
-                // 👇 এই pc.ontrack অংশটি আপডেট করা হয়েছে 👇
-                pc.ontrack = (event) => {
-                    let card = document.getElementById(`card-${userId}`);
-                    
-                    // ১. স্টুডেন্টের কার্ড যদি না থাকে তবে নতুন কার্ড তৈরি করবে
-                    if (!card) {
-                        const grid = document.getElementById('studentGrid');
-                        card = document.createElement('div');
-                        card.className = 'student-card';
-                        card.id = `card-${userId}`;
-                        
-                        const video = document.createElement('video');
-                        video.autoplay = true; 
-                        video.playsInline = true;
-                        video.srcObject = event.streams[0];
-
-                        const label = document.createElement('div');
-                        label.className = 'student-label';
-                        label.innerText = `Student (${userId.substring(0,4)})`;
-
-                        const micBtn = document.createElement('button');
-                        micBtn.className = 'mic-control-btn mic-off';
-                        micBtn.id = `mic-${userId}`;
-                        micBtn.innerText = "Muted 🔇";
-
-                        // Click event on card to swap video
-                        video.onclick = () => swapStudentToMain(userId);
-                        
-                        micBtn.onclick = (e) => {
-                            e.stopPropagation(); // Stop card click from triggering
-                            if (studentMicStatus[userId] === 'muted') {
-                                socket.emit('allow-student', userId);
-                            } else {
-                                socket.emit('mute-student', userId);
-                            }
-                        };
-
-                        card.appendChild(video);
-                        card.appendChild(label);
-                        card.appendChild(micBtn);
-                        grid.appendChild(card);
-                    } else {
-                        // ২. কার্ড আগেই থাকলে ভিডিও উপাদানটিতে স্ট্রিমটি আবার নিশ্চিত আপডেট করবে
-                        const video = card.querySelector('video');
-                        if (video && video.srcObject !== event.streams[0]) {
-                            video.srcObject = event.streams[0];
-                        }
-                    }
-
-                    // ৩. ক্যামেরা সুইচ করার পর যেন স্টুডেন্টের ভিডিও ফ্রিজ না হয়ে অটো প্লে হতে থাকে
-                    if (event.track) {
-                        event.track.onunmute = () => {
-                            const video = card.querySelector('video');
-                            if (video) {
-                                video.play().catch(e => console.log("Auto-play resume error:", e));
-                            }
-                            // স্টুডেন্ট যদি মেইন ডিসপ্লেতে সোয়াপ (Swap) করা থাকে
-                            if (activeSwappedStudentId === userId) {
-                                localVideo.play().catch(e => console.log("Main video play error:", e));
-                            }
-                        };
-                    }
-                };
-
-                pc.onicecandidate = (event) => {
-                    if (event.candidate) socket.emit('signal', { target: userId, signal: { candidate: event.candidate } });
-                };
-                return pc;
+            const pc = new RTCPeerConnection(servers);
+            peerConnections[userId] = pc;
+            studentMicStatus[userId] = 'muted'; 
+            
+            const currentStream = isScreenSharing ? screenStream : localStream;
+            if (currentStream) {
+                currentStream.getVideoTracks().forEach(track => pc.addTrack(track, currentStream));
             }
-        // On Teacher side where remoteStream (student stream) is handled:
-    
+            if (localStream) {
+                localStream.getAudioTracks().forEach(track => pc.addTrack(track, localStream));
+            }
+
+            pc.ontrack = (event) => {
+                let card = document.getElementById(`card-${userId}`);
+                
+                if (!card) {
+                    const grid = document.getElementById('studentGrid');
+                    card = document.createElement('div');
+                    card.className = 'student-card';
+                    card.id = `card-${userId}`;
+                    
+                    const video = document.createElement('video');
+                    video.autoplay = true; 
+                    video.playsInline = true;
+                    video.srcObject = event.streams[0];
+
+                    const label = document.createElement('div');
+                    label.className = 'student-label';
+                    label.innerText = `Student (${userId.substring(0,4)})`;
+
+                    const micBtn = document.createElement('button');
+                    micBtn.className = 'mic-control-btn mic-off';
+                    micBtn.id = `mic-${userId}`;
+                    micBtn.innerText = "Muted 🔇";
+
+                    video.onclick = () => swapStudentToMain(userId);
+                    
+                    micBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if (studentMicStatus[userId] === 'muted') {
+                            socket.emit('allow-student', userId);
+                        } else {
+                            socket.emit('mute-student', userId);
+                        }
+                    };
+
+                    card.appendChild(video);
+                    card.appendChild(label);
+                    card.appendChild(micBtn);
+                    grid.appendChild(card);
+                } else {
+                    const video = card.querySelector('video');
+                    if (video && video.srcObject !== event.streams[0]) {
+                        video.srcObject = event.streams[0];
+                    }
+                }
+
+                if (event.track) {
+                    event.track.onunmute = () => {
+                        const video = card.querySelector('video');
+                        if (video) {
+                            video.play().catch(e => console.log("Auto-play resume error:", e));
+                        }
+                        if (activeSwappedStudentId === userId) {
+                            localVideo.play().catch(e => console.log("Main video play error:", e));
+                        }
+                    };
+                }
+            };
+
+            pc.onicecandidate = (event) => {
+                if (event.candidate) socket.emit('signal', { target: userId, signal: { candidate: event.candidate } });
+            };
+            return pc;
+        }
     </script>
 </body>
 </html>

@@ -6,11 +6,108 @@
     <title>Student Panel - Virtual Classroom</title>
   <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: #111214; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .top-bar { padding: 5px; text-align: center; background: #1a1c20; border-bottom: 1px solid #2a2d32; }
-        .controls input, .controls button { padding: 3px 5px; font-size: 14px; margin: 3px; border: none; border-radius: 6px; outline: none; }
-        .controls input { background: #2a2d32; color: #fff; width: 170px; }
-        .controls button { background: #007fff; color: white; cursor: pointer; font-weight: bold; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background:linear-gradient(135deg,#0f172a,#1e3a8a,#2563eb); color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+        
+/* ===========================
+   Welcome Screen
+=========================== */
+
+.welcome-container{
+    position:absolute;
+    inset:0;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:linear-gradient(135deg,#0f172a,#1e3a8a,#2563eb);
+    z-index:999999;
+    transition:.4s ease;
+}
+
+.welcome-container.hide{
+    opacity:0;
+    visibility:hidden;
+    pointer-events:none;
+}
+
+.welcome-card{
+    width:90%;
+    max-width:480px;
+    padding:45px 35px;
+    text-align:center;
+    border-radius:20px;
+    background:rgba(255,255,255,.12);
+    backdrop-filter:blur(18px);
+    border:1px solid rgba(255,255,255,.18);
+    box-shadow:0 20px 45px rgba(0,0,0,.4);
+    color:#fff;
+    animation:cardPop .5s ease;
+}
+
+.welcome-icon{
+    font-size:60px;
+    margin-bottom:15px;
+}
+
+.welcome-card h1{
+    margin:0;
+    font-size:22px;
+    font-weight:400;
+}
+
+.welcome-card h2{
+    margin:10px 0;
+    font-size:34px;
+    color:#fff;
+    font-weight:700;
+}
+
+.welcome-card p{
+    color:#dbeafe;
+    margin:20px 0 30px;
+    line-height:1.6;
+}
+
+.controls{
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+}
+
+.controls input{
+    padding:15px;
+    border:none;
+    border-radius:12px;
+    font-size:16px;
+    outline:none;
+}
+
+.controls button{
+    padding:15px;
+    border:none;
+    border-radius:12px;
+    background:#22c55e;
+    color:#fff;
+    font-size:16px;
+    font-weight:bold;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.controls button:hover{
+    background:#16a34a;
+    transform:translateY(-2px);
+}
+
+@keyframes cardPop{
+    from{
+        opacity:0;
+        transform:translateY(30px) scale(.95);
+    }
+    to{
+        opacity:1;
+        transform:translateY(0) scale(1);
+    }
+}
         
         .meeting-container { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; position: relative; }
         .sidebar { width: 15%; background: #161719; border-right: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 5px; padding: 5px; transition: all 0.3s ease; }
@@ -127,18 +224,35 @@
 </head>
 <body>
 
-    <div class="meeting-container" id="meetingContainer">
-        <div class="sidebar">
-            <div class="top-bar">
-                <div class="controls">
-                    <input type="text" id="roomIdInput" placeholder="Enter Class Room ID">
-                    <button id="joinBtn">Join Class</button>
+    <div class="meeting-container" id="meetingContainer" style="margin: 0;padding: 0;">
+                <div class="welcome-container">
+                    <div class="welcome-card">
+                        <div class="welcome-icon">🎓</div>
+
+                        <h1>Welcome to</h1>
+                        <h2>Lachit Global Studies</h2>
+
+                        <p>
+                            Join your live class and start learning with your teachers in real time.
+                        </p>
+
+                        <div class="controls">
+                            <input
+                                type="text"
+                                id="roomIdInput"
+                                placeholder="Enter Class Room ID"
+                                style="text-align: center;"
+                            >
+
+                            <button id="joinBtn">Join Class</button>
+                        </div>
+                    </div>
                 </div>
-                <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px;"></h4>
-            </div>
-        </div>
+                
+            
+       
         
-        <div class="main-display" id="mainArea">
+        <div class="main-display" id="mainArea"  style="display: none;">
             <!-- শিক্ষার্থীর সার্কেল ভিডিও জয়েন করার পর এখানে ভেসে উঠবে -->
             <div class="my-video-card" id="myVideoCard">
                 <video id="localVideo" autoplay playsinline muted></video>
@@ -176,7 +290,7 @@
        let currentFacingMode = 'user'; // ডিফল্ট ক্যামেরা 'user' (Front Camera)
         let localStream;
         let teacherPc;
-        const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19020' }] };
+        const servers = { iceServers: [{ urls: 'stun:stun1.l.google.com:19302' }] };
         const chatPanel = document.getElementById('chatPanel');
 
         // Helper function to generate a Dummy Video Stream if camera is unavailable or blocked
@@ -219,7 +333,8 @@
         document.getElementById('joinBtn').onclick = async () => {
             const roomId = document.getElementById('roomIdInput').value;
             if (!roomId) return alert("Please enter Room ID");
-
+            document.querySelector(".welcome-container").style.display = "none";
+            document.getElementById("mainArea").style.display = "block";
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             } catch (err) {
@@ -242,7 +357,6 @@
                 localStream.getAudioTracks()[0].enabled = false; 
             }
 
-            document.getElementById('roomDisplay').innerText = `Joined Room: ${roomId}`;
             document.getElementById('raiseHandBtn').style.display = 'block';
             document.getElementById('statusLabel').style.display = 'block';
 
