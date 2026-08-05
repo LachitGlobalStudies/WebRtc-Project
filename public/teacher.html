@@ -450,18 +450,21 @@
             <div class="studentgrid" id="studentGrid"></div>
         </div>
 
-        <!-- Main Video Display -->
-        <div class="main-display" id="mainArea">
-            <div id="participantCounter" class="counter-header">0</div>
-            <video id="localVideo" autoplay playsinline class="mirror" muted="1"></video>
-            
-            <div class="cam-controls-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 10px; z-index: 50;">
-                <button id="camSwitchBtn" class="cam-switch-btn" style="display: none;">📷 My Camera</button>
-                <button id="studentCamSwitchBtn" class="cam-switch-btn" style="display: none; background: #ff9800; color: #000;">📷 Student's Camera</button>
-            </div>
-
-            <div id="mainDisplayLabel" class="main-display-label" style="display: none;">Teacher (You)</div>
+    <!-- Main Video Display -->
+    <div class="main-display" id="mainArea">
+        <div id="participantCounter" class="counter-header">0</div>
+        <video id="localVideo" autoplay playsinline class="mirror" muted="1"></video>
+        
+        <!-- Updated Overlay Controls -->
+        <div class="cam-controls-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 50;">
+            <button id="toggleAudioBtn" class="cam-switch-btn" style="display: none;">🎙️ Mute Audio</button>
+            <button id="toggleVideoBtn" class="cam-switch-btn" style="display: none;">📹 Turn Off Video</button>
+            <button id="camSwitchBtn" class="cam-switch-btn" style="display: none;">📷 My Camera</button>
+            <button id="studentCamSwitchBtn" class="cam-switch-btn" style="display: none; background: #ff9800; color: #000;">📷 Student's Camera</button>
         </div>
+
+        <div id="mainDisplayLabel" class="main-display-label" style="display: none;">Teacher (You)</div>
+    </div>
 
         <!-- Floating Chat Panel -->
         <div class="chat-panel" id="chatPanel">
@@ -504,6 +507,10 @@
         const localVideo = document.getElementById('localVideo');
         const meetingContainer = document.getElementById('meetingContainer');
         const welcomeScreen = document.getElementById('welcomeScreen');
+        const toggleAudioBtn = document.getElementById('toggleAudioBtn');
+        const toggleVideoBtn = document.getElementById('toggleVideoBtn');
+        let isAudioMuted = false;
+        let isVideoStopped = false;
 
         function toggleMeetingFullscreen() {
             if (!document.fullscreenElement) {
@@ -573,7 +580,53 @@
                 socket.emit('toggle-room-chat', { open: false }); 
             }
         };
+        // Mute/Unmute Teacher Microphone
+        toggleAudioBtn.onclick = () => {
+            if (!localStream) return;
+            
+            const audioTracks = localStream.getAudioTracks();
+            if (audioTracks.length === 0) return;
 
+            isAudioMuted = !isAudioMuted;
+            
+            // Enable/Disable local audio tracks
+            audioTracks.forEach(track => {
+                track.enabled = !isAudioMuted;
+            });
+
+            // Update UI
+            if (isAudioMuted) {
+                toggleAudioBtn.innerText = "🔇 Unmute Audio";
+                toggleAudioBtn.style.background = "rgba(234, 67, 53, 0.85)"; // Red background
+            } else {
+                toggleAudioBtn.innerText = "🎙️ Mute Audio";
+                toggleAudioBtn.style.background = "rgba(0, 0, 0, 0.7)";
+            }
+        };
+
+        // Turn On/Off Teacher Video
+        toggleVideoBtn.onclick = () => {
+            if (!localStream) return;
+
+            const videoTracks = localStream.getVideoTracks();
+            if (videoTracks.length === 0) return;
+
+            isVideoStopped = !isVideoStopped;
+
+            // Enable/Disable local video tracks
+            videoTracks.forEach(track => {
+                track.enabled = !isVideoStopped;
+            });
+
+            // Update UI
+            if (isVideoStopped) {
+                toggleVideoBtn.innerText = "📷 Turn On Video";
+                toggleVideoBtn.style.background = "rgba(234, 67, 53, 0.85)"; // Red background
+            } else {
+                toggleVideoBtn.innerText = "📹 Turn Off Video";
+                toggleVideoBtn.style.background = "rgba(0, 0, 0, 0.7)";
+            }
+        };
         document.getElementById('createBtn').onclick = async function() {
             const customInput = document.getElementById('customRoomIdInput');
             const roomId = customInput ? customInput.value.trim() : "";
@@ -650,6 +703,10 @@
             document.getElementById('youtubeStreamBtn').style.display = 'flex';
             document.getElementById('muteAllBtn').style.display = 'flex';
             document.getElementById('unmuteAllBtn').style.display = 'flex';
+            // Inside createBtn.onclick function (around line 370-380):
+            toggleAudioBtn.style.display = 'flex';
+            toggleVideoBtn.style.display = 'flex';
+            camSwitchBtn.style.display = 'flex';
             masterChatBtn.style.display = 'flex';
             if(participantCounter) participantCounter.style.display = 'flex';
             camSwitchBtn.style.display = 'flex'; 
