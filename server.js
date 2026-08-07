@@ -71,6 +71,39 @@ io.on('connection', (socket) => {
                 socket.to(currentRoom).emit('streamToStudent', chunk);
             }
         });
+        // server.js এর io.on('connection') এর ভেতরে এই কোড যোগ করুন
+
+        socket.on('webrtc-offer', ({ target, offer, roomId }) => {
+            // শিক্ষক থেকে অফার পেয়ে ছাত্রকে পাঠানো
+            if (target) {
+                io.to(target).emit('webrtc-offer', { 
+                    offer: offer,
+                    sender: socket.id 
+                });
+            } else if (roomId) {
+                // যদি roomId থাকে, তাহলে রুমের সবাইকে পাঠান
+                socket.to(roomId).emit('webrtc-offer', { 
+                    offer: offer,
+                    sender: socket.id 
+                });
+            }
+        });
+
+        socket.on('webrtc-answer', ({ target, answer }) => {
+            // ছাত্র থেকে উত্তর পেয়ে শিক্ষককে পাঠানো
+            io.to(target).emit('webrtc-answer', { 
+                answer: answer,
+                sender: socket.id 
+            });
+        });
+
+        socket.on('webrtc-ice-candidate', ({ target, candidate }) => {
+            // ICE candidate পাঠানো
+            io.to(target).emit('webrtc-ice-candidate', { 
+                candidate: candidate,
+                sender: socket.id 
+            });
+        });
 
         socket.on('start-youtube-stream', ({ streamKey }) => {
             if (socket.role !== 'teacher') return;
