@@ -178,6 +178,10 @@ io.on('connection', (socket) => {
         // ==========================================
         // STUDENT MANAGEMENT
         // ==========================================
+        socket.on('switch-student-camera', ({ targetStudentId }) => {
+                // শিক্ষকের নির্দেশ নির্দিষ্ট স্টুডেন্টের কাছে পাঠানো
+                io.to(targetStudentId).emit('request-camera-switch');
+            });
         
         socket.on('raise-hand', () => {
             const currentRoom = socket.roomId;
