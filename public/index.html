@@ -284,17 +284,20 @@
         </div>
     </div>
 
-   <script src="/socket.io/socket.io.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 <script>
-    const socket = io("https://webrtc-project-k0jx.onrender.com");
-    let currentFacingMode = 'user'; // ডিফল্ট ক্যামেরা 'user' (Front Camera)
+    const socket = io("https://webrtc-project-k0jx.onrender.com", {
+        autoConnect: true,
+        reconnection: true
+    });
+    let currentFacingMode = 'user';
     let localStream;
     let teacherPc;
+    let currentRoomId = '';
     const servers = { iceServers: [{ urls: 'stun:stun1.l.google.com:19302' }] };
     const chatPanel = document.getElementById('chatPanel');
 
-    // Helper function to generate a Dummy Video Stream if camera is unavailable or blocked
     function createDummyStream() {
         const canvas = document.createElement('canvas');
         canvas.width = 640;
@@ -321,7 +324,6 @@
         return canvas.captureStream(30);
     }
 
-    // Automatic Global Sync Event Channel
     socket.on('chat-state-changed', ({ open }) => {
         if (open) {
             chatPanel.classList.add('open');
@@ -331,15 +333,16 @@
     });
 
     document.getElementById('joinBtn').onclick = async () => {
-        const roomId = document.getElementById('roomIdInput').value;
+        const roomId = document.getElementById('roomIdInput').value.trim();
         if (!roomId) return alert("Please enter Room ID");
-        document.querySelector(".welcome-container").style.display = "none";
-        document.getElementById("mainArea").style.display = "block";
+
+        currentRoomId = roomId;
+
         try {
             localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         } catch (err) {
-            console.warn("Camera/Mic access denied or not found. Falling back to dummy video stream.", err);
-            alert("Your camera and microphone is not accessible , a dummy video will play");
+            console.warn("Camera/Mic access denied. Falling back to dummy video stream.", err);
+            alert("Your camera and microphone is not accessible, a dummy video will play");
             
             localStream = createDummyStream();
             
@@ -347,10 +350,12 @@
                 const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 audioStream.getAudioTracks().forEach(track => localStream.addTrack(track));
             } catch (e) {
-                console.warn("Audio fallback also failed, running with video-only dummy stream.");
+                console.warn("Audio fallback also failed.");
             }
         }
 
+        document.querySelector(".welcome-container").style.display = "none";
+        document.getElementById("mainArea").style.display = "block";
         document.getElementById('localVideo').srcObject = localStream;
         
         if(localStream.getAudioTracks().length > 0) {
@@ -360,16 +365,28 @@
         document.getElementById('raiseHandBtn').style.display = 'block';
         document.getElementById('statusLabel').style.display = 'block';
 
-        // জয়েন করার সাথে সাথে লেআউট ফুলস্ক্রিন টিচারের ভিডিওর মডেলে শিফট হবে
         document.getElementById('meetingContainer').classList.add('joined');
 
-        socket.emit('join-room', { roomId, role: 'student' });
+        // সকেট যদি অলরেডি কানেক্টেড থাকে তবে সাথে সাথে Emit করবে
+        if (socket.connected) {
+            socket.emit('join-room', { roomId: currentRoomId, role: 'student' });
+        } else {
+            socket.connect();
+        }
+
         setTimeout(() => {
             statusLabel.style.display = 'none';
             myVideoCard.style.display='none';
             raiseHandBtn.style.display='none';
         }, 8000);
     };
+
+    socket.on('connect', () => {
+        console.log("Connected to socket server");
+        if (currentRoomId) {
+            socket.emit('join-room', { roomId: currentRoomId, role: 'student' });
+        }
+    });
 
     // Text Message Execution Block
     document.getElementById('sendMsgBtn').onclick = sendTextMessage;
@@ -407,7 +424,6 @@
         reader.readAsDataURL(file);
     };
 
-    // double and single tap
     const mainArea = document.getElementById('mainArea');
     const teacherVideo = document.getElementById('teacherVideo');
     const statusLabel = document.getElementById('statusLabel');
@@ -416,18 +432,17 @@
 
     let tapTimer = null;
     let hideControlsTimer = null;
-    const TAP_DELAY = 300; // মোবাইল টাচের জন্য ৩০০ms নিখুঁত সময়
+    const TAP_DELAY = 300;
 
-    // ১. সঠিক ফুলস্ক্রিন ফাংশন (মোবাইল ও ডেসকটপ উভয়ের জন্য)
     function toggleFullScreen() {
         const targetElem = mainArea || teacherVideo;
 
         if (!document.fullscreenElement && !document.webkitFullscreenElement) {
             if (targetElem.requestFullscreen) {
                 targetElem.requestFullscreen();
-            } else if (targetElem.webkitRequestFullscreen) { /* Safari / iOS / Android Chrome */
+            } else if (targetElem.webkitRequestFullscreen) {
                 targetElem.webkitRequestFullscreen();
-            } else if (teacherVideo && teacherVideo.webkitEnterFullscreen) { /* iOS Video Native */
+            } else if (teacherVideo && teacherVideo.webkitEnterFullscreen) {
                 teacherVideo.webkitEnterFullscreen();
             }
         } else {
@@ -439,7 +454,6 @@
         }
     }
 
-    // ২. বাটনের জন্য অটো-হাইড টাইমারসহ শো ফাংশন
     function showHiddenItems() {
         if (statusLabel) statusLabel.style.display = 'block';
         if (myVideoCard) myVideoCard.style.display = 'block';
@@ -454,7 +468,6 @@
         }, 4000);
     }
 
-    // ৩. ট্যাপ হ্যান্ডলার
     mainArea.addEventListener('click', (event) => {
         if (event.target.closest('button') || event.target.closest('.interactive-btn')) {
             return;
@@ -482,7 +495,6 @@
         }
     });
 
-    // UI Event Listeners
     socket.on('receive-message', (data) => { appendMsg(data, 'msg-other'); });
     socket.on('receive-file', (data) => { appendFile(data, 'msg-other'); });
 
@@ -526,7 +538,6 @@
         }
     });
 
-    // Android WebRTC Screen Share Connection Handlers
     socket.on('webrtc-offer', async (data) => {
         if (!teacherPc) {
             teacherPc = new RTCPeerConnection(servers);
@@ -571,7 +582,6 @@
         };
     }
 
-    // সার্ভার থেকে ক্যামেরা সুইচের নির্দেশ পেলে
     socket.on('request-camera-switch', async () => {
         try {
             console.log("Teacher requested camera switch...");
@@ -670,7 +680,6 @@
         }
     }
 
-    // URL Room Parameter Auto-Join Handler
     window.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const roomIdFromUrl = urlParams.get('room');
@@ -683,7 +692,6 @@
         }
     });
 
-    // শিক্ষক চ্যাট ওপেন/ক্লোজ করলে স্টুডেন্ট প্যানেলে সিগন্যাল হ্যান্ডেল করা
     socket.on('toggle-room-chat', (data) => {
         if (data.open) {
             chatPanel.classList.add('open');
