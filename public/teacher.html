@@ -492,7 +492,6 @@
         let isScreenSharing = false;
         let isLiveStreaming = false;
         let isChatPanelOpen = false;
-        let overlayTimeout;
         const peerConnections = {};
         const studentMicStatus = {}; 
         const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19020' }] };
@@ -523,59 +522,7 @@
             }
         }
 
-        let touchTimer = null;
-
-        // Desktop / Mouse Click Handling
-        localVideo.addEventListener("click", function (e) {
-            if (touchTimer === null) {
-                touchTimer = setTimeout(() => {
-                    touchTimer = null;
-                    // Single Click Event: Toggle Overlay
-                    const overlayControls = document.querySelector('.cam-controls-overlay');
-                    if (overlayControls.style.display === 'none' || overlayControls.style.display === '') {
-                        showOverlayControls();
-                    } else {
-                        overlayControls.style.display = 'none';
-                        clearTimeout(overlayTimeout);
-                    }
-                }, 300); // 300ms ওয়েট করবে ডাবল ক্লিক নিশ্চিত করতে
-            }
-        });
-
-        localVideo.addEventListener("dblclick", function (e) {
-            clearTimeout(touchTimer);
-            touchTimer = null;
-            // Double Click Event: Toggle Fullscreen
-            toggleMeetingFullscreen();
-        });
-
-        // Mobile Touch Handling
-        let lastTapTime = 0;
-        localVideo.addEventListener("touchend", function (e) {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTapTime;
-            
-            if (tapLength < 300 && tapLength > 0) {
-                // Double Tap: Fullscreen Toggle
-                e.preventDefault();
-                clearTimeout(touchTimer);
-                touchTimer = null;
-                toggleMeetingFullscreen();
-            } else {
-                // Single Tap: Show Overlay Controls
-                touchTimer = setTimeout(() => {
-                    touchTimer = null;
-                    const overlayControls = document.querySelector('.cam-controls-overlay');
-                    if (overlayControls.style.display === 'none' || overlayControls.style.display === '') {
-                        showOverlayControls();
-                    } else {
-                        overlayControls.style.display = 'none';
-                        clearTimeout(overlayTimeout);
-                    }
-                }, 300);
-            }
-            lastTapTime = currentTime;
-        });
+        localVideo.addEventListener("dblclick", toggleMeetingFullscreen);
 
         let lastTap = 0;
         localVideo.addEventListener("touchend", function (e) {
@@ -764,10 +711,7 @@
             if(participantCounter) participantCounter.style.display = 'flex';
             camSwitchBtn.style.display = 'flex'; 
             studentCamSwitchBtn.style.display = 'none';   
-            mainDisplayLabel.style.display = 'block';  
-             socket.emit('join-room', { roomId, role: 'student' });
-            // প্রথমবার মিটিং তৈরি হলে Overlay দেখাবে এবং ৮ সেকেন্ড পর auto-hide হবে
-            resetOverlayTimeout();  
+            mainDisplayLabel.style.display = 'block';      
         };
 
         document.getElementById('youtubeStreamBtn').onclick = function() {
@@ -800,28 +744,7 @@
 
         socket.on('stream-stopped', () => { cleanupStreaming(); });
         socket.on('stream-error', (err) => { alert(err); cleanupStreaming(); });
-      
 
-        // Overlay বাটনগুলো দেখানোর এবং ৮ সেকেন্ড পর অটো-হাইড করার ফাংশন
-        function showOverlayControls() {
-            const overlayControls = document.querySelector('.cam-controls-overlay');
-            if (overlayControls) {
-                overlayControls.style.display = 'flex';
-                mainDisplayLabel.style.display='flex';
-            }
-            resetOverlayTimeout();
-        }
-
-        function resetOverlayTimeout() {
-            clearTimeout(overlayTimeout);
-            overlayTimeout = setTimeout(() => {
-                const overlayControls = document.querySelector('.cam-controls-overlay');
-                if (overlayControls) {
-                    overlayControls.style.display = 'none';
-                    mainDisplayLabel.style.display='none';
-                }
-            }, 5000); // ৮ সেকেন্ড পর হাইড হবে
-        }
         function cleanupStreaming() {
             isLiveStreaming = false;
             const btn = document.getElementById('youtubeStreamBtn');

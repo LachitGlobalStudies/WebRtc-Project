@@ -1,43 +1,64 @@
 const express = require('express');
-const cors = require('cors'); // CORS ইমপোর্ট করুন
 const app = express();
 const http = require('http').createServer(app);
-const { spawn } = require('child_process');
-// server.js-এ এই রুটটি যুক্ত করুন
-const path = require('path');
-
-app.get('/get-html-page', (req, res) => {
-    // public ফোল্ডারে থাকা index.html ফাইলটি পাঠাবে
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-// Express-এর জন্য CORS এনাবল করুন
-app.use(cors({ origin: "*" }));
-
 const io = require('socket.io')(http, {
     cors: { 
-        origin: "*", // যেকোনো ডোমেইন থেকে এক্সেস এলাউ করবে
+        origin: "*",
         methods: ["GET", "POST"]
     },
-    maxHttpBufferSize: 1e7 // 10MB Limit
+    maxHttpBufferSize: 1e8, // 100MB for screen sharing
+    pingTimeout: 60000,
+    pingInterval: 25000
+});
+
+// Enable CORS for Render
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    next();
 });
 
 app.use(express.static('public'));
 
 const roomTeachers = {};
-const roomChatState = {}; 
+const roomChatState = {};
 const activeStreams = {};
 
+// Store screen sharing sessions
+const screenShareSessions = {};
+
 io.on('connection', (socket) => {
+    console.log('New connection:', socket.id);
     
+    // Detect Android device
+    const userAgent = socket.handshake.headers['user-agent'] || '';
+    const isAndroid = /Android/i.test(userAgent);
+    const isChrome = /Chrome/i.test(userAgent) && !/Edge/i.test(userAgent);
+    
+    if (isAndroid) {
+        console.log('Android device connected:', socket.id);
+        socket.emit('device-detected', { 
+            isAndroid: true,
+            isChrome: isChrome,
+            screenShareSupported: true,
+            message: 'Android screen sharing enabled'
+        });
+    }
+
     socket.on('join-room', ({ roomId, role }) => {
         socket.join(roomId);
         socket.role = role;
-        socket.roomId = roomId; 
+        socket.roomId = roomId;
+        
+        console.log(`${role} joined room: ${roomId}`);
 
         if (role === 'teacher') {
             roomTeachers[roomId] = socket.id;
-            roomChatState[roomId] = false; 
+            roomChatState[roomId] = false;
             socket.to(roomId).emit('teacher-connected', socket.id);
+            // Initialize screen share session
+            screenShareSessions[roomId] = { active: false };
         }
 
         if (role === 'student' && roomChatState[roomId] === true) {
@@ -50,14 +71,72 @@ io.on('connection', (socket) => {
             for (let clientId of clients) {
                 if (clientId !== socket.id) {
                     const clientSocket = io.sockets.sockets.get(clientId);
-                    otherUsers.push({ id: clientId, role: clientSocket ? clientSocket.role : 'student' });
+                    otherUsers.push({ 
+                        id: clientId, 
+                        role: clientSocket ? clientSocket.role : 'student' 
+                    });
                 }
             }
         }
 
-        socket.emit('all-users', { users: otherUsers, teacherId: roomTeachers[roomId] });
-        io.to(roomId).emit('user-joined', { userId: socket.id, role: role, count: clients ? clients.size : 1 });
+        socket.emit('all-users', { 
+            users: otherUsers, 
+            teacherId: roomTeachers[roomId],
+            count: clients ? clients.size : 1
+        });
+        
+        io.to(roomId).emit('user-joined', { 
+            userId: socket.id, 
+            role: role, 
+            count: clients ? clients.size : 1 
+        });
 
+        // ==========================================
+        // ANDROID SCREEN SHARING (Chrome compatible)
+        // ==========================================
+        
+        // For Android: Receive screen share chunks
+        socket.on('screen-share-chunk', (data) => {
+            const currentRoom = socket.roomId;
+            if (socket.role === 'teacher' && currentRoom) {
+                // Broadcast to all students in the room
+                socket.to(currentRoom).emit('screen-share-chunk', {
+                    chunk: data.chunk,
+                    lastChunk: data.lastChunk || false,
+                    timestamp: Date.now()
+                });
+            }
+        });
+
+        // Start screen share session
+        socket.on('start-screen-share', () => {
+            const currentRoom = socket.roomId;
+            if (socket.role === 'teacher' && currentRoom) {
+                screenShareSessions[currentRoom] = { 
+                    active: true,
+                    startedAt: Date.now()
+                };
+                socket.to(currentRoom).emit('screen-share-started');
+                socket.emit('screen-share-started');
+                console.log(`Screen share started in room: ${currentRoom}`);
+            }
+        });
+
+        // Stop screen share session
+        socket.on('stop-screen-share', () => {
+            const currentRoom = socket.roomId;
+            if (socket.role === 'teacher' && currentRoom) {
+                screenShareSessions[currentRoom] = { active: false };
+                socket.to(currentRoom).emit('screen-share-stopped');
+                socket.emit('screen-share-stopped');
+                console.log(`Screen share stopped in room: ${currentRoom}`);
+            }
+        });
+
+        // ==========================================
+        // WebRTC Signaling (for non-Android devices)
+        // ==========================================
+        
         socket.on('signal', (data) => {
             socket.to(data.target).emit('signal', {
                 sender: socket.id,
@@ -65,114 +144,27 @@ io.on('connection', (socket) => {
             });
         });
 
-        socket.on('screenDataChunk', (chunk) => {
+        // ==========================================
+        // CHAT SYSTEM
+        // ==========================================
+        
+        socket.on('send-message', (data) => {
             const currentRoom = socket.roomId;
-            if (socket.role === 'teacher' && currentRoom) {
-                socket.to(currentRoom).emit('streamToStudent', chunk);
-            }
-        });
-        // server.js এর io.on('connection') এর ভেতরে এই কোড যোগ করুন
-
-        socket.on('webrtc-offer', ({ target, offer, roomId }) => {
-            // শিক্ষক থেকে অফার পেয়ে ছাত্রকে পাঠানো
-            if (target) {
-                io.to(target).emit('webrtc-offer', { 
-                    offer: offer,
-                    sender: socket.id 
-                });
-            } else if (roomId) {
-                // যদি roomId থাকে, তাহলে রুমের সবাইকে পাঠান
-                socket.to(roomId).emit('webrtc-offer', { 
-                    offer: offer,
-                    sender: socket.id 
-                });
-            }
-        });
-
-        socket.on('webrtc-answer', ({ target, answer }) => {
-            // ছাত্র থেকে উত্তর পেয়ে শিক্ষককে পাঠানো
-            io.to(target).emit('webrtc-answer', { 
-                answer: answer,
-                sender: socket.id 
+            socket.to(currentRoom).emit('receive-message', {
+                sender: data.sender,
+                text: data.text,
+                timestamp: Date.now()
             });
         });
 
-        socket.on('webrtc-ice-candidate', ({ target, candidate }) => {
-            // ICE candidate পাঠানো
-            io.to(target).emit('webrtc-ice-candidate', { 
-                candidate: candidate,
-                sender: socket.id 
+        socket.on('share-file', (data) => {
+            const currentRoom = socket.roomId;
+            socket.to(currentRoom).emit('receive-file', {
+                sender: data.sender,
+                fileName: data.fileName,
+                fileBuffer: data.fileBuffer,
+                timestamp: Date.now()
             });
-        });
-
-        socket.on('start-youtube-stream', ({ streamKey }) => {
-            if (socket.role !== 'teacher') return;
-            const currentRoom = socket.roomId;
-
-            if (activeStreams[currentRoom]) {
-                return socket.emit('stream-error', 'Stream already running!');
-            }
-
-            const youtubeUrl = `rtmp://a.rtmp.youtube.com/live2/${streamKey}`;
-            
-            const ffmpeg = spawn('ffmpeg', [
-                '-i', '-',
-                '-c:v', 'libx264',
-                '-preset', 'veryfast',
-                '-b:v', '2500k',
-                '-maxrate', '2500k',
-                '-bufsize', '5000k',
-                '-pix_fmt', 'yuv420p',
-                '-g', '50',
-                '-c:a', 'aac',
-                '-b:a', '128k',
-                '-ar', '44100',
-                '-f', 'flv',
-                youtubeUrl
-            ]);
-
-            ffmpeg.on('close', (code) => {
-                console.log(`FFmpeg process closed with code ${code}`);
-                delete activeStreams[currentRoom];
-            });
-
-            ffmpeg.stderr.on('data', (data) => {
-                console.log('FFmpeg Log:', data.toString());
-            });
-
-            activeStreams[currentRoom] = ffmpeg;
-            socket.emit('stream-started');
-        });
-
-        socket.on('stream-chunk', (chunk) => {
-            const currentRoom = socket.roomId;
-            if (activeStreams[currentRoom]) {
-                activeStreams[currentRoom].stdin.write(chunk);
-            }
-        });
-
-        socket.on('teacher-screen-chunk', (chunk) => {
-            const currentRoom = socket.roomId;
-            socket.to(currentRoom).emit('incoming-teacher-screen', chunk);
-        });
-
-        socket.on('stop-youtube-stream', () => {
-            const currentRoom = socket.roomId;
-            if (activeStreams[currentRoom]) {
-                activeStreams[currentRoom].stdin.end();
-                delete activeStreams[currentRoom];
-                socket.emit('stream-stopped');
-            }
-        });
-
-        socket.on('draw-data', (data) => {
-            const currentRoom = socket.roomId;
-            socket.to(currentRoom).emit('incoming-draw', data);
-        });
-
-        socket.on('clear-board', () => {
-            const currentRoom = socket.roomId;
-            socket.to(currentRoom).emit('incoming-clear');
         });
 
         socket.on('toggle-room-chat', ({ open }) => {
@@ -183,41 +175,34 @@ io.on('connection', (socket) => {
             }
         });
 
-        socket.on('send-message', (data) => {
-            const currentRoom = socket.roomId;
-            socket.to(currentRoom).emit('receive-message', {
-                sender: data.sender,
-                text: data.text
-            });
-        });
-
-        socket.on('share-file', (data) => {
-            const currentRoom = socket.roomId;
-            socket.to(currentRoom).emit('receive-file', {
-                sender: data.sender,
-                fileName: data.fileName,
-                fileBuffer: data.fileBuffer
-            });
-        });
-
+        // ==========================================
+        // STUDENT MANAGEMENT
+        // ==========================================
+        
         socket.on('raise-hand', () => {
             const currentRoom = socket.roomId;
             const teacherId = roomTeachers[currentRoom];
-            if (teacherId) io.to(teacherId).emit('student-raised-hand', socket.id);
+            if (teacherId) {
+                io.to(teacherId).emit('student-raised-hand', socket.id);
+            }
         });
 
         socket.on('allow-student', (studentId) => {
             const currentRoom = socket.roomId;
             io.to(studentId).emit('allowed-to-talk');
             const teacherId = roomTeachers[currentRoom];
-            if (teacherId) io.to(teacherId).emit('single-student-unmuted-ui', studentId);
+            if (teacherId) {
+                io.to(teacherId).emit('single-student-unmuted-ui', studentId);
+            }
         });
 
         socket.on('mute-student', (studentId) => {
             const currentRoom = socket.roomId;
             io.to(studentId).emit('force-mute');
             const teacherId = roomTeachers[currentRoom];
-            if (teacherId) io.to(teacherId).emit('single-student-muted-ui', studentId);
+            if (teacherId) {
+                io.to(teacherId).emit('single-student-muted-ui', studentId);
+            }
         });
 
         socket.on('mute-all-students', () => {
@@ -232,32 +217,39 @@ io.on('connection', (socket) => {
             socket.emit('all-students-unmuted-ui');
         });
 
-        socket.on('switch-student-camera', ({ targetStudentId }) => {
-            io.to(targetStudentId).emit('request-camera-switch');
-        });
-
+        // ==========================================
+        // DISCONNECT HANDLING
+        // ==========================================
+        
         socket.on('disconnect', () => {
+            console.log('Disconnected:', socket.id);
             const currentRoom = socket.roomId;
+            
             if (socket.role === 'teacher') {
-                if (activeStreams[currentRoom]) {
-                    activeStreams[currentRoom].stdin.end();
-                    delete activeStreams[currentRoom];
+                if (screenShareSessions[currentRoom]) {
+                    screenShareSessions[currentRoom] = { active: false };
                 }
                 delete roomTeachers[currentRoom];
                 delete roomChatState[currentRoom];
                 socket.to(currentRoom).emit('teacher-disconnected');
             } else {
                 socket.to(currentRoom).emit('user-left', socket.id);
-                
                 const clients = io.sockets.adapter.rooms.get(currentRoom);
-                io.to(currentRoom).emit('room-count-update', { count: clients ? clients.size : 0 });
+                io.to(currentRoom).emit('room-count-update', { 
+                    count: clients ? clients.size : 0 
+                });
             }
         });
     });
 });
 
-// Port Handling for Render
+// Health check for Render
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
+
 const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+    console.log(`Access at: http://localhost:${PORT}`);
 });

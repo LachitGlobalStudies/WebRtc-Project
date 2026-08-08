@@ -665,61 +665,6 @@
                 chatPanel.classList.remove('open');
             }
         });
-        // Socket events for WebRTC
-        socket.on('webrtc-offer', async ({ offer, sender }) => {
-            try {
-                if (!teacherPc) {
-                    teacherPc = new RTCPeerConnection(servers);
-                    // ট্র্যাক যোগ করুন
-                    localStream.getTracks().forEach(track => teacherPc.addTrack(track, localStream));
-                    
-                    teacherPc.ontrack = (event) => {
-                        document.getElementById('teacherVideo').srcObject = event.streams[0];
-                    };
-                    
-                    teacherPc.onicecandidate = (event) => {
-                        if (event.candidate) {
-                            socket.emit('webrtc-ice-candidate', {
-                                target: sender,
-                                candidate: event.candidate
-                            });
-                        }
-                    };
-                }
-                
-                await teacherPc.setRemoteDescription(new RTCSessionDescription(offer));
-                const answer = await teacherPc.createAnswer();
-                await teacherPc.setLocalDescription(answer);
-                
-                socket.emit('webrtc-answer', {
-                    target: sender,
-                    answer: answer
-                });
-                
-            } catch (err) {
-                console.error('WebRTC offer handling error:', err);
-            }
-        });
-
-        socket.on('webrtc-answer', async ({ answer }) => {
-            try {
-                if (teacherPc) {
-                    await teacherPc.setRemoteDescription(new RTCSessionDescription(answer));
-                }
-            } catch (err) {
-                console.error('WebRTC answer handling error:', err);
-            }
-        });
-
-        socket.on('webrtc-ice-candidate', async ({ candidate }) => {
-            try {
-                if (teacherPc) {
-                    await teacherPc.addIceCandidate(new RTCIceCandidate(candidate));
-                }
-            } catch (err) {
-                console.error('ICE candidate handling error:', err);
-            }
-        });
     </script>
 </body>
 </html>
