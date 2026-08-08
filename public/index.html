@@ -665,6 +665,42 @@
                 chatPanel.classList.remove('open');
             }
         });
+        
+        socket.on("webrtc-offer", async (data) => {
+            peerConnection = new RTCPeerConnection(configuration);
+
+            // শিক্ষক ব্যাকএন্ড থেকে ভিডিও ফ্রেম পাঠালে তা রিসিভ করা
+            peerConnection.ontrack = (event) => {
+            if (videoElement.srcObject !== event.streams[0]) {
+                videoElement.srcObject = event.streams[0];
+            }
+            };
+
+            // ICE Candidate বিনিময়
+            peerConnection.onicecandidate = (event) => {
+            if (event.candidate) {
+                socket.emit("webrtc-ice-candidate", {
+                target: data.sender,
+                candidate: event.candidate
+                });
+            }
+            };
+
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
+
+            socket.emit("webrtc-answer", {
+            target: data.sender,
+            answer: answer
+            });
+        });
+
+        socket.on("webrtc-ice-candidate", (data) => {
+            if (peerConnection) {
+            peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+            }
+        });
     </script>
 </body>
 </html>
