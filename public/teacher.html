@@ -492,6 +492,7 @@
         let isScreenSharing = false;
         let isLiveStreaming = false;
         let isChatPanelOpen = false;
+        let overlayTimeout;
         const peerConnections = {};
         const studentMicStatus = {}; 
         const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19020' }] };
@@ -522,7 +523,59 @@
             }
         }
 
-        localVideo.addEventListener("dblclick", toggleMeetingFullscreen);
+        let touchTimer = null;
+
+        // Desktop / Mouse Click Handling
+        localVideo.addEventListener("click", function (e) {
+            if (touchTimer === null) {
+                touchTimer = setTimeout(() => {
+                    touchTimer = null;
+                    // Single Click Event: Toggle Overlay
+                    const overlayControls = document.querySelector('.cam-controls-overlay');
+                    if (overlayControls.style.display === 'none' || overlayControls.style.display === '') {
+                        showOverlayControls();
+                    } else {
+                        overlayControls.style.display = 'none';
+                        clearTimeout(overlayTimeout);
+                    }
+                }, 300); // 300ms ওয়েট করবে ডাবল ক্লিক নিশ্চিত করতে
+            }
+        });
+
+        localVideo.addEventListener("dblclick", function (e) {
+            clearTimeout(touchTimer);
+            touchTimer = null;
+            // Double Click Event: Toggle Fullscreen
+            toggleMeetingFullscreen();
+        });
+
+        // Mobile Touch Handling
+        let lastTapTime = 0;
+        localVideo.addEventListener("touchend", function (e) {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
+            
+            if (tapLength < 300 && tapLength > 0) {
+                // Double Tap: Fullscreen Toggle
+                e.preventDefault();
+                clearTimeout(touchTimer);
+                touchTimer = null;
+                toggleMeetingFullscreen();
+            } else {
+                // Single Tap: Show Overlay Controls
+                touchTimer = setTimeout(() => {
+                    touchTimer = null;
+                    const overlayControls = document.querySelector('.cam-controls-overlay');
+                    if (overlayControls.style.display === 'none' || overlayControls.style.display === '') {
+                        showOverlayControls();
+                    } else {
+                        overlayControls.style.display = 'none';
+                        clearTimeout(overlayTimeout);
+                    }
+                }, 300);
+            }
+            lastTapTime = currentTime;
+        });
 
         let lastTap = 0;
         localVideo.addEventListener("touchend", function (e) {
@@ -711,7 +764,9 @@
             if(participantCounter) participantCounter.style.display = 'flex';
             camSwitchBtn.style.display = 'flex'; 
             studentCamSwitchBtn.style.display = 'none';   
-            mainDisplayLabel.style.display = 'block';      
+            mainDisplayLabel.style.display = 'block';  
+            // প্রথমবার মিটিং তৈরি হলে Overlay দেখাবে এবং ৮ সেকেন্ড পর auto-hide হবে
+            resetOverlayTimeout();  
         };
 
         document.getElementById('youtubeStreamBtn').onclick = function() {
@@ -744,7 +799,28 @@
 
         socket.on('stream-stopped', () => { cleanupStreaming(); });
         socket.on('stream-error', (err) => { alert(err); cleanupStreaming(); });
+      
 
+        // Overlay বাটনগুলো দেখানোর এবং ৮ সেকেন্ড পর অটো-হাইড করার ফাংশন
+        function showOverlayControls() {
+            const overlayControls = document.querySelector('.cam-controls-overlay');
+            if (overlayControls) {
+                overlayControls.style.display = 'flex';
+                mainDisplayLabel.style.display='flex';
+            }
+            resetOverlayTimeout();
+        }
+
+        function resetOverlayTimeout() {
+            clearTimeout(overlayTimeout);
+            overlayTimeout = setTimeout(() => {
+                const overlayControls = document.querySelector('.cam-controls-overlay');
+                if (overlayControls) {
+                    overlayControls.style.display = 'none';
+                    mainDisplayLabel.style.display='none';
+                }
+            }, 5000); // ৮ সেকেন্ড পর হাইড হবে
+        }
         function cleanupStreaming() {
             isLiveStreaming = false;
             const btn = document.getElementById('youtubeStreamBtn');
@@ -811,11 +887,7 @@
         document.getElementById('shareBtn').onclick = async function() {
             if (!isScreenSharing) {
                 try {
-                    // ১. অ্যান্ড্রয়েডের জন্য ফ্লেক্সিবল স্ক্রিন ক্যাপচার অপশন
-                    screenStream = await navigator.mediaDevices.getDisplayMedia({ 
-                        video: { mediaSource: "screen" } 
-                    });
-
+                    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
                     const videoTrack = screenStream.getVideoTracks()[0];
                     
                     for (let userId in peerConnections) {
@@ -830,49 +902,52 @@
                     this.style.background = "#ea4335";
                     isScreenSharing = true;
 
-                    // ২. অ্যান্ড্রয়েড সাপোর্টেড MIME Type চেক করা
-                    if (isLiveStreaming) {
-                        let options = { mimeType: 'video/webm;codecs=vp8,opus' };
-                        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
-                            options = { mimeType: 'video/mp4' }; // অ্যান্ড্রয়েড ব্যাকআপ কোডেক
-                        }
-
-                        mediaRecorder = new MediaRecorder(screenStream, options);
-                        mediaRecorder.ondataavailable = (e) => { 
-                            if (e.data && e.data.size > 0) socket.emit('stream-chunk', e.data); 
-                        };
+                    if (isLiveStreaming && mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                        mediaRecorder = new MediaRecorder(screenStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
+                        mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) socket.emit('stream-chunk', e.data); };
                         mediaRecorder.start(1000);
                     }
                     
                     videoTrack.onended = () => { stopScreenShare(); };
                 } catch (error) {
-                    alert("অ্যান্ড্রয়েডে স্ক্রিন শেয়ার চালু করা যায়নি: " + error.message);
+                    console.error("Error starting screen share:", error);
                 }
             } else {
                 stopScreenShare();
             }
         };
-        camSwitchBtn.onclick = async () => {
-            currentCamFacingMode = (currentCamFacingMode === "user") ? "environment" : "user";
+
+      camSwitchBtn.onclick = async () => {
             try {
+                // ১. আগের ভিডিও ট্র্যাক বন্ধ করা
+                if (localStream) {
+                    const oldVideoTrack = localStream.getVideoTracks()[0];
+                    if (oldVideoTrack) {
+                        oldVideoTrack.stop();
+                    }
+                }
+
+                // ২. মোড পরিবর্তন করা
+                currentCamFacingMode = (currentCamFacingMode === "user") ? "environment" : "user";
+
+                // ৩. 'exact' তুলে দিয়ে Flexibly ক্যামেরা রিকোয়েস্ট করা
                 const newStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: { exact: currentCamFacingMode } },
+                    video: { facingMode: currentCamFacingMode },
                     audio: true
                 });
                 
                 const videoTrack = newStream.getVideoTracks()[0];
                 
+                // ৪. কানেক্টেড সব স্টুডেন্টের কাছে নতুন ট্র্যাক পাঠানো
                 for (let id in peerConnections) {
                     const sender = peerConnections[id].getSenders().find(s => s.track && s.track.kind === 'video');
                     if (sender) sender.replaceTrack(videoTrack);
                 }
 
-                if (localStream) {
-                    localStream.getVideoTracks().forEach(t => t.stop());
-                }
-                
                 localStream = newStream;
 
+                // ৫. টিচারের লোকাল ডিসপ্লে আপডেট
                 if (!activeSwappedStudentId) {
                     localVideo.srcObject = localStream;
                     if (currentCamFacingMode === "user") {
@@ -882,7 +957,8 @@
                     }
                 }
             } catch (err) {
-                alert("Teacher Camera switch failed or selected camera mode is unavailable.");
+                console.error("Teacher camera switch error:", err);
+                alert("Teacher Camera switch failed: " + err.message);
                 currentCamFacingMode = (currentCamFacingMode === "user") ? "environment" : "user";
             }
         };

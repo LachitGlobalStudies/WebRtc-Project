@@ -148,15 +148,18 @@
         .main-display video { width: 100%; height: 100%; object-fit: cover; background: #222; border-radius: 12px; }
 
         /* চ্যাট প্যানেলটি ভিডিওর ওপর ফ্লোটিং বা ওভারলে উইন্ডো হিসেবে থাকবে */
+       /* চ্যাট প্যানেল ডিফোল্ট অবস্থায় হাইড থাকবে */
         .chat-panel { 
             position: absolute !important;
             right: 20px !important;
             bottom: 70px !important;
             top: auto !important;
             left: auto !important;
-            width: 0 !important;
-            height: 0 !important;
+            width: 0;
+            height: 0;
             opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
             background: rgba(22, 23, 25, 0.95) !important;
             backdrop-filter: blur(8px);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -165,18 +168,18 @@
             display: flex; 
             flex-direction: column; 
             transition: all 0.3s ease; 
-            overflow: hidden; 
             z-index: 99999 !important; 
         }
 
-        /* শিক্ষক চ্যাট ওপেন করলে ভাসমান উইন্ডো হিসেবে ভেসে উঠবে */
+        /* টিচার ওপেন করলে ওভারলে ভাসমান উইন্ডো হিসেবে দৃশ্যমান হবে */
         .chat-panel.open { 
             width: 320px !important; 
             height: 400px !important;
             max-height: 70vh !important;
-            opacity: 1;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
         }
-
         .role-label { position: absolute; top: 35px; left: 45px; background: #e02424; padding: 5px 12px; font-weight: bold; border-radius: 6px; }
         
         .action-bar { height: 70px; background: #1a1c20; display: flex; justify-content: center; align-items: center; border-top: 1px solid #2a2d32; gap: 15px; }
@@ -219,6 +222,52 @@
     pointer-events: auto;
     z-index: 100; /* ভিডিওর ওপরে বাটন রাখার জন্য */
 }
+/* Fullscreen Element Styling */
+#mainArea:-webkit-full-screen {
+    width: 100vw !important;
+    height: 100vh !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: #0e0f11 !important;
+}
+
+#mainArea:fullscreen {
+    width: 100vw !important;
+    height: 100vh !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    background: #0e0f11 !important;
+}
+
+/* ফুলস্ক্রিন থাকা অবস্থায় ব্যাকগ্রাউন্ড ভিডিওর সাইজ */
+#mainArea:-webkit-full-screen #teacherVideo,
+#mainArea:fullscreen #teacherVideo {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    z-index: 1 !important;
+}
+
+/* ওভারলে এলিমেন্টগুলোর জন্য উচ্চ Z-Index নিশ্চিত করা */
+#mainArea:-webkit-full-screen #myVideoCard,
+#mainArea:fullscreen #myVideoCard {
+    position: absolute !important;
+    z-index: 999999 !important;
+}
+
+#mainArea:-webkit-full-screen #raiseHandBtn,
+#mainArea:fullscreen #raiseHandBtn {
+    position: absolute !important;
+    z-index: 999999 !important;
+}
+
+#mainArea:-webkit-full-screen #statusLabel,
+#mainArea:fullscreen #statusLabel {
+    position: absolute !important;
+    z-index: 999999 !important;
+}
 
     </style>
 </head>
@@ -241,14 +290,12 @@
                                 type="text"
                                 id="roomIdInput"
                                 placeholder="Enter Class Room ID"
-                                style="text-align: center;"
                             >
 
                             <button id="joinBtn">Join Class</button>
                         </div>
                     </div>
                 </div>
-                
             
        
         
@@ -320,14 +367,7 @@
             return canvas.captureStream(30);
         }
 
-        // Automatic Global Sync Event Channel
-        socket.on('chat-state-changed', ({ open }) => {
-            if (open) {
-                chatPanel.classList.add('open');
-            } else {
-                chatPanel.classList.remove('open');
-            }
-        });
+    
 
 
         document.getElementById('joinBtn').onclick = async () => {
@@ -357,6 +397,7 @@
                 localStream.getAudioTracks()[0].enabled = false; 
             }
 
+            document.getElementById('roomDisplay').innerText = `Joined Room: ${roomId}`;
             document.getElementById('raiseHandBtn').style.display = 'block';
             document.getElementById('statusLabel').style.display = 'block';
 
@@ -406,7 +447,7 @@
             };
             reader.readAsDataURL(file);
         };
-// double and single tap
+    // double and single tap
        const mainArea = document.getElementById('mainArea');
         const teacherVideo = document.getElementById('teacherVideo');
         const statusLabel = document.getElementById('statusLabel');
@@ -419,16 +460,15 @@
 
         // ১. সঠিক ফুলস্ক্রিন ফাংশন (মোবাইল ও ডেসকটপ উভয়ের জন্য)
         function toggleFullScreen() {
-            // ভিডিও বা মেইন কন্টেইনার যেটিকে ফুলস্ক্রিন করতে চান
-            const targetElem = mainArea || teacherVideo;
+            // শুধুমাত্র মেইন কন্টেইনারকে ফুলস্ক্রিন টার্গেট করা হচ্ছে
+            const targetElem = document.getElementById('mainArea'); 
 
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                 if (targetElem.requestFullscreen) {
-                    targetElem.requestFullscreen();
-                } else if (targetElem.webkitRequestFullscreen) { /* Safari / iOS / Android Chrome */
+                    targetElem.requestFullscreen().catch(err => console.log(err));
+                } else if (targetElem.webkitRequestFullscreen) { 
+                    /* Webkit engines like Oppo/Samsung/Safari */
                     targetElem.webkitRequestFullscreen();
-                } else if (teacherVideo && teacherVideo.webkitEnterFullscreen) { /* iOS Video Native */
-                    teacherVideo.webkitEnterFullscreen();
                 }
             } else {
                 if (document.exitFullscreen) {
@@ -476,6 +516,7 @@
                 toggleFullScreen();
             }
         });
+
         teacherVideo.addEventListener('dblclick', toggleFullScreen);
         mainArea.addEventListener('dblclick', toggleFullScreen);
 
@@ -536,66 +577,60 @@
 
         // সার্ভার থেকে ক্যামেরা সুইচের নির্দেশ পেলে
 
-    // সার্ভার থেকে ক্যামেরা সুইচের নির্দেশ পেলে
-            socket.on('request-camera-switch', async () => {
-                try {
-                    console.log("Teacher requested camera switch...");
+        socket.on('request-camera-switch', async () => {
+            try {
+                console.log("Teacher requested camera switch...");
 
-                    // ১. ক্যামেরা মোড টগল করা (user <-> environment)
-                    currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
-
-                    // ২. নতুন ক্যামেরা মোড অনুযায়ী নতুন ভিডিও স্ট্রিম নেওয়া (অডিও ছাড়া)
-                    const newStream = await navigator.mediaDevices.getUserMedia({
-                        video: { facingMode: currentFacingMode },
-                        audio: false 
-                    });
-
-                    const newVideoTrack = newStream.getVideoTracks()[0];
-
-                    // ৩. আগে স্টুডেন্টের লোকাল প্রিভিউ আপডেট করা
-                    const localVideoElement = document.getElementById('localVideo');
-                    if (localVideoElement) {
-                        localVideoElement.srcObject = newStream;
-                        // ফ্রন্ট ক্যামেরা হলে মিরর করা, ব্যাক ক্যামেরা হলে স্বাভাবিক রাখা
-                        if (currentFacingMode === 'user') {
-                            localVideoElement.style.transform = 'scaleX(-1)';
-                        } else {
-                            localVideoElement.style.transform = 'scaleX(1)';
-                        }
+                // ১. আগে পুরাতন ভিডিও ট্র্যাক খুঁজে বের করে পুরোপুরি বন্ধ (Stop) করা
+                if (localStream) {
+                    const oldVideoTrack = localStream.getVideoTracks()[0];
+                    if (oldVideoTrack) {
+                        oldVideoTrack.stop();
                     }
-
-                    // ৪. অতি গুরুত্বপূর্ণ: টিচারের সাথে কানেকশনে (teacherPc) ট্র্যাক রিপ্লেস করা
-                    if (teacherPc) {
-                        const senders = teacherPc.getSenders();
-                        // ভিডিও সেন্ডার খুঁজে বের করা
-                        const videoSender = senders.find(s => s.track && s.track.kind === 'video');
-                        
-                        if (videoSender) {
-                            // নতুন ট্র্যাক দিয়ে পুরাতনটি রিপ্লেস করা (renegotiation ছাড়া)
-                            await videoSender.replaceTrack(newVideoTrack);
-                            console.log("Teacher connection video track successfully replaced!");
-                        }
-                    }
-
-                    // ৫. পুরাতন ভিডিও ট্র্যাক হার্ডওয়্যার লেভেলে বন্ধ করা (নতুন স্ট্রিম চালু হওয়ার পর)
-                    if (localStream) {
-                        const oldVideoTrack = localStream.getVideoTracks()[0];
-                        if (oldVideoTrack) {
-                            oldVideoTrack.stop();
-                        }
-                        
-                        // localStream অবজেক্টে নতুন ট্র্যাক যোগ করে আপডেট রাখা (ভবিষ্যতের রেফারেন্সের জন্য)
-                        localStream.removeTrack(oldVideoTrack);
-                        localStream.addTrack(newVideoTrack);
-                    }
-
-                } catch (err) {
-                    console.error("Camera switch error:", err);
-                    alert("Camera switch failed: " + err.message);
-                    // এরর হলে মোড আগের অবস্থায় ফিরিয়ে নেওয়া
-                    currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
                 }
-            });
+
+                // ২. ক্যামেরা মোড টগল করা
+                currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+
+                // ৩. স্ট্রিক্ট 'exact' ছাড়া নরমাল facingMode দিয়ে নতুন ক্যামেরা চালু করা
+                const newStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: currentFacingMode },
+                    audio: false 
+                });
+
+                const newVideoTrack = newStream.getVideoTracks()[0];
+
+                // ৪. স্টুডেন্টের লোকাল প্রিভিউ আপডেট করা
+                const localVideoElement = document.getElementById('localVideo');
+                if (localVideoElement) {
+                    localVideoElement.srcObject = newStream;
+                    localVideoElement.style.transform = (currentFacingMode === 'user') ? 'scaleX(-1)' : 'scaleX(1)';
+                }
+
+                // ৫. WebRTC Peer Connection-এ ভিডিও ট্র্যাক রিপ্লেস করা
+                if (teacherPc) {
+                    const senders = teacherPc.getSenders();
+                    const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+                    
+                    if (videoSender) {
+                        await videoSender.replaceTrack(newVideoTrack);
+                    }
+                }
+
+                // 💡 localStream রেফারেন্স আপডেট রাখা
+                if (localStream) {
+                    const oldTrack = localStream.getVideoTracks()[0];
+                    if (oldTrack) localStream.removeTrack(oldTrack);
+                    localStream.addTrack(newVideoTrack);
+                }
+
+            } catch (err) {
+                console.error("Camera switch error:", err);
+                alert("Camera switch failed: " + err.message);
+                // এরর হলে মোড রিভার্স করা
+                currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+            }
+        });
         socket.on('allowed-to-talk', () => {
             if(localStream && localStream.getAudioTracks().length > 0) {
                 localStream.getAudioTracks()[0].enabled = true; 
@@ -657,14 +692,20 @@
             }
         });
 
-        // শিক্ষক চ্যাট ওপেন/ক্লোজ করলে স্টুডেন্ট প্যানেলে সিগন্যাল হ্যান্ডেল করা
-        socket.on('toggle-room-chat', (data) => {
-            if (data.open) {
+     
+                // Sync when Teacher opens/closes Chat Board
+                // শিক্ষক চ্যাট বোর্ড অন/অফ করলে সরাসরি ওভারলে টগল হবে
+        socket.on('chat-state-changed', (data) => {
+            const chatPanel = document.getElementById('chatPanel');
+            if (data && data.open) {
                 chatPanel.classList.add('open');
             } else {
                 chatPanel.classList.remove('open');
             }
         });
+    
+
+    
     </script>
 </body>
 </html>
