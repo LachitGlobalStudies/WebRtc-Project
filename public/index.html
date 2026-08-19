@@ -416,7 +416,7 @@
         // ১. সঠিক ফুলস্ক্রিন ফাংশন (মোবাইল ও ডেসকটপ উভয়ের জন্য)
         function toggleFullScreen() {
             // ভিডিও বা মেইন কন্টেইনার যেটিকে ফুলস্ক্রিন করতে চান
-            const targetElem = mainArea || teacherVideo;
+            const targetElem = mainArea;
 
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                 if (targetElem.requestFullscreen) {
