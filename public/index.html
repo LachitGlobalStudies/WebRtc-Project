@@ -250,7 +250,7 @@
                         </div>
                     </div>
                 </div>
-
+                <h4 id="roomDisplay" style="color: #aaa; margin-top: 5px;"></h4>
             
        
         
@@ -416,7 +416,7 @@
         // ১. সঠিক ফুলস্ক্রিন ফাংশন (মোবাইল ও ডেসকটপ উভয়ের জন্য)
         function toggleFullScreen() {
             // ভিডিও বা মেইন কন্টেইনার যেটিকে ফুলস্ক্রিন করতে চান
-            const targetElem = teacherVideo;
+            const targetElem = mainArea || teacherVideo;
 
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                 if (targetElem.requestFullscreen) {
