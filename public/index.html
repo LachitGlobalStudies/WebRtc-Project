@@ -222,52 +222,6 @@
     pointer-events: auto;
     z-index: 100; /* ভিডিওর ওপরে বাটন রাখার জন্য */
 }
-/* Fullscreen Element Styling */
-#mainArea:-webkit-full-screen {
-    width: 100vw !important;
-    height: 100vh !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    background: #0e0f11 !important;
-}
-
-#mainArea:fullscreen {
-    width: 100vw !important;
-    height: 100vh !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    background: #0e0f11 !important;
-}
-
-/* ফুলস্ক্রিন থাকা অবস্থায় ব্যাকগ্রাউন্ড ভিডিওর সাইজ */
-#mainArea:-webkit-full-screen #teacherVideo,
-#mainArea:fullscreen #teacherVideo {
-    width: 100% !important;
-    height: 100% !important;
-    object-fit: cover !important;
-    z-index: 1 !important;
-}
-
-/* ওভারলে এলিমেন্টগুলোর জন্য উচ্চ Z-Index নিশ্চিত করা */
-#mainArea:-webkit-full-screen #myVideoCard,
-#mainArea:fullscreen #myVideoCard {
-    position: absolute !important;
-    z-index: 999999 !important;
-}
-
-#mainArea:-webkit-full-screen #raiseHandBtn,
-#mainArea:fullscreen #raiseHandBtn {
-    position: absolute !important;
-    z-index: 999999 !important;
-}
-
-#mainArea:-webkit-full-screen #statusLabel,
-#mainArea:fullscreen #statusLabel {
-    position: absolute !important;
-    z-index: 999999 !important;
-}
 
     </style>
 </head>
@@ -296,6 +250,7 @@
                         </div>
                     </div>
                 </div>
+
             
        
         
@@ -460,15 +415,16 @@
 
         // ১. সঠিক ফুলস্ক্রিন ফাংশন (মোবাইল ও ডেসকটপ উভয়ের জন্য)
         function toggleFullScreen() {
-            // শুধুমাত্র মেইন কন্টেইনারকে ফুলস্ক্রিন টার্গেট করা হচ্ছে
-            const targetElem = document.getElementById('mainArea'); 
+            // ভিডিও বা মেইন কন্টেইনার যেটিকে ফুলস্ক্রিন করতে চান
+            const targetElem = teacherVideo;
 
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                 if (targetElem.requestFullscreen) {
-                    targetElem.requestFullscreen().catch(err => console.log(err));
-                } else if (targetElem.webkitRequestFullscreen) { 
-                    /* Webkit engines like Oppo/Samsung/Safari */
+                    targetElem.requestFullscreen();
+                } else if (targetElem.webkitRequestFullscreen) { /* Safari / iOS / Android Chrome */
                     targetElem.webkitRequestFullscreen();
+                } else if (teacherVideo && teacherVideo.webkitEnterFullscreen) { /* iOS Video Native */
+                    teacherVideo.webkitEnterFullscreen();
                 }
             } else {
                 if (document.exitFullscreen) {
