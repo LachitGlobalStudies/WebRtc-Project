@@ -242,7 +242,15 @@
         gap: 6px;
         transition: background 0.2s;
     }
-
+    .camera-mirror{
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .mirror-icon{
+        font-size: 20px;
+        line-height: 1;
+    }
     .cam-switch-btn:hover {
         background: rgba(0, 127, 255, 0.8);
     }
@@ -373,6 +381,14 @@
     @media screen and (max-width: 768px) {
         body { height: 100vh; overflow: auto; }
         
+        #shareBtn{
+            display: none !important;
+
+        }
+
+        #youtubeStreamBtn{
+            display: none !important;
+        }
         .meeting-container { 
             flex-direction: column; 
             height: auto; 
@@ -457,6 +473,7 @@
         
         <!-- Updated Overlay Controls -->
         <div class="cam-controls-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 50;">
+            <button id="cameraMirror" class="camera-mirror" style="display: none;"> <span class="mirror-icon"></span>Mirror</button>
             <button id="toggleAudioBtn" class="cam-switch-btn" style="display: none;">🎙️ Mute Audio</button>
             <button id="toggleVideoBtn" class="cam-switch-btn" style="display: none;">📹 Turn Off Video</button>
             <button id="camSwitchBtn" class="cam-switch-btn" style="display: none;">📷 My Camera</button>
@@ -500,6 +517,7 @@
         let activeSwappedStudentId = null;
         
         const studentCamSwitchBtn = document.getElementById('studentCamSwitchBtn');
+        const cameraMirror = document.getElementById('cameraMirror');
         const camSwitchBtn = document.getElementById('camSwitchBtn');
         const mainDisplayLabel = document.getElementById('mainDisplayLabel');
         const chatPanel = document.getElementById('chatPanel');
@@ -752,8 +770,16 @@
             setTimeout(() => { welcomeScreen.style.display = 'none'; }, 400);
             meetingContainer.style.display = 'flex';
 
-            document.getElementById('shareBtn').style.display = 'flex';
-            document.getElementById('youtubeStreamBtn').style.display = 'flex';
+         // Function to check if device is mobile (portrait or landscape)
+            const isMobileDevice = () => {
+                return window.innerWidth <= 768 || (window.innerHeight <= 500 && window.matchMedia("(orientation: landscape)").matches);
+            };
+
+            // Show buttons only if NOT on a mobile device
+            if (!isMobileDevice()) {
+                document.getElementById('shareBtn').style.display = 'flex';
+                document.getElementById('youtubeStreamBtn').style.display = 'flex';
+            }
             document.getElementById('muteAllBtn').style.display = 'flex';
             document.getElementById('unmuteAllBtn').style.display = 'flex';
             // Inside createBtn.onclick function (around line 370-380):
@@ -962,7 +988,9 @@
                 currentCamFacingMode = (currentCamFacingMode === "user") ? "environment" : "user";
             }
         };
-
+        cameraMirror.onclick=()=>{
+            localVideo.classList.toggle('mirror');
+        }
         studentCamSwitchBtn.onclick = () => {
             if (activeSwappedStudentId) {
                 socket.emit('switch-student-camera', { targetStudentId: activeSwappedStudentId });
