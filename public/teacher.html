@@ -294,24 +294,24 @@
     @keyframes blink { 50% { opacity: 0.4; } }
 
     /* Main Video Display */
-    .main-display { 
-        flex: 1; 
-        display: flex; 
-        justify-content: center; 
-        align-items: center; 
-        background: #0e0f11; 
-        padding: 2px; 
-        position: relative; 
-        overflow: hidden; 
-    }
-    
-    .main-display video { 
-        width: 100%; 
-        height: 100%; 
-        object-fit: contain; 
-        background: #222; 
-        border-radius: 12px; 
-    }
+ .main-display { 
+    flex: 1; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    background: #0e0f11; 
+    padding: 2px; 
+    position: relative; 
+    overflow: hidden; 
+}
+
+.main-display video { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: fill; /* Stretches video to fill exact container dimensions */
+    background: #000; 
+    border-radius: 12px; 
+}
 
     #participantCounter.counter-header {
         position: absolute; 
