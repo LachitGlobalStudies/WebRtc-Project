@@ -807,15 +807,32 @@
             resetOverlayTimeout();  
         };
 
-        document.getElementById('youtubeStreamBtn').onclick = function() {
-            if (!isLiveStreaming) {
-                const streamKey = prompt("Please enter your YouTube Stream Key:");
-                if (!streamKey) return alert("Stream Key is required to push media live!");
-                socket.emit('start-youtube-stream', { streamKey });
-            } else {
-                socket.emit('stop-youtube-stream');
-            }
-        };
+     const streamKeyModal = document.getElementById('streamKeyModal');
+    const streamKeyInput = document.getElementById('streamKeyInput');
+    const confirmStreamBtn = document.getElementById('confirmStreamBtn');
+    const cancelStreamBtn = document.getElementById('cancelStreamBtn');
+    
+    document.getElementById('youtubeStreamBtn').onclick = function() {
+        if (!isLiveStreaming) {
+            streamKeyInput.value = '';
+            streamKeyModal.style.display = 'flex';
+        } else {
+            socket.emit('stop-youtube-stream');
+        }
+    };
+    
+    cancelStreamBtn.onclick = function() {
+        streamKeyModal.style.display = 'none';
+    };
+    
+    confirmStreamBtn.onclick = function() {
+        const streamKey = streamKeyInput.value.trim();
+        if (!streamKey) {
+            return alert("Stream Key is required to push media live!");
+        }
+        streamKeyModal.style.display = 'none';
+        socket.emit('start-youtube-stream', { streamKey });
+    };
 
         socket.on('stream-started', () => {
             isLiveStreaming = true;
