@@ -17,66 +17,6 @@
         overflow: hidden; 
     }
 
-    /* =========================================
-       Picture-in-Picture Floating Window Styles
-    ========================================= */
-    body.pip-mode {
-        background: #161719 !important;
-        padding: 0 !important;
-        margin: 0 !important;
-        overflow: hidden !important;
-        width: 100vw !important;
-        height: 100vh !important;
-        display: flex !important;
-        flex-direction: column !important;
-    }
-
-    .pip-launcher-view {
-        width: 100%;
-        height: 100%;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        background: #1a1c20;
-    }
-
-    .pip-launcher-btn {
-        background: #ff9800;
-        color: #000;
-        font-weight: bold;
-        font-size: 14px;
-        padding: 10px 18px;
-        border: none;
-        border-radius: 25px;
-        cursor: pointer;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    body.pip-mode .chat-panel {
-        position: static !important;
-        width: 100% !important;
-        height: 100% !important;
-        max-height: 100vh !important;
-        opacity: 1 !important;
-        border-radius: 0 !important;
-        border: none !important;
-        display: flex !important;
-    }
-
-    .pip-close-dock-btn {
-        background: #ea4335;
-        color: #fff;
-        border: none;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 11px;
-        cursor: pointer;
-        float: right;
-    }
-
     /* ===========================
        Welcome Screen Fixed
     =========================== */
@@ -113,35 +53,11 @@
         animation: cardPop .5s ease;
     }
 
-    .welcome-icon {
-        font-size: 60px;
-        margin-bottom: 15px;
-    }
-
-    .welcome-card h1 {
-        margin: 0;
-        font-size: 22px;
-        font-weight: 400;
-    }
-
-    .welcome-card h2 {
-        margin: 10px 0;
-        font-size: 34px;
-        color: #fff;
-        font-weight: 700;
-    }
-
-    .welcome-card p {
-        color: #dbeafe;
-        margin: 20px 0 30px;
-        line-height: 1.6;
-    }
-
-    .welcome-card .controls {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
+    .welcome-icon { font-size: 60px; margin-bottom: 15px; }
+    .welcome-card h1 { margin: 0; font-size: 22px; font-weight: 400; }
+    .welcome-card h2 { margin: 10px 0; font-size: 34px; color: #fff; font-weight: 700; }
+    .welcome-card p { color: #dbeafe; margin: 20px 0 30px; line-height: 1.6; }
+    .welcome-card .controls { display: flex; flex-direction: column; gap: 15px; }
 
     .welcome-card .controls input {
         padding: 15px;
@@ -241,7 +157,7 @@
     .sidebar::-webkit-scrollbar-thumb { background: #90f169; border-radius: 4px; }
     .sidebar::-webkit-scrollbar-track { background: #ffffff; }
 
-    /* Student Grid Structure Fix */
+    /* Student Grid Structure */
     .studentgrid { 
         flex: 1; 
         overflow-y: auto; 
@@ -285,7 +201,16 @@
         border-radius: 4px; 
     }
 
-    /* Camera Switch Button Overlay */
+    /* Camera Switch & Mirror Controls Overlay */
+    .cam-controls-overlay {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        display: flex;
+        gap: 8px;
+        z-index: 50;
+    }
+
     .cam-switch-btn {
         background: rgba(0, 0, 0, 0.7);
         color: #fff;
@@ -299,22 +224,16 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        transition: background 0.2s;
+        backdrop-filter: blur(8px);
+        transition: background 0.2s, transform 0.1s;
     }
-    
-    .camera-mirror {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    
-    .mirror-icon {
-        font-size: 20px;
-        line-height: 1;
-    }
-    
+
     .cam-switch-btn:hover {
         background: rgba(0, 127, 255, 0.8);
+    }
+
+    .cam-switch-btn:active {
+        transform: scale(0.96);
     }
 
     .main-display-label {
@@ -390,7 +309,6 @@
         color: rgb(255, 0, 0);
         font-size: 24px;
         font-weight: bold;
-        font-family: sans-serif;
         overflow: hidden;
         text-align: center;
         box-shadow: 0 2px 10px rgba(0,0,0,0.5);
@@ -403,8 +321,6 @@
         position: absolute !important;
         right: 20px !important;
         bottom: 70px !important;
-        top: auto !important;
-        left: auto !important;
         width: 0 !important;
         height: 0 !important;
         opacity: 0;
@@ -439,18 +355,12 @@
     .file-label { display: inline-block; background: #444; text-align: center; padding: 5px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; }
     .file-link { color: #ff9800; text-decoration: underline; display: block; font-weight: bold; margin-top: 4px; }
 
-    /* Responsive Styles (Mobile & Small Screens) */
+    /* Responsive Styles */
     @media screen and (max-width: 768px) {
         body { height: 100vh; overflow: auto; }
+        #shareBtn, #youtubeStreamBtn { display: none !important; }
         
-        #shareBtn { display: none !important; }
-        #youtubeStreamBtn { display: none !important; }
-        
-        .meeting-container { 
-            flex-direction: column; 
-            height: auto; 
-        }
-
+        .meeting-container { flex-direction: column; height: auto; }
         .sidebar {
             display: flex;
             flex-direction: column;
@@ -461,9 +371,7 @@
             overflow: hidden;
         }
 
-        .sidebar .controls {
-            grid-template-columns: repeat(2, 1fr);
-        }
+        .sidebar .controls { grid-template-columns: repeat(2, 1fr); }
 
         .studentgrid {
             width: 100%;
@@ -492,6 +400,7 @@
 </style>
 </head>
 <body>
+ 
     <!-- 1. Welcome Container -->
     <div class="welcome-container" id="welcomeScreen">
         <div class="welcome-card">
@@ -526,8 +435,9 @@
             <div id="participantCounter" class="counter-header">0</div>
             <video id="localVideo" autoplay playsinline class="mirror" muted="1"></video>
             
-            <div class="cam-controls-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 50;">
-                <button id="cameraMirror" class="camera-mirror" style="display: none;">Mirror</button>
+            <!-- Overlay Controls -->
+            <div class="cam-controls-overlay">
+                <button id="cameraMirror" class="cam-switch-btn" style="display: none;">🪞 Mirror</button>
                 <button id="toggleAudioBtn" class="cam-switch-btn" style="display: none;">🎙️ Mute Audio</button>
                 <button id="toggleVideoBtn" class="cam-switch-btn" style="display: none;">📹 Turn Off Video</button>
                 <button id="camSwitchBtn" class="cam-switch-btn" style="display: none;">📷 My Camera</button>
@@ -556,14 +466,14 @@
 
     <!-- Stream Key Modal -->
     <div id="streamKeyModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:99999; justify-content:center; align-items:center;">
-      <div style="background:#222; padding:20px; border-radius:10px; width:90%; max-width:400px; display:flex; flex-direction:column; gap:12px; border:1px solid #444;">
-        <h3 style="margin:0; font-size:16px;">Enter YouTube Stream Key</h3>
-        <input type="text" id="streamKeyInput" placeholder="Paste your stream key here..." style="padding:10px; border-radius:6px; border:1px solid #555; background:#111; color:#fff; outline:none;">
-        <div style="display:flex; justify-content:flex-end; gap:8px;">
-          <button id="cancelStreamBtn" style="padding:8px 14px; background:#555; border:none; color:#fff; border-radius:4px; cursor:pointer;">Cancel</button>
-          <button id="confirmStreamBtn" style="padding:8px 14px; background:#ff0000; border:none; color:#fff; font-weight:bold; border-radius:4px; cursor:pointer;">Start Streaming</button>
+        <div style="background:#222; padding:20px; border-radius:10px; width:90%; max-width:400px; display:flex; flex-direction:column; gap:12px; border:1px solid #444;">
+            <h3 style="margin:0; font-size:16px;">Enter YouTube Stream Key</h3>
+            <input type="text" id="streamKeyInput" placeholder="Paste your stream key here..." style="padding:10px; border-radius:6px; border:1px solid #555; background:#111; color:#fff; outline:none;">
+            <div style="display:flex; justify-content:flex-end; gap:8px;">
+                <button id="cancelStreamBtn" style="padding:8px 14px; background:#555; border:none; color:#fff; border-radius:4px; cursor:pointer;">Cancel</button>
+                <button id="confirmStreamBtn" style="padding:8px 14px; background:#ff0000; border:none; color:#fff; font-weight:bold; border-radius:4px; cursor:pointer;">Start Streaming</button>
+            </div>
         </div>
-      </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -575,6 +485,8 @@
         let isScreenSharing = false;
         let isLiveStreaming = false;
         let isChatPanelOpen = false;
+        let isAudioMuted = false;
+        let isVideoStopped = false;
         let overlayTimeout;
         const peerConnections = {};
         const studentMicStatus = {}; 
@@ -582,9 +494,6 @@
         let currentCamFacingMode = "user";
         let activeSwappedStudentId = null;
         
-        let pipWindowInstance = null;
-        let isPipChatExpanded = false;
-
         const studentCamSwitchBtn = document.getElementById('studentCamSwitchBtn');
         const cameraMirror = document.getElementById('cameraMirror');
         const camSwitchBtn = document.getElementById('camSwitchBtn');
@@ -597,27 +506,24 @@
         const welcomeScreen = document.getElementById('welcomeScreen');
         const toggleAudioBtn = document.getElementById('toggleAudioBtn');
         const toggleVideoBtn = document.getElementById('toggleVideoBtn');
-        let isAudioMuted = false;
-        let isVideoStopped = false;
+        const overlayControls = document.querySelector('.cam-controls-overlay');
 
         function toggleMeetingFullscreen() {
             if (!document.fullscreenElement) {
-                meetingContainer.requestFullscreen().catch(err => {
-                    console.error("Fullscreen failed:", err);
-                });
+                meetingContainer.requestFullscreen().catch(err => console.error("Fullscreen failed:", err));
             } else {
                 document.exitFullscreen();
             }
         }
 
         let touchTimer = null;
+        let lastTapTime = 0;
 
         // Desktop / Mouse Click Handling
-        localVideo.addEventListener("click", function (e) {
+        localVideo.addEventListener("click", () => {
             if (touchTimer === null) {
                 touchTimer = setTimeout(() => {
                     touchTimer = null;
-                    const overlayControls = document.querySelector('.cam-controls-overlay');
                     if (overlayControls.style.display === 'none' || overlayControls.style.display === '') {
                         showOverlayControls();
                     } else {
@@ -628,15 +534,14 @@
             }
         });
 
-        localVideo.addEventListener("dblclick", function (e) {
+        localVideo.addEventListener("dblclick", () => {
             clearTimeout(touchTimer);
             touchTimer = null;
             toggleMeetingFullscreen();
         });
 
         // Mobile Touch Handling
-        let lastTapTime = 0;
-        localVideo.addEventListener("touchend", function (e) {
+        localVideo.addEventListener("touchend", (e) => {
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTapTime;
             
@@ -648,7 +553,6 @@
             } else {
                 touchTimer = setTimeout(() => {
                     touchTimer = null;
-                    const overlayControls = document.querySelector('.cam-controls-overlay');
                     if (overlayControls.style.display === 'none' || overlayControls.style.display === '') {
                         showOverlayControls();
                     } else {
@@ -661,7 +565,7 @@
         });
 
         function updateCountUI(count) {
-            if(count !== undefined && participantCounter) {
+            if (count !== undefined && participantCounter) {
                 participantCounter.innerText = count;
                 participantCounter.style.display = 'flex';
             }
@@ -690,112 +594,7 @@
             return canvas.captureStream(30);
         }
 
- // ==========================================
-// Picture-in-Picture Floating Window Manager
-// ==========================================
-async function openFloatingDockPiP() {
-    if (!('documentPictureInPicture' in window)) {
-        console.warn("Document Picture-in-Picture is not supported in this browser.");
-        return;
-    }
-
-    try {
-        // 1. Request standard minimum window size
-        pipWindowInstance = await window.documentPictureInPicture.requestWindow({
-            width: 340,
-            height: 480
-        });
-
-        // 2. Inject explicit standalone CSS into the floating window
-        const style = pipWindowInstance.document.createElement('style');
-        style.textContent = `
-            * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
-            body { background: #161719; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; padding: 0; }
-            .chat-panel { position: static !important; width: 100% !important; height: 100vh !important; display: flex !important; flex-direction: column !important; opacity: 1 !important; border: none !important; }
-            .chat-header { padding: 12px; background: #1a1c20; font-weight: bold; text-align: center; border-bottom: 1px solid #2a2d32; color: #ff9800; font-size: 14px; }
-            .chat-messages { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-            .msg-block { padding: 8px 12px; border-radius: 6px; max-width: 85%; font-size: 13px; line-height: 1.4; word-break: break-all; }
-            .msg-me { background: #007fff; color: #fff; align-self: flex-end; }
-            .msg-other { background: #2a2d32; color: #fff; align-self: flex-start; }
-            .chat-input-area { padding: 10px; background: #1a1c20; border-top: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 6px; }
-            .chat-row { display: flex; gap: 5px; }
-            .chat-input-area input[type="text"] { flex: 1; padding: 8px; background: #222; border: 1px solid #3a3f47; border-radius: 4px; color: #fff; outline: none; }
-            .chat-input-area button { padding: 8px 14px; background: #2ea44f; border: none; color: #fff; font-weight: bold; border-radius: 4px; cursor: pointer; }
-            .file-label { display: inline-block; background: #444; text-align: center; padding: 5px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-            .file-link { color: #ff9800; text-decoration: underline; display: block; font-weight: bold; margin-top: 4px; }
-        `;
-        pipWindowInstance.document.head.appendChild(style);
-
-        // 3. Move chatPanel into the floating window directly
-        pipWindowInstance.document.body.appendChild(chatPanel);
-        chatPanel.classList.add('open');
-
-        // 4. Return chat to main page when floating window is closed
-        pipWindowInstance.addEventListener('pagehide', () => {
-            meetingContainer.appendChild(chatPanel);
-            chatPanel.classList.remove('open');
-            isChatPanelOpen = false;
-            masterChatBtn.innerText = "Chat Board 💬";
-            masterChatBtn.style.background = "#ff9800";
-            pipWindowInstance = null;
-        });
-
-    } catch (err) {
-        console.error("Failed to open floating PiP window:", err);
-    }
-}
-
-        function renderPipLauncherView() {
-            if (!pipWindowInstance) return;
-            
-            isPipChatExpanded = false;
-            pipWindowInstance.resizeTo(220, 60);
-            pipWindowInstance.document.body.innerHTML = `
-                <div class="pip-launcher-view">
-                    <button class="pip-launcher-btn" id="pipOpenChatBtn">💬 Open Chat</button>
-                </div>
-            `;
-
-            pipWindowInstance.document.getElementById('pipOpenChatBtn').onclick = () => {
-                renderPipChatView();
-            };
-        }
-
-        function renderPipChatView() {
-            if (!pipWindowInstance) return;
-
-            isPipChatExpanded = true;
-            pipWindowInstance.resizeTo(360, 500);
-            pipWindowInstance.document.body.innerHTML = '';
-            
-            pipWindowInstance.document.body.appendChild(chatPanel);
-            chatPanel.classList.add('open');
-
-            const header = chatPanel.querySelector('.chat-header');
-            if (header && !header.querySelector('.pip-close-dock-btn')) {
-                const minimizeBtn = document.createElement('button');
-                minimizeBtn.className = 'pip-close-dock-btn';
-                minimizeBtn.innerText = "Minimize ➖";
-                minimizeBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    meetingContainer.appendChild(chatPanel);
-                    chatPanel.classList.remove('open');
-                    renderPipLauncherView();
-                };
-                header.appendChild(minimizeBtn);
-            }
-        }
-
         masterChatBtn.onclick = () => {
-            if (pipWindowInstance) {
-                if (!isPipChatExpanded) {
-                    renderPipChatView();
-                } else {
-                    renderPipLauncherView();
-                }
-                return;
-            }
-
             if (!isChatPanelOpen) {
                 chatPanel.classList.add('open');
                 masterChatBtn.innerText = "Close Chat ✖";
@@ -811,18 +610,13 @@ async function openFloatingDockPiP() {
             }
         };
 
-        // Mute/Unmute Teacher Microphone
         toggleAudioBtn.onclick = () => {
             if (!localStream) return;
-            
             const audioTracks = localStream.getAudioTracks();
             if (audioTracks.length === 0) return;
 
             isAudioMuted = !isAudioMuted;
-            
-            audioTracks.forEach(track => {
-                track.enabled = !isAudioMuted;
-            });
+            audioTracks.forEach(track => track.enabled = !isAudioMuted);
 
             if (isAudioMuted) {
                 toggleAudioBtn.innerText = "🔇 Unmute Audio";
@@ -833,18 +627,13 @@ async function openFloatingDockPiP() {
             }
         };
 
-        // Turn On/Off Teacher Video
         toggleVideoBtn.onclick = () => {
             if (!localStream) return;
-
             const videoTracks = localStream.getVideoTracks();
             if (videoTracks.length === 0) return;
 
             isVideoStopped = !isVideoStopped;
-
-            videoTracks.forEach(track => {
-                track.enabled = !isVideoStopped;
-            });
+            videoTracks.forEach(track => track.enabled = !isVideoStopped);
 
             if (isVideoStopped) {
                 toggleVideoBtn.innerText = "📷 Turn On Video";
@@ -860,32 +649,30 @@ async function openFloatingDockPiP() {
             const roomId = customInput ? customInput.value.trim() : "";
 
             if (!roomId) {
-                alert("Please Enter a room id");
+                alert("Please enter a room ID");
                 return;
             }
 
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             } catch (err) {
-                console.warn("Camera/Mic access denied or not found. Falling back to dummy video stream.", err);
-                alert("Your camera and microphone is not accessible , a dummy video will play");
-                
+                console.warn("Camera/Mic access denied or not found. Falling back to dummy stream.", err);
+                alert("Your camera/microphone is inaccessible; playing a dummy video stream.");
                 localStream = createDummyStream();
                 
                 try {
                     const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
                     audioStream.getAudioTracks().forEach(track => localStream.addTrack(track));
                 } catch (e) {
-                    console.warn("Audio fallback also failed, running with video-only dummy stream.");
+                    console.warn("Audio fallback failed, running video-only.");
                 }
             }
             
             localVideo.srcObject = localStream;
             
             const joinLink = `${window.location.origin}/index.html?room=${roomId}`;
-
             let linkDisplay = document.getElementById('shareLinkDisplay');
-            if(!linkDisplay) {
+            if (!linkDisplay) {
                 linkDisplay = document.createElement('div');
                 linkDisplay.id = 'shareLinkDisplay';
                 linkDisplay.style.cssText = "width: 100%; margin-top: 5px;";
@@ -899,24 +686,17 @@ async function openFloatingDockPiP() {
 
             document.getElementById('copyLinkBtn').onclick = async () => {
                 const link = document.getElementById('copyLinkInput').value;
-
                 if (navigator.share) {
                     try {
-                        await navigator.share({
-                            title: "LGS Live Tuition",
-                            text: "Join my live class",
-                            url: link
-                        });
+                        await navigator.share({ title: "LGS Live Tuition", text: "Join my live class", url: link });
                         document.getElementById('copyLinkBtn').innerText = "✅ Shared!";
-                        setTimeout(() => {
-                            document.getElementById('copyLinkBtn').innerText = "📤 Share Join Link";
-                        }, 2000);
+                        setTimeout(() => { document.getElementById('copyLinkBtn').innerText = "📤 Share Join Link"; }, 2000);
                     } catch (err) {
                         console.log("Share cancelled");
                     }
                 } else {
                     navigator.clipboard.writeText(link).then(() => {
-                        alert("Sharing is not supported on this device.\nLink copied instead.");
+                        alert("Sharing not supported on this device. Link copied to clipboard.");
                     });
                 }
             };
@@ -927,9 +707,7 @@ async function openFloatingDockPiP() {
             setTimeout(() => { welcomeScreen.style.display = 'none'; }, 400);
             meetingContainer.style.display = 'flex';
 
-            const isMobileDevice = () => {
-                return window.innerWidth <= 768 || (window.innerHeight <= 500 && window.matchMedia("(orientation: landscape)").matches);
-            };
+            const isMobileDevice = () => window.innerWidth <= 768 || (window.innerHeight <= 500 && window.matchMedia("(orientation: landscape)").matches);
 
             if (!isMobileDevice()) {
                 document.getElementById('shareBtn').style.display = 'flex';
@@ -941,10 +719,10 @@ async function openFloatingDockPiP() {
             toggleVideoBtn.style.display = 'flex';
             camSwitchBtn.style.display = 'flex';
             masterChatBtn.style.display = 'flex';
-            if(participantCounter) participantCounter.style.display = 'flex';
-            studentCamSwitchBtn.style.display = 'none';   
-            mainDisplayLabel.style.display = 'block';  
             cameraMirror.style.display = 'flex';
+            mainDisplayLabel.style.display = 'block';  
+            
+            if (participantCounter) participantCounter.style.display = 'flex';
             
             resetOverlayTimeout();  
         };
@@ -954,7 +732,7 @@ async function openFloatingDockPiP() {
         const confirmStreamBtn = document.getElementById('confirmStreamBtn');
         const cancelStreamBtn = document.getElementById('cancelStreamBtn');
         
-        document.getElementById('youtubeStreamBtn').onclick = function() {
+        document.getElementById('youtubeStreamBtn').onclick = () => {
             if (!isLiveStreaming) {
                 streamKeyInput.value = '';
                 streamKeyModal.style.display = 'flex';
@@ -963,15 +741,11 @@ async function openFloatingDockPiP() {
             }
         };
         
-        cancelStreamBtn.onclick = function() {
-            streamKeyModal.style.display = 'none';
-        };
+        cancelStreamBtn.onclick = () => { streamKeyModal.style.display = 'none'; };
         
-        confirmStreamBtn.onclick = function() {
+        confirmStreamBtn.onclick = () => {
             const streamKey = streamKeyInput.value.trim();
-            if (!streamKey) {
-                return alert("Stream Key is required to push media live!");
-            }
+            if (!streamKey) return alert("Stream Key is required to push media live!");
             streamKeyModal.style.display = 'none';
             socket.emit('start-youtube-stream', { streamKey });
         };
@@ -994,11 +768,10 @@ async function openFloatingDockPiP() {
             mediaRecorder.start(1000); 
         });
 
-        socket.on('stream-stopped', () => { cleanupStreaming(); });
+        socket.on('stream-stopped', () => cleanupStreaming());
         socket.on('stream-error', (err) => { alert(err); cleanupStreaming(); });
 
         function showOverlayControls() {
-            const overlayControls = document.querySelector('.cam-controls-overlay');
             if (overlayControls) {
                 overlayControls.style.display = 'flex';
                 mainDisplayLabel.style.display = 'flex';
@@ -1009,7 +782,6 @@ async function openFloatingDockPiP() {
         function resetOverlayTimeout() {
             clearTimeout(overlayTimeout);
             overlayTimeout = setTimeout(() => {
-                const overlayControls = document.querySelector('.cam-controls-overlay');
                 if (overlayControls) {
                     overlayControls.style.display = 'none';
                     mainDisplayLabel.style.display = 'none';
@@ -1038,13 +810,13 @@ async function openFloatingDockPiP() {
             input.value = '';
         }
 
-        document.getElementById('fileInput').onchange = function(e) {
+        document.getElementById('fileInput').onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
             if (file.size > 10 * 1024 * 1024) return alert("File size must be under 10MB");
 
             const reader = new FileReader();
-            reader.onload = function(evt) {
+            reader.onload = (evt) => {
                 const fileData = {
                     sender: 'Teacher',
                     fileName: file.name,
@@ -1056,8 +828,8 @@ async function openFloatingDockPiP() {
             reader.readAsDataURL(file);
         };
 
-        socket.on('receive-message', (data) => { appendMsg(data, 'msg-other'); });
-        socket.on('receive-file', (data) => { appendFile(data, 'msg-other'); });
+        socket.on('receive-message', (data) => appendMsg(data, 'msg-other'));
+        socket.on('receive-file', (data) => appendFile(data, 'msg-other'));
 
         function appendMsg(data, className) {
             const win = document.getElementById('chatWindow');
@@ -1077,10 +849,9 @@ async function openFloatingDockPiP() {
             win.scrollTop = win.scrollHeight;
         }
 
-        document.getElementById('muteAllBtn').onclick = function() { socket.emit('mute-all-students'); };
-        document.getElementById('unmuteAllBtn').onclick = function() { socket.emit('unmute-all-students'); };
+        document.getElementById('muteAllBtn').onclick = () => socket.emit('mute-all-students');
+        document.getElementById('unmuteAllBtn').onclick = () => socket.emit('unmute-all-students');
 
-        // Screen Sharing Initiation
         document.getElementById('shareBtn').onclick = async function() {
             if (!isScreenSharing) {
                 try {
@@ -1099,9 +870,6 @@ async function openFloatingDockPiP() {
                     this.style.background = "#ea4335";
                     isScreenSharing = true;
 
-                    // Open always-on-top desktop badge
-                    await openFloatingDockPiP();
-
                     if (isLiveStreaming && mediaRecorder && mediaRecorder.state !== 'inactive') {
                         mediaRecorder.stop();
                         mediaRecorder = new MediaRecorder(screenStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
@@ -1109,7 +877,7 @@ async function openFloatingDockPiP() {
                         mediaRecorder.start(1000);
                     }
                     
-                    videoTrack.onended = () => { stopScreenShare(); };
+                    videoTrack.onended = () => stopScreenShare();
                 } catch (error) {
                     console.error("Error starting screen share:", error);
                 }
@@ -1118,49 +886,11 @@ async function openFloatingDockPiP() {
             }
         };
 
-        function stopScreenShare() {
-            if (!isScreenSharing) return;
-
-            if (pipWindowInstance) {
-                pipWindowInstance.close();
-                pipWindowInstance = null;
-            }
-            
-            const videoTrack = localStream.getVideoTracks()[0];
-            
-            for (let userId in peerConnections) {
-                const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
-                if (sender) sender.replaceTrack(videoTrack);
-            }
-            
-            localVideo.srcObject = localStream;
-            localVideo.classList.add('mirror');
-            
-            const shareBtn = document.getElementById('shareBtn');
-            shareBtn.innerText = "Share Screen 🖥️";
-            shareBtn.style.background = "#007fff";
-            
-            if (screenStream) {
-                screenStream.getTracks().forEach(track => track.stop());
-            }
-            
-            isScreenSharing = false;
-
-            if (isLiveStreaming && mediaRecorder) {
-                mediaRecorder.stop();
-                mediaRecorder = new MediaRecorder(localStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
-                mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) socket.emit('stream-chunk', e.data); };
-                mediaRecorder.start(1000);
-            }
-        }
-
         camSwitchBtn.onclick = async () => {
             try {
                 if (localStream) {
                     const oldVideoTrack = localStream.getVideoTracks()[0];
-                    if (oldVideoTrack) {
-                        oldVideoTrack.stop();
-                    }
+                    if (oldVideoTrack) oldVideoTrack.stop();
                 }
 
                 currentCamFacingMode = (currentCamFacingMode === "user") ? "environment" : "user";
@@ -1267,6 +997,37 @@ async function openFloatingDockPiP() {
             studentCamSwitchBtn.style.display = 'none';
         }
 
+        function stopScreenShare() {
+            if (!isScreenSharing) return;
+            
+            const videoTrack = localStream.getVideoTracks()[0];
+            
+            for (let userId in peerConnections) {
+                const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
+                if (sender) sender.replaceTrack(videoTrack);
+            }
+            
+            localVideo.srcObject = localStream;
+            localVideo.classList.add('mirror');
+            
+            const shareBtn = document.getElementById('shareBtn');
+            shareBtn.innerText = "Share Screen 🖥️";
+            shareBtn.style.background = "#007fff";
+            
+            if (screenStream) {
+                screenStream.getTracks().forEach(track => track.stop());
+            }
+            
+            isScreenSharing = false;
+
+            if (isLiveStreaming && mediaRecorder) {
+                mediaRecorder.stop();
+                mediaRecorder = new MediaRecorder(localStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
+                mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) socket.emit('stream-chunk', e.data); };
+                mediaRecorder.start(1000);
+            }
+        }
+
         socket.on('all-users', ({ users, count }) => {
             updateCountUI(count);
             users.forEach(user => { if (user.role === 'student') createPeerConnection(user.id); });
@@ -1294,7 +1055,11 @@ async function openFloatingDockPiP() {
             let pc = peerConnections[data.sender];
             if (!pc) return;
             if (data.signal.answer) await pc.setRemoteDescription(new RTCSessionDescription(data.signal.answer));
-            else if (data.signal.candidate) { try { await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){} }
+            else if (data.signal.candidate) { 
+                try { 
+                    await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); 
+                } catch(e){} 
+            }
         });
 
         socket.on('student-raised-hand', (studentId) => {
@@ -1305,9 +1070,7 @@ async function openFloatingDockPiP() {
             if (btn && studentMicStatus[studentId] !== 'unmuted') { 
                 btn.innerText = "✋ Hand Raised"; 
                 btn.className = "mic-control-btn hand-raised"; 
-                if (card && grid) {
-                    grid.prepend(card);
-                }
+                if (card && grid) grid.prepend(card);
             }
         });
 
@@ -1340,9 +1103,7 @@ async function openFloatingDockPiP() {
         });
 
         socket.on('user-left', (userId) => {
-            if (activeSwappedStudentId === userId) {
-                resetMainDisplay();
-            }
+            if (activeSwappedStudentId === userId) resetMainDisplay();
             
             if (peerConnections[userId]) peerConnections[userId].close();
             delete peerConnections[userId];
@@ -1412,12 +1173,8 @@ async function openFloatingDockPiP() {
                 if (event.track) {
                     event.track.onunmute = () => {
                         const video = card.querySelector('video');
-                        if (video) {
-                            video.play().catch(e => console.log("Auto-play resume error:", e));
-                        }
-                        if (activeSwappedStudentId === userId) {
-                            localVideo.play().catch(e => console.log("Main video play error:", e));
-                        }
+                        if (video) video.play().catch(e => console.log("Auto-play resume error:", e));
+                        if (activeSwappedStudentId === userId) localVideo.play().catch(e => console.log("Main video play error:", e));
                     };
                 }
             };
