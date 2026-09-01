@@ -16,65 +16,67 @@
         flex-direction: column; 
         overflow: hidden; 
     }
-/* Picture-in-Picture Root Window Styles */
-body.pip-mode {
-    background: #161719 !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    overflow: hidden !important;
-    width: 100vw !important;
-    height: 100vh !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
 
-/* Floating Launcher Pill inside PiP Window */
-.pip-launcher-view {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: #1a1c20;
-}
+    /* =========================================
+       Picture-in-Picture Floating Window Styles
+    ========================================= */
+    body.pip-mode {
+        background: #161719 !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        display: flex !important;
+        flex-direction: column !important;
+    }
 
-.pip-launcher-btn {
-    background: #ff9800;
-    color: #000;
-    font-weight: bold;
-    font-size: 14px;
-    padding: 10px 18px;
-    border: none;
-    border-radius: 25px;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+    .pip-launcher-view {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: #1a1c20;
+    }
 
-/* Full Chat Mode inside PiP Window */
-body.pip-mode .chat-panel {
-    position: static !important;
-    width: 100% !important;
-    height: 100% !important;
-    max-height: 100vh !important;
-    opacity: 1 !important;
-    border-radius: 0 !important;
-    border: none !important;
-    display: flex !important;
-}
+    .pip-launcher-btn {
+        background: #ff9800;
+        color: #000;
+        font-weight: bold;
+        font-size: 14px;
+        padding: 10px 18px;
+        border: none;
+        border-radius: 25px;
+        cursor: pointer;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-.pip-close-dock-btn {
-    background: #ea4335;
-    color: #fff;
-    border: none;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 11px;
-    cursor: pointer;
-    float: right;
-}
+    body.pip-mode .chat-panel {
+        position: static !important;
+        width: 100% !important;
+        height: 100% !important;
+        max-height: 100vh !important;
+        opacity: 1 !important;
+        border-radius: 0 !important;
+        border: none !important;
+        display: flex !important;
+    }
+
+    .pip-close-dock-btn {
+        background: #ea4335;
+        color: #fff;
+        border: none;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        cursor: pointer;
+        float: right;
+    }
+
     /* ===========================
        Welcome Screen Fixed
     =========================== */
@@ -178,17 +180,16 @@ body.pip-mode .chat-panel {
         flex-shrink: 0;
     }
     
-    /* বাটনগুলোকে একই সাইজে আনার CSS Grid */
     .sidebar .controls {
         display: grid;
-        grid-template-columns: 1fr; /* একটির নিচে একটি সমান উইডথে বসবে */
+        grid-template-columns: 1fr;
         gap: 8px;
         width: 100%;
     }
 
     .sidebar .controls button { 
         width: 100%;
-        height: 42px; /* সবকটি বাটনের উচ্চতা সমান */
+        height: 42px;
         padding: 0 10px; 
         font-size: 13px; 
         border: none; 
@@ -300,15 +301,18 @@ body.pip-mode .chat-panel {
         gap: 6px;
         transition: background 0.2s;
     }
-    .camera-mirror{
+    
+    .camera-mirror {
         display: flex;
         align-items: center;
         gap: 6px;
     }
-    .mirror-icon{
+    
+    .mirror-icon {
         font-size: 20px;
         line-height: 1;
     }
+    
     .cam-switch-btn:hover {
         background: rgba(0, 127, 255, 0.8);
     }
@@ -352,24 +356,24 @@ body.pip-mode .chat-panel {
     @keyframes blink { 50% { opacity: 0.4; } }
 
     /* Main Video Display */
- .main-display { 
-    flex: 1; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    background: #0e0f11; 
-    padding: 2px; 
-    position: relative; 
-    overflow: hidden; 
-}
+    .main-display { 
+        flex: 1; 
+        display: flex; 
+        justify-content: center; 
+        align-items: center; 
+        background: #0e0f11; 
+        padding: 2px; 
+        position: relative; 
+        overflow: hidden; 
+    }
 
-.main-display video { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: fill; /* Stretches video to fill exact container dimensions */
-    background: #000; 
-    border-radius: 12px; 
-}
+    .main-display video { 
+        width: 100%; 
+        height: 100%; 
+        object-fit: fill;
+        background: #000; 
+        border-radius: 12px; 
+    }
 
     #participantCounter.counter-header {
         position: absolute; 
@@ -439,14 +443,9 @@ body.pip-mode .chat-panel {
     @media screen and (max-width: 768px) {
         body { height: 100vh; overflow: auto; }
         
-        #shareBtn{
-            display: none !important;
-
-        }
-
-        #youtubeStreamBtn{
-            display: none !important;
-        }
+        #shareBtn { display: none !important; }
+        #youtubeStreamBtn { display: none !important; }
+        
         .meeting-container { 
             flex-direction: column; 
             height: auto; 
@@ -463,7 +462,7 @@ body.pip-mode .chat-panel {
         }
 
         .sidebar .controls {
-            grid-template-columns: repeat(2, 1fr); /* মোবাইলে পাশাপাশি ২টি করে সমান বাটন বসবে */
+            grid-template-columns: repeat(2, 1fr);
         }
 
         .studentgrid {
@@ -493,8 +492,6 @@ body.pip-mode .chat-panel {
 </style>
 </head>
 <body>
- 
-    
     <!-- 1. Welcome Container -->
     <div class="welcome-container" id="welcomeScreen">
         <div class="welcome-card">
@@ -513,7 +510,6 @@ body.pip-mode .chat-panel {
     <div class="meeting-container" id="meetingContainer" style="display: none;">
         <div class="sidebar">
             <div class="tools-bar">
-                <!-- Controls Grid Section -->
                 <div class="controls">
                     <button id="shareBtn" style="display: none;">Share Screen 🖥️</button>
                     <button id="youtubeStreamBtn" style="display: none;">Stream YouTube 🎥</button>
@@ -525,22 +521,21 @@ body.pip-mode .chat-panel {
             <div class="studentgrid" id="studentGrid"></div>
         </div>
 
-    <!-- Main Video Display -->
-    <div class="main-display" id="mainArea">
-        <div id="participantCounter" class="counter-header">0</div>
-        <video id="localVideo" autoplay playsinline class="mirror" muted="1"></video>
-        
-        <!-- Updated Overlay Controls -->
-        <div class="cam-controls-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 50;">
-            <button id="cameraMirror" class="camera-mirror" style="display: none;">Mirror</button>
-            <button id="toggleAudioBtn" class="cam-switch-btn" style="display: none;">🎙️ Mute Audio</button>
-            <button id="toggleVideoBtn" class="cam-switch-btn" style="display: none;">📹 Turn Off Video</button>
-            <button id="camSwitchBtn" class="cam-switch-btn" style="display: none;">📷 My Camera</button>
-            <button id="studentCamSwitchBtn" class="cam-switch-btn" style="display: none; background: #ff9800; color: #000;">📷 Student's Camera</button>
-        </div>
+        <!-- Main Video Display -->
+        <div class="main-display" id="mainArea">
+            <div id="participantCounter" class="counter-header">0</div>
+            <video id="localVideo" autoplay playsinline class="mirror" muted="1"></video>
+            
+            <div class="cam-controls-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 50;">
+                <button id="cameraMirror" class="camera-mirror" style="display: none;">Mirror</button>
+                <button id="toggleAudioBtn" class="cam-switch-btn" style="display: none;">🎙️ Mute Audio</button>
+                <button id="toggleVideoBtn" class="cam-switch-btn" style="display: none;">📹 Turn Off Video</button>
+                <button id="camSwitchBtn" class="cam-switch-btn" style="display: none;">📷 My Camera</button>
+                <button id="studentCamSwitchBtn" class="cam-switch-btn" style="display: none; background: #ff9800; color: #000;">📷 Student's Camera</button>
+            </div>
 
-        <div id="mainDisplayLabel" class="main-display-label" style="display: none;">Teacher (You)</div>
-    </div>
+            <div id="mainDisplayLabel" class="main-display-label" style="display: none;">Teacher (You)</div>
+        </div>
 
         <!-- Floating Chat Panel -->
         <div class="chat-panel" id="chatPanel">
@@ -558,17 +553,19 @@ body.pip-mode .chat-panel {
             </div>
         </div>
     </div>
-   <!-- Stream Key Modal -->
-<div id="streamKeyModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:99999; justify-content:center; align-items:center;">
-  <div style="background:#222; padding:20px; border-radius:10px; width:90%; max-width:400px; display:flex; flex-direction:column; gap:12px; border:1px solid #444;">
-    <h3 style="margin:0; font-size:16px;">Enter YouTube Stream Key</h3>
-    <input type="text" id="streamKeyInput" placeholder="Paste your stream key here..." style="padding:10px; border-radius:6px; border:1px solid #555; background:#111; color:#fff; outline:none;">
-    <div style="display:flex; justify-content:flex-end; gap:8px;">
-      <button id="cancelStreamBtn" style="padding:8px 14px; background:#555; border:none; color:#fff; border-radius:4px; cursor:pointer;">Cancel</button>
-      <button id="confirmStreamBtn" style="padding:8px 14px; background:#ff0000; border:none; color:#fff; font-weight:bold; border-radius:4px; cursor:pointer;">Start Streaming</button>
+
+    <!-- Stream Key Modal -->
+    <div id="streamKeyModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:99999; justify-content:center; align-items:center;">
+      <div style="background:#222; padding:20px; border-radius:10px; width:90%; max-width:400px; display:flex; flex-direction:column; gap:12px; border:1px solid #444;">
+        <h3 style="margin:0; font-size:16px;">Enter YouTube Stream Key</h3>
+        <input type="text" id="streamKeyInput" placeholder="Paste your stream key here..." style="padding:10px; border-radius:6px; border:1px solid #555; background:#111; color:#fff; outline:none;">
+        <div style="display:flex; justify-content:flex-end; gap:8px;">
+          <button id="cancelStreamBtn" style="padding:8px 14px; background:#555; border:none; color:#fff; border-radius:4px; cursor:pointer;">Cancel</button>
+          <button id="confirmStreamBtn" style="padding:8px 14px; background:#ff0000; border:none; color:#fff; font-weight:bold; border-radius:4px; cursor:pointer;">Start Streaming</button>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
+
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
@@ -585,6 +582,9 @@ body.pip-mode .chat-panel {
         let currentCamFacingMode = "user";
         let activeSwappedStudentId = null;
         
+        let pipWindowInstance = null;
+        let isPipChatExpanded = false;
+
         const studentCamSwitchBtn = document.getElementById('studentCamSwitchBtn');
         const cameraMirror = document.getElementById('cameraMirror');
         const camSwitchBtn = document.getElementById('camSwitchBtn');
@@ -617,7 +617,6 @@ body.pip-mode .chat-panel {
             if (touchTimer === null) {
                 touchTimer = setTimeout(() => {
                     touchTimer = null;
-                    // Single Click Event: Toggle Overlay
                     const overlayControls = document.querySelector('.cam-controls-overlay');
                     if (overlayControls.style.display === 'none' || overlayControls.style.display === '') {
                         showOverlayControls();
@@ -625,14 +624,13 @@ body.pip-mode .chat-panel {
                         overlayControls.style.display = 'none';
                         clearTimeout(overlayTimeout);
                     }
-                }, 300); // 300ms ওয়েট করবে ডাবল ক্লিক নিশ্চিত করতে
+                }, 300);
             }
         });
 
         localVideo.addEventListener("dblclick", function (e) {
             clearTimeout(touchTimer);
             touchTimer = null;
-            // Double Click Event: Toggle Fullscreen
             toggleMeetingFullscreen();
         });
 
@@ -643,13 +641,11 @@ body.pip-mode .chat-panel {
             const tapLength = currentTime - lastTapTime;
             
             if (tapLength < 300 && tapLength > 0) {
-                // Double Tap: Fullscreen Toggle
                 e.preventDefault();
                 clearTimeout(touchTimer);
                 touchTimer = null;
                 toggleMeetingFullscreen();
             } else {
-                // Single Tap: Show Overlay Controls
                 touchTimer = setTimeout(() => {
                     touchTimer = null;
                     const overlayControls = document.querySelector('.cam-controls-overlay');
@@ -662,17 +658,6 @@ body.pip-mode .chat-panel {
                 }, 300);
             }
             lastTapTime = currentTime;
-        });
-
-        let lastTap = 0;
-        localVideo.addEventListener("touchend", function (e) {
-            const currentTime = new Date().getTime();
-            const tapLength = currentTime - lastTap;
-            if (tapLength < 300 && tapLength > 0) {
-                e.preventDefault();
-                toggleMeetingFullscreen();
-            }
-            lastTap = currentTime;
         });
 
         function updateCountUI(count) {
@@ -705,7 +690,104 @@ body.pip-mode .chat-panel {
             return canvas.captureStream(30);
         }
 
+        // ==========================================
+        // Picture-in-Picture Floating Window Manager
+        // ==========================================
+        async function openFloatingDockPiP() {
+            if (!('documentPictureInPicture' in window)) {
+                console.warn("Document Picture-in-Picture is not supported in this browser.");
+                return;
+            }
+
+            try {
+                pipWindowInstance = await window.documentPictureInPicture.requestWindow({
+                    width: 220,
+                    height: 60
+                });
+
+                [...document.styleSheets].forEach((styleSheet) => {
+                    try {
+                        const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
+                        const style = document.createElement('style');
+                        style.textContent = cssRules;
+                        pipWindowInstance.document.head.appendChild(style);
+                    } catch (e) {
+                        const link = document.createElement('link');
+                        link.rel = 'stylesheet';
+                        link.href = styleSheet.href;
+                        pipWindowInstance.document.head.appendChild(link);
+                    }
+                });
+
+                pipWindowInstance.document.body.classList.add('pip-mode');
+                renderPipLauncherView();
+
+                pipWindowInstance.addEventListener('pagehide', () => {
+                    meetingContainer.appendChild(chatPanel);
+                    chatPanel.classList.remove('open');
+                    isChatPanelOpen = false;
+                    masterChatBtn.innerText = "Chat Board 💬";
+                    masterChatBtn.style.background = "#ff9800";
+                    pipWindowInstance = null;
+                    isPipChatExpanded = false;
+                });
+
+            } catch (err) {
+                console.error("Failed to launch floating desktop badge:", err);
+            }
+        }
+
+        function renderPipLauncherView() {
+            if (!pipWindowInstance) return;
+            
+            isPipChatExpanded = false;
+            pipWindowInstance.resizeTo(220, 60);
+            pipWindowInstance.document.body.innerHTML = `
+                <div class="pip-launcher-view">
+                    <button class="pip-launcher-btn" id="pipOpenChatBtn">💬 Open Chat</button>
+                </div>
+            `;
+
+            pipWindowInstance.document.getElementById('pipOpenChatBtn').onclick = () => {
+                renderPipChatView();
+            };
+        }
+
+        function renderPipChatView() {
+            if (!pipWindowInstance) return;
+
+            isPipChatExpanded = true;
+            pipWindowInstance.resizeTo(360, 500);
+            pipWindowInstance.document.body.innerHTML = '';
+            
+            pipWindowInstance.document.body.appendChild(chatPanel);
+            chatPanel.classList.add('open');
+
+            const header = chatPanel.querySelector('.chat-header');
+            if (header && !header.querySelector('.pip-close-dock-btn')) {
+                const minimizeBtn = document.createElement('button');
+                minimizeBtn.className = 'pip-close-dock-btn';
+                minimizeBtn.innerText = "Minimize ➖";
+                minimizeBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    meetingContainer.appendChild(chatPanel);
+                    chatPanel.classList.remove('open');
+                    renderPipLauncherView();
+                };
+                header.appendChild(minimizeBtn);
+            }
+        }
+
         masterChatBtn.onclick = () => {
+            if (pipWindowInstance) {
+                if (!isPipChatExpanded) {
+                    renderPipChatView();
+                } else {
+                    renderPipLauncherView();
+                }
+                return;
+            }
+
             if (!isChatPanelOpen) {
                 chatPanel.classList.add('open');
                 masterChatBtn.innerText = "Close Chat ✖";
@@ -720,6 +802,7 @@ body.pip-mode .chat-panel {
                 socket.emit('toggle-room-chat', { open: false }); 
             }
         };
+
         // Mute/Unmute Teacher Microphone
         toggleAudioBtn.onclick = () => {
             if (!localStream) return;
@@ -729,15 +812,13 @@ body.pip-mode .chat-panel {
 
             isAudioMuted = !isAudioMuted;
             
-            // Enable/Disable local audio tracks
             audioTracks.forEach(track => {
                 track.enabled = !isAudioMuted;
             });
 
-            // Update UI
             if (isAudioMuted) {
                 toggleAudioBtn.innerText = "🔇 Unmute Audio";
-                toggleAudioBtn.style.background = "rgba(234, 67, 53, 0.85)"; // Red background
+                toggleAudioBtn.style.background = "rgba(234, 67, 53, 0.85)";
             } else {
                 toggleAudioBtn.innerText = "🎙️ Mute Audio";
                 toggleAudioBtn.style.background = "rgba(0, 0, 0, 0.7)";
@@ -753,20 +834,19 @@ body.pip-mode .chat-panel {
 
             isVideoStopped = !isVideoStopped;
 
-            // Enable/Disable local video tracks
             videoTracks.forEach(track => {
                 track.enabled = !isVideoStopped;
             });
 
-            // Update UI
             if (isVideoStopped) {
                 toggleVideoBtn.innerText = "📷 Turn On Video";
-                toggleVideoBtn.style.background = "rgba(234, 67, 53, 0.85)"; // Red background
+                toggleVideoBtn.style.background = "rgba(234, 67, 53, 0.85)";
             } else {
                 toggleVideoBtn.innerText = "📹 Turn Off Video";
                 toggleVideoBtn.style.background = "rgba(0, 0, 0, 0.7)";
             }
         };
+
         document.getElementById('createBtn').onclick = async function() {
             const customInput = document.getElementById('customRoomIdInput');
             const roomId = customInput ? customInput.value.trim() : "";
@@ -839,58 +919,54 @@ body.pip-mode .chat-panel {
             setTimeout(() => { welcomeScreen.style.display = 'none'; }, 400);
             meetingContainer.style.display = 'flex';
 
-         // Function to check if device is mobile (portrait or landscape)
             const isMobileDevice = () => {
                 return window.innerWidth <= 768 || (window.innerHeight <= 500 && window.matchMedia("(orientation: landscape)").matches);
             };
 
-            // Show buttons only if NOT on a mobile device
             if (!isMobileDevice()) {
                 document.getElementById('shareBtn').style.display = 'flex';
                 document.getElementById('youtubeStreamBtn').style.display = 'flex';
             }
             document.getElementById('muteAllBtn').style.display = 'flex';
             document.getElementById('unmuteAllBtn').style.display = 'flex';
-            // Inside createBtn.onclick function (around line 370-380):
             toggleAudioBtn.style.display = 'flex';
             toggleVideoBtn.style.display = 'flex';
             camSwitchBtn.style.display = 'flex';
             masterChatBtn.style.display = 'flex';
             if(participantCounter) participantCounter.style.display = 'flex';
-            camSwitchBtn.style.display = 'flex'; 
             studentCamSwitchBtn.style.display = 'none';   
             mainDisplayLabel.style.display = 'block';  
-            cameraMirror.style.display='flex';
-            // প্রথমবার মিটিং তৈরি হলে Overlay দেখাবে এবং ৮ সেকেন্ড পর auto-hide হবে
+            cameraMirror.style.display = 'flex';
+            
             resetOverlayTimeout();  
         };
 
-     const streamKeyModal = document.getElementById('streamKeyModal');
-    const streamKeyInput = document.getElementById('streamKeyInput');
-    const confirmStreamBtn = document.getElementById('confirmStreamBtn');
-    const cancelStreamBtn = document.getElementById('cancelStreamBtn');
-    
-    document.getElementById('youtubeStreamBtn').onclick = function() {
-        if (!isLiveStreaming) {
-            streamKeyInput.value = '';
-            streamKeyModal.style.display = 'flex';
-        } else {
-            socket.emit('stop-youtube-stream');
-        }
-    };
-    
-    cancelStreamBtn.onclick = function() {
-        streamKeyModal.style.display = 'none';
-    };
-    
-    confirmStreamBtn.onclick = function() {
-        const streamKey = streamKeyInput.value.trim();
-        if (!streamKey) {
-            return alert("Stream Key is required to push media live!");
-        }
-        streamKeyModal.style.display = 'none';
-        socket.emit('start-youtube-stream', { streamKey });
-    };
+        const streamKeyModal = document.getElementById('streamKeyModal');
+        const streamKeyInput = document.getElementById('streamKeyInput');
+        const confirmStreamBtn = document.getElementById('confirmStreamBtn');
+        const cancelStreamBtn = document.getElementById('cancelStreamBtn');
+        
+        document.getElementById('youtubeStreamBtn').onclick = function() {
+            if (!isLiveStreaming) {
+                streamKeyInput.value = '';
+                streamKeyModal.style.display = 'flex';
+            } else {
+                socket.emit('stop-youtube-stream');
+            }
+        };
+        
+        cancelStreamBtn.onclick = function() {
+            streamKeyModal.style.display = 'none';
+        };
+        
+        confirmStreamBtn.onclick = function() {
+            const streamKey = streamKeyInput.value.trim();
+            if (!streamKey) {
+                return alert("Stream Key is required to push media live!");
+            }
+            streamKeyModal.style.display = 'none';
+            socket.emit('start-youtube-stream', { streamKey });
+        };
 
         socket.on('stream-started', () => {
             isLiveStreaming = true;
@@ -912,14 +988,12 @@ body.pip-mode .chat-panel {
 
         socket.on('stream-stopped', () => { cleanupStreaming(); });
         socket.on('stream-error', (err) => { alert(err); cleanupStreaming(); });
-      
 
-        // Overlay বাটনগুলো দেখানোর এবং ৮ সেকেন্ড পর অটো-হাইড করার ফাংশন
         function showOverlayControls() {
             const overlayControls = document.querySelector('.cam-controls-overlay');
             if (overlayControls) {
                 overlayControls.style.display = 'flex';
-                mainDisplayLabel.style.display='flex';
+                mainDisplayLabel.style.display = 'flex';
             }
             resetOverlayTimeout();
         }
@@ -930,10 +1004,11 @@ body.pip-mode .chat-panel {
                 const overlayControls = document.querySelector('.cam-controls-overlay');
                 if (overlayControls) {
                     overlayControls.style.display = 'none';
-                    mainDisplayLabel.style.display='none';
+                    mainDisplayLabel.style.display = 'none';
                 }
-            }, 5000); // ৮ সেকেন্ড পর হাইড হবে
+            }, 5000);
         }
+
         function cleanupStreaming() {
             isLiveStreaming = false;
             const btn = document.getElementById('youtubeStreamBtn');
@@ -997,210 +1072,82 @@ body.pip-mode .chat-panel {
         document.getElementById('muteAllBtn').onclick = function() { socket.emit('mute-all-students'); };
         document.getElementById('unmuteAllBtn').onclick = function() { socket.emit('unmute-all-students'); };
 
-let pipWindowInstance = null;
-let isPipChatExpanded = false;
+        // Screen Sharing Initiation
+        document.getElementById('shareBtn').onclick = async function() {
+            if (!isScreenSharing) {
+                try {
+                    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                    const videoTrack = screenStream.getVideoTracks()[0];
+                    
+                    for (let userId in peerConnections) {
+                        const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
+                        if (sender) sender.replaceTrack(videoTrack);
+                    }
+                    
+                    localVideo.srcObject = screenStream;
+                    localVideo.classList.remove('mirror');
+                    
+                    this.innerText = "Stop Sharing ❌";
+                    this.style.background = "#ea4335";
+                    isScreenSharing = true;
 
-// Open PiP Window (Always-on-top Floating Dock)
-async function openFloatingDockPiP() {
-    if (!('documentPictureInPicture' in window)) {
-        console.warn("Document Picture-in-Picture is not supported in this browser.");
-        return;
-    }
+                    // Open always-on-top desktop badge
+                    await openFloatingDockPiP();
 
-    try {
-        // 1. Create a compact floating window on top of the OS desktop
-        pipWindowInstance = await window.documentPictureInPicture.requestWindow({
-            width: 220,
-            height: 60
-        });
-
-        // 2. Transfer all stylesheets to the floating OS window
-        [...document.styleSheets].forEach((styleSheet) => {
-            try {
-                const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
-                const style = document.createElement('style');
-                style.textContent = cssRules;
-                pipWindowInstance.document.head.appendChild(style);
-            } catch (e) {
-                const link = document.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = styleSheet.href;
-                pipWindowInstance.document.head.appendChild(link);
+                    if (isLiveStreaming && mediaRecorder && mediaRecorder.state !== 'inactive') {
+                        mediaRecorder.stop();
+                        mediaRecorder = new MediaRecorder(screenStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
+                        mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) socket.emit('stream-chunk', e.data); };
+                        mediaRecorder.start(1000);
+                    }
+                    
+                    videoTrack.onended = () => { stopScreenShare(); };
+                } catch (error) {
+                    console.error("Error starting screen share:", error);
+                }
+            } else {
+                stopScreenShare();
             }
-        });
-
-        pipWindowInstance.document.body.classList.add('pip-mode');
-
-        // 3. Render the mini floating launcher pill
-        renderPipLauncherView();
-
-        // 4. Return elements back to classroom if window is closed
-        pipWindowInstance.addEventListener('pagehide', () => {
-            meetingContainer.appendChild(chatPanel);
-            chatPanel.classList.remove('open');
-            isChatPanelOpen = false;
-            masterChatBtn.innerText = "Chat Board 💬";
-            masterChatBtn.style.background = "#ff9800";
-            pipWindowInstance = null;
-            isPipChatExpanded = false;
-        });
-
-    } catch (err) {
-        console.error("Failed to launch floating desktop badge:", err);
-    }
-}
-
-// Render Mini Launcher View inside the Floating Window
-function renderPipLauncherView() {
-    if (!pipWindowInstance) return;
-    
-    isPipChatExpanded = false;
-    pipWindowInstance.resizeTo(220, 60);
-    pipWindowInstance.document.body.innerHTML = `
-        <div class="pip-launcher-view">
-            <button class="pip-launcher-btn" id="pipOpenChatBtn">💬 Open Chat</button>
-        </div>
-    `;
-
-    pipWindowInstance.document.getElementById('pipOpenChatBtn').onclick = () => {
-        renderPipChatView();
-    };
-}
-
-// Render Expanded Chat View inside the Floating Window
-function renderPipChatView() {
-    if (!pipWindowInstance) return;
-
-    isPipChatExpanded = true;
-    pipWindowInstance.resizeTo(360, 500);
-    pipWindowInstance.document.body.innerHTML = '';
-    
-    // Append full chat panel
-    pipWindowInstance.document.body.appendChild(chatPanel);
-    chatPanel.classList.add('open');
-
-    // Add a collapse button inside the floating chat header
-    const header = chatPanel.querySelector('.chat-header');
-    if (header && !header.querySelector('.pip-close-dock-btn')) {
-        const minimizeBtn = document.createElement('button');
-        minimizeBtn.className = 'pip-close-dock-btn';
-        minimizeBtn.innerText = "Minimize ➖";
-        minimizeBtn.onclick = (e) => {
-            e.stopPropagation();
-            meetingContainer.appendChild(chatPanel);
-            chatPanel.classList.remove('open');
-            renderPipLauncherView();
         };
-        header.appendChild(minimizeBtn);
-    }
-}
 
-// Master Chat Button Handler (In-tab)
-masterChatBtn.onclick = () => {
-    if (pipWindowInstance) {
-        if (!isPipChatExpanded) {
-            renderPipChatView();
-        } else {
-            renderPipLauncherView();
-        }
-        return;
-    }
+        function stopScreenShare() {
+            if (!isScreenSharing) return;
 
-    if (!isChatPanelOpen) {
-        chatPanel.classList.add('open');
-        masterChatBtn.innerText = "Close Chat ✖";
-        masterChatBtn.style.background = "#ea4335";
-        isChatPanelOpen = true;
-        socket.emit('toggle-room-chat', { open: true });
-    } else {
-        chatPanel.classList.remove('open');
-        masterChatBtn.innerText = "Chat Board 💬";
-        masterChatBtn.style.background = "#ff9800";
-        isChatPanelOpen = false;
-        socket.emit('toggle-room-chat', { open: false });
-    }
-};
-
-// Screen Share Toggle Handlers
-document.getElementById('shareBtn').onclick = async function() {
-    if (!isScreenSharing) {
-        try {
-            screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-            const videoTrack = screenStream.getVideoTracks()[0];
+            if (pipWindowInstance) {
+                pipWindowInstance.close();
+                pipWindowInstance = null;
+            }
+            
+            const videoTrack = localStream.getVideoTracks()[0];
             
             for (let userId in peerConnections) {
                 const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
                 if (sender) sender.replaceTrack(videoTrack);
             }
             
-            localVideo.srcObject = screenStream;
-            localVideo.classList.remove('mirror');
+            localVideo.srcObject = localStream;
+            localVideo.classList.add('mirror');
             
-            this.innerText = "Stop Sharing ❌";
-            this.style.background = "#ea4335";
-            isScreenSharing = true;
+            const shareBtn = document.getElementById('shareBtn');
+            shareBtn.innerText = "Share Screen 🖥️";
+            shareBtn.style.background = "#007fff";
+            
+            if (screenStream) {
+                screenStream.getTracks().forEach(track => track.stop());
+            }
+            
+            isScreenSharing = false;
 
-            // Launch Always-on-Top Floating Launcher over your desktop
-            await openFloatingDockPiP();
-
-            if (isLiveStreaming && mediaRecorder && mediaRecorder.state !== 'inactive') {
+            if (isLiveStreaming && mediaRecorder) {
                 mediaRecorder.stop();
-                mediaRecorder = new MediaRecorder(screenStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
+                mediaRecorder = new MediaRecorder(localStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
                 mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) socket.emit('stream-chunk', e.data); };
                 mediaRecorder.start(1000);
             }
-            
-            videoTrack.onended = () => { stopScreenShare(); };
-        } catch (error) {
-            console.error("Error starting screen share:", error);
         }
-    } else {
-        stopScreenShare();
-    }
-};
 
-// Unified Stop Screen Share Function
-function stopScreenShare() {
-    if (!isScreenSharing) return;
-
-    // Clean up desktop PiP window
-    if (pipWindowInstance) {
-        pipWindowInstance.close();
-        pipWindowInstance = null;
-    }
-    
-    const videoTrack = localStream.getVideoTracks()[0];
-    
-    for (let userId in peerConnections) {
-        const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
-        if (sender) sender.replaceTrack(videoTrack);
-    }
-    
-    localVideo.srcObject = localStream;
-    localVideo.classList.add('mirror');
-    
-    const shareBtn = document.getElementById('shareBtn');
-    shareBtn.innerText = "Share Screen 🖥️";
-    shareBtn.style.background = "#007fff";
-    
-    if (screenStream) {
-        screenStream.getTracks().forEach(track => track.stop());
-    }
-    
-    isScreenSharing = false;
-
-    if (isLiveStreaming && mediaRecorder) {
-        mediaRecorder.stop();
-        mediaRecorder = new MediaRecorder(localStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
-        mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) socket.emit('stream-chunk', e.data); };
-        mediaRecorder.start(1000);
-    }
-}
-
-
-      camSwitchBtn.onclick = async () => {
+        camSwitchBtn.onclick = async () => {
             try {
-                // ১. আগের ভিডিও ট্র্যাক বন্ধ করা
                 if (localStream) {
                     const oldVideoTrack = localStream.getVideoTracks()[0];
                     if (oldVideoTrack) {
@@ -1208,10 +1155,8 @@ function stopScreenShare() {
                     }
                 }
 
-                // ২. মোড পরিবর্তন করা
                 currentCamFacingMode = (currentCamFacingMode === "user") ? "environment" : "user";
 
-                // ৩. 'exact' তুলে দিয়ে Flexibly ক্যামেরা রিকোয়েস্ট করা
                 const newStream = await navigator.mediaDevices.getUserMedia({
                     video: { facingMode: currentCamFacingMode },
                     audio: true
@@ -1219,7 +1164,6 @@ function stopScreenShare() {
                 
                 const videoTrack = newStream.getVideoTracks()[0];
                 
-                // ৪. কানেক্টেড সব স্টুডেন্টের কাছে নতুন ট্র্যাক পাঠানো
                 for (let id in peerConnections) {
                     const sender = peerConnections[id].getSenders().find(s => s.track && s.track.kind === 'video');
                     if (sender) sender.replaceTrack(videoTrack);
@@ -1227,7 +1171,6 @@ function stopScreenShare() {
 
                 localStream = newStream;
 
-                // ৫. টিচারের লোকাল ডিসপ্লে আপডেট
                 if (!activeSwappedStudentId) {
                     localVideo.srcObject = localStream;
                     if (currentCamFacingMode === "user") {
@@ -1242,9 +1185,11 @@ function stopScreenShare() {
                 currentCamFacingMode = (currentCamFacingMode === "user") ? "environment" : "user";
             }
         };
-        cameraMirror.onclick=()=>{
+
+        cameraMirror.onclick = () => {
             localVideo.classList.toggle('mirror');
-        }
+        };
+
         studentCamSwitchBtn.onclick = () => {
             if (activeSwappedStudentId) {
                 socket.emit('switch-student-camera', { targetStudentId: activeSwappedStudentId });
@@ -1252,94 +1197,6 @@ function stopScreenShare() {
                 alert("No student is currently selected in the main display!");
             }
         };
-
-        let pipWindowInstance = null;
-
-// Function to pop chat out into an Always-On-Top desktop window
-async function openFloatingChatPiP() {
-    if ('documentPictureInPicture' in window) {
-        try {
-            pipWindowInstance = await window.documentPictureInPicture.requestWindow({
-                width: 360,
-                height: 480
-            });
-
-            // Copy parent styles to the OS floating window
-            [...document.styleSheets].forEach((styleSheet) => {
-                try {
-                    const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
-                    const style = document.createElement('style');
-                    style.textContent = cssRules;
-                    pipWindowInstance.document.head.appendChild(style);
-                } catch (e) {
-                    const link = document.createElement('link');
-                    link.rel = 'stylesheet';
-                    link.href = styleSheet.href;
-                    pipWindowInstance.document.head.appendChild(link);
-                }
-            });
-
-            // Move chat panel into floating window
-            pipWindowInstance.document.body.classList.add('pip-mode');
-            pipWindowInstance.document.body.appendChild(chatPanel);
-            chatPanel.classList.add('open');
-
-            // Handle when floating window is closed by the teacher
-            pipWindowInstance.addEventListener('pagehide', () => {
-                meetingContainer.appendChild(chatPanel);
-                chatPanel.classList.remove('open');
-                isChatPanelOpen = false;
-                masterChatBtn.innerText = "Chat Board 💬";
-                masterChatBtn.style.background = "#ff9800";
-                pipWindowInstance = null;
-                socket.emit('toggle-room-chat', { open: false });
-            });
-
-            return true;
-        } catch (err) {
-            console.error("Failed to open floating PiP window:", err);
-            return false;
-        }
-    }
-    return false;
-}
-
-// On-demand Chat Button Toggle
-masterChatBtn.onclick = async () => {
-    // If PiP is open, close it
-    if (pipWindowInstance) {
-        pipWindowInstance.close();
-        return;
-    }
-
-    if (!isChatPanelOpen) {
-        // Pop out over desktop on demand if screen share is running
-        if (isScreenSharing && 'documentPictureInPicture' in window) {
-            const success = await openFloatingChatPiP();
-            if (success) {
-                isChatPanelOpen = true;
-                masterChatBtn.innerText = "Close Floating Chat ✖";
-                masterChatBtn.style.background = "#ea4335";
-                socket.emit('toggle-room-chat', { open: true });
-                return;
-            }
-        }
-
-        // Standard in-tab open
-        chatPanel.classList.add('open');
-        masterChatBtn.innerText = "Close Chat ✖";
-        masterChatBtn.style.background = "#ea4335";
-        isChatPanelOpen = true;
-        socket.emit('toggle-room-chat', { open: true });
-    } else {
-        // Standard in-tab close
-        chatPanel.classList.remove('open');
-        masterChatBtn.innerText = "Chat Board 💬";
-        masterChatBtn.style.background = "#ff9800";
-        isChatPanelOpen = false;
-        socket.emit('toggle-room-chat', { open: false });
-    }
-};
 
         function swapStudentToMain(studentId) {
             const studentCard = document.getElementById(`card-${studentId}`);
@@ -1368,11 +1225,11 @@ masterChatBtn.onclick = async () => {
 
             activeSwappedStudentId = studentId;
             studentCard.classList.add('swapped-teacher');
-            if(studentLabel) studentLabel.innerText = "Teacher (You)";
+            if (studentLabel) studentLabel.innerText = "Teacher (You)";
             mainDisplayLabel.innerText = `Student (${studentId.substring(0,4)})`;
 
             studentCamSwitchBtn.style.display = 'flex';
-            camSwitchBtn.style.display='none';
+            camSwitchBtn.style.display = 'none';
         }
 
         function resetMainDisplay() {
@@ -1393,16 +1250,14 @@ masterChatBtn.onclick = async () => {
                 studentVideo.classList.remove('mirror');
 
                 studentCard.classList.remove('swapped-teacher');
-                if(studentLabel) studentLabel.innerText = `Student (${activeSwappedStudentId.substring(0,4)})`;
+                if (studentLabel) studentLabel.innerText = `Student (${activeSwappedStudentId.substring(0,4)})`;
             }
 
             activeSwappedStudentId = null;
             mainDisplayLabel.innerText = "Teacher (You)";
-            camSwitchBtn.style.display='flex'
+            camSwitchBtn.style.display = 'flex';
             studentCamSwitchBtn.style.display = 'none';
         }
-
-      
 
         socket.on('all-users', ({ users, count }) => {
             updateCountUI(count);
