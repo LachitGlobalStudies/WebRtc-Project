@@ -16,7 +16,35 @@
         flex-direction: column; 
         overflow: hidden; 
     }
+/* Minimized UI mode when screen sharing */
+body.screenshare-minimized {
+    background: transparent !important;
+}
 
+body.screenshare-minimized .sidebar,
+body.screenshare-minimized .main-display {
+    display: none !important;
+}
+
+/* Floating quick launcher for chat and share control */
+.floating-share-dock {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000000;
+    display: flex;
+    gap: 10px;
+}
+
+.floating-btn {
+    padding: 12px 18px;
+    border-radius: 50px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    color: #fff;
+}
     /* ===========================
        Welcome Screen Fixed
     =========================== */
@@ -939,39 +967,102 @@
         document.getElementById('muteAllBtn').onclick = function() { socket.emit('mute-all-students'); };
         document.getElementById('unmuteAllBtn').onclick = function() { socket.emit('unmute-all-students'); };
 
-        document.getElementById('shareBtn').onclick = async function() {
-            if (!isScreenSharing) {
-                try {
-                    screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-                    const videoTrack = screenStream.getVideoTracks()[0];
-                    
-                    for (let userId in peerConnections) {
-                        const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
-                        if (sender) sender.replaceTrack(videoTrack);
-                    }
-                    
-                    localVideo.srcObject = screenStream;
-                    localVideo.classList.remove('mirror');
-                    
-                    this.innerText = "Stop Sharing ❌";
-                    this.style.background = "#ea4335";
-                    isScreenSharing = true;
-
-                    if (isLiveStreaming && mediaRecorder && mediaRecorder.state !== 'inactive') {
-                        mediaRecorder.stop();
-                        mediaRecorder = new MediaRecorder(screenStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
-                        mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) socket.emit('stream-chunk', e.data); };
-                        mediaRecorder.start(1000);
-                    }
-                    
-                    videoTrack.onended = () => { stopScreenShare(); };
-                } catch (error) {
-                    console.error("Error starting screen share:", error);
-                }
-            } else {
-                stopScreenShare();
+    document.getElementById('shareBtn').onclick = async function() {
+    if (!isScreenSharing) {
+        try {
+            screenStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+            const videoTrack = screenStream.getVideoTracks()[0];
+            
+            for (let userId in peerConnections) {
+                const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
+                if (sender) sender.replaceTrack(videoTrack);
             }
+            
+            localVideo.srcObject = screenStream;
+            localVideo.classList.remove('mirror');
+            
+            this.innerText = "Stop Sharing ❌";
+            this.style.background = "#ea4335";
+            isScreenSharing = true;
+
+            // --- MINIMIZE INTERFACE ---
+            document.body.classList.add('screenshare-minimized');
+            createFloatingDock();
+
+            if (isLiveStreaming && mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                mediaRecorder = new MediaRecorder(screenStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
+                mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) socket.emit('stream-chunk', e.data); };
+                mediaRecorder.start(1000);
+            }
+            
+            videoTrack.onended = () => { stopScreenShare(); };
+        } catch (error) {
+            console.error("Error starting screen share:", error);
+        }
+    } else {
+        stopScreenShare();
+    }
+};
+
+function createFloatingDock() {
+    let dock = document.getElementById('floatingShareDock');
+    if (!dock) {
+        dock = document.createElement('div');
+        dock.id = 'floatingShareDock';
+        dock.className = 'floating-share-dock';
+        dock.innerHTML = `
+            <button class="floating-btn" style="background:#ff9800; color:#000;" id="floatChatBtn">💬 Open Chat</button>
+            <button class="floating-btn" style="background:#ea4335;" id="floatStopShareBtn">🛑 Stop Share</button>
+        `;
+        document.body.appendChild(dock);
+
+        document.getElementById('floatChatBtn').onclick = () => {
+            chatPanel.classList.toggle('open');
         };
+
+        document.getElementById('floatStopShareBtn').onclick = () => {
+            stopScreenShare();
+        };
+    }
+    dock.style.display = 'flex';
+}
+
+function stopScreenShare() {
+    if (!isScreenSharing) return;
+    
+    // Remove minimized mode & remove dock
+    document.body.classList.remove('screenshare-minimized');
+    const dock = document.getElementById('floatingShareDock');
+    if (dock) dock.style.display = 'none';
+
+    const videoTrack = localStream.getVideoTracks()[0];
+    
+    for (let userId in peerConnections) {
+        const sender = peerConnections[userId].getSenders().find(s => s.track && s.track.kind === 'video');
+        if (sender) sender.replaceTrack(videoTrack);
+    }
+    
+    localVideo.srcObject = localStream;
+    localVideo.classList.add('mirror');
+    
+    const shareBtn = document.getElementById('shareBtn');
+    shareBtn.innerText = "Share Screen 🖥️";
+    shareBtn.style.background = "#007fff";
+    
+    if (screenStream) {
+        screenStream.getTracks().forEach(track => track.stop());
+    }
+    
+    isScreenSharing = false;
+
+    if (isLiveStreaming && mediaRecorder) {
+        mediaRecorder.stop();
+        mediaRecorder = new MediaRecorder(localStream, { mimeType: 'video/webm;codecs=vp8,opus', videoBitsPerSecond: 2500000 });
+        mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) socket.emit('stream-chunk', e.data); };
+        mediaRecorder.start(1000);
+    }
+}
 
       camSwitchBtn.onclick = async () => {
             try {
