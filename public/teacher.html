@@ -690,52 +690,60 @@
             return canvas.captureStream(30);
         }
 
-        // ==========================================
-        // Picture-in-Picture Floating Window Manager
-        // ==========================================
-        async function openFloatingDockPiP() {
-            if (!('documentPictureInPicture' in window)) {
-                console.warn("Document Picture-in-Picture is not supported in this browser.");
-                return;
-            }
+ // ==========================================
+// Picture-in-Picture Floating Window Manager
+// ==========================================
+async function openFloatingDockPiP() {
+    if (!('documentPictureInPicture' in window)) {
+        console.warn("Document Picture-in-Picture is not supported in this browser.");
+        return;
+    }
 
-            try {
-                pipWindowInstance = await window.documentPictureInPicture.requestWindow({
-                    width: 220,
-                    height: 60
-                });
+    try {
+        // 1. Request standard minimum window size
+        pipWindowInstance = await window.documentPictureInPicture.requestWindow({
+            width: 340,
+            height: 480
+        });
 
-                [...document.styleSheets].forEach((styleSheet) => {
-                    try {
-                        const cssRules = [...styleSheet.cssRules].map((rule) => rule.cssText).join('');
-                        const style = document.createElement('style');
-                        style.textContent = cssRules;
-                        pipWindowInstance.document.head.appendChild(style);
-                    } catch (e) {
-                        const link = document.createElement('link');
-                        link.rel = 'stylesheet';
-                        link.href = styleSheet.href;
-                        pipWindowInstance.document.head.appendChild(link);
-                    }
-                });
+        // 2. Inject explicit standalone CSS into the floating window
+        const style = pipWindowInstance.document.createElement('style');
+        style.textContent = `
+            * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+            body { background: #161719; color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; padding: 0; }
+            .chat-panel { position: static !important; width: 100% !important; height: 100vh !important; display: flex !important; flex-direction: column !important; opacity: 1 !important; border: none !important; }
+            .chat-header { padding: 12px; background: #1a1c20; font-weight: bold; text-align: center; border-bottom: 1px solid #2a2d32; color: #ff9800; font-size: 14px; }
+            .chat-messages { flex: 1; padding: 12px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+            .msg-block { padding: 8px 12px; border-radius: 6px; max-width: 85%; font-size: 13px; line-height: 1.4; word-break: break-all; }
+            .msg-me { background: #007fff; color: #fff; align-self: flex-end; }
+            .msg-other { background: #2a2d32; color: #fff; align-self: flex-start; }
+            .chat-input-area { padding: 10px; background: #1a1c20; border-top: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 6px; }
+            .chat-row { display: flex; gap: 5px; }
+            .chat-input-area input[type="text"] { flex: 1; padding: 8px; background: #222; border: 1px solid #3a3f47; border-radius: 4px; color: #fff; outline: none; }
+            .chat-input-area button { padding: 8px 14px; background: #2ea44f; border: none; color: #fff; font-weight: bold; border-radius: 4px; cursor: pointer; }
+            .file-label { display: inline-block; background: #444; text-align: center; padding: 5px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+            .file-link { color: #ff9800; text-decoration: underline; display: block; font-weight: bold; margin-top: 4px; }
+        `;
+        pipWindowInstance.document.head.appendChild(style);
 
-                pipWindowInstance.document.body.classList.add('pip-mode');
-                renderPipLauncherView();
+        // 3. Move chatPanel into the floating window directly
+        pipWindowInstance.document.body.appendChild(chatPanel);
+        chatPanel.classList.add('open');
 
-                pipWindowInstance.addEventListener('pagehide', () => {
-                    meetingContainer.appendChild(chatPanel);
-                    chatPanel.classList.remove('open');
-                    isChatPanelOpen = false;
-                    masterChatBtn.innerText = "Chat Board 💬";
-                    masterChatBtn.style.background = "#ff9800";
-                    pipWindowInstance = null;
-                    isPipChatExpanded = false;
-                });
+        // 4. Return chat to main page when floating window is closed
+        pipWindowInstance.addEventListener('pagehide', () => {
+            meetingContainer.appendChild(chatPanel);
+            chatPanel.classList.remove('open');
+            isChatPanelOpen = false;
+            masterChatBtn.innerText = "Chat Board 💬";
+            masterChatBtn.style.background = "#ff9800";
+            pipWindowInstance = null;
+        });
 
-            } catch (err) {
-                console.error("Failed to launch floating desktop badge:", err);
-            }
-        }
+    } catch (err) {
+        console.error("Failed to open floating PiP window:", err);
+    }
+}
 
         function renderPipLauncherView() {
             if (!pipWindowInstance) return;
