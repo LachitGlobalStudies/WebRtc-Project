@@ -238,17 +238,7 @@
     pointer-events: auto;
     z-index: 100; /* ভিডিওর ওপরে বাটন রাখার জন্য */
 }
-/* Fallback: Force simulated landscape when device orientation is locked in portrait */
-.force-landscape {
-    transform: rotate(90deg) !important;
-    transform-origin: bottom left !important;
-    width: 100vh !important;
-    height: 100vw !important;
-    position: absolute !important;
-    top: -100vw !important;
-    left: 0 !important;
-    overflow: hidden !important;
-}
+
     </style>
 </head>
 <body>
@@ -352,49 +342,46 @@
     
 
 
-     document.getElementById('joinBtn').onclick = async () => {
-    const roomId = document.getElementById('roomIdInput').value;
-    if (!roomId) return alert("Please enter Room ID");
+        document.getElementById('joinBtn').onclick = async () => {
+            const roomId = document.getElementById('roomIdInput').value;
+            if (!roomId) return alert("Please enter Room ID");
+            document.querySelector(".welcome-container").style.display = "none";
+            document.getElementById("mainArea").style.display = "block";
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            } catch (err) {
+                console.warn("Camera/Mic access denied or not found. Falling back to dummy video stream.", err);
+                alert("Your camera and microphone is not accessible , a dummy video will play");
+                
+                localStream = createDummyStream();
+                
+                try {
+                    const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    audioStream.getAudioTracks().forEach(track => localStream.addTrack(track));
+                } catch (e) {
+                    console.warn("Audio fallback also failed, running with video-only dummy stream.");
+                }
+            }
 
-    // Must be invoked immediately from the click event to satisfy browser security policies
-    await forceLandscapeFullscreen();
+            document.getElementById('localVideo').srcObject = localStream;
+            
+            if(localStream.getAudioTracks().length > 0) {
+                localStream.getAudioTracks()[0].enabled = false; 
+            }
+            document.getElementById('raiseHandBtn').style.display = 'block';
+            document.getElementById('statusLabel').style.display = 'block';
 
-    document.querySelector(".welcome-container").style.display = "none";
-    document.getElementById("mainArea").style.display = "block";
-    
-    try {
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    } catch (err) {
-        console.warn("Camera/Mic access denied or not found. Falling back to dummy video stream.", err);
-        alert("Your camera and microphone is not accessible , a dummy video will play");
-        
-        localStream = createDummyStream();
-        try {
-            const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            audioStream.getAudioTracks().forEach(track => localStream.addTrack(track));
-        } catch (e) {
-            console.warn("Audio fallback also failed, running with video-only dummy stream.");
-        }
-    }
-
-    document.getElementById('localVideo').srcObject = localStream;
-    
-    if(localStream.getAudioTracks().length > 0) {
-        localStream.getAudioTracks()[0].enabled = false; 
-    }
-    document.getElementById('raiseHandBtn').style.display = 'block';
-    document.getElementById('statusLabel').style.display = 'block';
-
-    document.getElementById('meetingContainer').classList.add('joined');
-    
-    socket.emit('join-room', { roomId, role: 'student' });
-
-    setTimeout(() => {
-        statusLabel.style.display = 'none';
-        myVideoCard.style.display = 'none';
-        raiseHandBtn.style.display = 'none';
-    }, 8000);
-};
+            // জয়েন করার সাথে সাথে লেআউট ফুলস্ক্রিন টিচারের ভিডিওর মডেলে শিফট হবে
+            document.getElementById('meetingContainer').classList.add('joined');
+            
+            socket.emit('join-room', { roomId, role: 'student' });
+            setTimeout(() => {
+                statusLabel.style.display = 'none';
+                myVideoCard.style.display='none';
+                raiseHandBtn.style.display='none';
+                toggleFullScreen();
+            }, 8000);
+        };
 
         // Text Message Execution Block
         document.getElementById('sendMsgBtn').onclick = sendTextMessage;
@@ -655,55 +642,7 @@
         socket.on('teacher-disconnected', () => {
             document.getElementById('teacherVideo').srcObject = null;
         });
-        
-async function forceLandscapeFullscreen() {
-    const container = document.getElementById('meetingContainer');
 
-    // 1. Trigger Fullscreen
-    try {
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-            if (container.requestFullscreen) {
-                await container.requestFullscreen();
-            } else if (container.webkitRequestFullscreen) {
-                await container.webkitRequestFullscreen();
-            }
-        }
-    } catch (fsErr) {
-        console.warn("Fullscreen request was prevented:", fsErr);
-    }
-
-    // 2. Lock Orientation via API
-    try {
-        if (screen.orientation && screen.orientation.lock) {
-            await screen.orientation.lock('landscape');
-            return; // Hardware orientation succeeded
-        }
-    } catch (orientErr) {
-        console.warn("Screen orientation lock rejected/unsupported:", orientErr);
-    }
-
-    // 3. Fallback: Rotate via CSS if phone is still physically in portrait
-    checkAndApplyCssOrientation();
-}
-
-function checkAndApplyCssOrientation() {
-    const container = document.getElementById('meetingContainer');
-    const isPortrait = window.innerHeight > window.innerWidth;
-    
-    // Only apply CSS rotation on mobile viewports held vertically
-    if (isPortrait && window.innerWidth < 768) {
-        container.classList.add('force-landscape');
-    } else {
-        container.classList.remove('force-landscape');
-    }
-}
-
-// Re-evaluate CSS rotation if the user rotates the device manually
-window.addEventListener('resize', () => {
-    if (document.getElementById('meetingContainer').classList.contains('joined')) {
-        checkAndApplyCssOrientation();
-    }
-});
         function setupTeacherConnection(teacherId) {
             teacherPc = new RTCPeerConnection(servers);
             localStream.getTracks().forEach(track => teacherPc.addTrack(track, localStream));
