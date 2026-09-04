@@ -431,26 +431,44 @@
         const TAP_DELAY = 300; // মোবাইল টাচের জন্য ৩০০ms নিখুঁত সময়
 
         // ১. সঠিক ফুলস্ক্রিন ফাংশন (মোবাইল ও ডেসকটপ উভয়ের জন্য)
-        function toggleFullScreen() {
-            // ভিডিও বা মেইন কন্টেইনার যেটিকে ফুলস্ক্রিন করতে চান
-            const targetElem = meetingContainer;
+     // ১. ফুলস্ক্রিন ও ল্যান্ডস্কেপ টগল ফাংশন
+async function toggleFullScreen() {
+    const targetElem = meetingContainer;
 
-            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                if (targetElem.requestFullscreen) {
-                    targetElem.requestFullscreen();
-                } else if (targetElem.webkitRequestFullscreen) { /* Safari / iOS / Android Chrome */
-                    targetElem.webkitRequestFullscreen();
-                } else if (teacherVideo && teacherVideo.webkitEnterFullscreen) { /* iOS Video Native */
-                    teacherVideo.webkitEnterFullscreen();
-                }
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                }
+    try {
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            // Enter Fullscreen
+            if (targetElem.requestFullscreen) {
+                await targetElem.requestFullscreen();
+            } else if (targetElem.webkitRequestFullscreen) {
+                await targetElem.webkitRequestFullscreen();
+            } else if (teacherVideo && teacherVideo.webkitEnterFullscreen) {
+                teacherVideo.webkitEnterFullscreen();
+            }
+
+            // Lock to Landscape
+            if (screen.orientation && screen.orientation.lock) {
+                await screen.orientation.lock('landscape').catch((err) => {
+                    console.warn("Landscape lock failed/not supported:", err);
+                });
+            }
+        } else {
+            // Exit Fullscreen
+            if (document.exitFullscreen) {
+                await document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                await document.webkitExitFullscreen();
+            }
+
+            // Unlock Orientation back to natural/portrait
+            if (screen.orientation && screen.orientation.unlock) {
+                screen.orientation.unlock();
             }
         }
+    } catch (err) {
+        console.error("Fullscreen/Orientation error:", err);
+    }
+}
 
         // ২. বাটনের জন্য অটো-হাইড টাইমারসহ শো ফাংশন
         function showHiddenItems() {
@@ -677,7 +695,17 @@
             }
         });
     
+document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && screen.orientation && screen.orientation.unlock) {
+        screen.orientation.unlock();
+    }
+});
 
+document.addEventListener('webkitfullscreenchange', () => {
+    if (!document.webkitFullscreenElement && screen.orientation && screen.orientation.unlock) {
+        screen.orientation.unlock();
+    }
+});
     
     </script>
 </body>
