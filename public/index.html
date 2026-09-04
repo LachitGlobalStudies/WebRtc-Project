@@ -345,6 +345,7 @@
         document.getElementById('joinBtn').onclick = async () => {
             const roomId = document.getElementById('roomIdInput').value;
             if (!roomId) return alert("Please enter Room ID");
+             toggleFullScreen();
             document.querySelector(".welcome-container").style.display = "none";
             document.getElementById("mainArea").style.display = "block";
             try {
@@ -379,7 +380,7 @@
                 statusLabel.style.display = 'none';
                 myVideoCard.style.display='none';
                 raiseHandBtn.style.display='none';
-                toggleFullScreen();
+               
             }, 8000);
         };
 
