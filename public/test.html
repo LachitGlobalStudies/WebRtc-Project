@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Override Portrait Lock to Landscape</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #121212;
+      color: #ffffff;
+      text-align: center;
+    }
+
+    .container {
+      padding: 20px;
+    }
+
+    button {
+      padding: 16px 32px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #fff;
+      background-color: #6200ee;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+      transition: background-color 0.2s;
+    }
+
+    button:active {
+      background-color: #3700b3;
+    }
+
+    #status {
+      margin-top: 15px;
+      font-size: 0.9rem;
+      color: #a0a0a0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Fullscreen Landscape Lock</h1>
+    <p style="margin: 15px 0;">Forces landscape mode even if system portrait lock is active.</p>
+    <button id="landscapeBtn">Go Fullscreen & Lock Landscape</button>
+    <p id="status"></p>
+  </div>
+
+  <script>
+    const btn = document.getElementById('landscapeBtn');
+    const statusText = document.getElementById('status');
+
+    btn.addEventListener('click', async () => {
+      try {
+        // Step 1: Request Fullscreen Mode (Required by browser security)
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          await docEl.requestFullscreen();
+        } else if (docEl.webkitRequestFullscreen) { /* Safari / iOS fallback */
+          await docEl.webkitRequestFullscreen();
+        } else if (docEl.msRequestFullscreen) { /* IE/Edge fallback */
+          await docEl.msRequestFullscreen();
+        }
+
+        // Step 2: Lock the orientation to Landscape
+        if (screen.orientation && typeof screen.orientation.lock === 'function') {
+          await screen.orientation.lock('landscape');
+          statusText.textContent = "Successfully locked to landscape mode!";
+        } else {
+          statusText.textContent = "Fullscreen enabled, but Orientation Lock API is not supported on this browser.";
+        }
+
+      } catch (error) {
+        console.error('Error locking landscape:', error);
+        statusText.textContent = Error: ${error.message};
+      }
+    });
+  </script>
+
+</body>
+</html>
