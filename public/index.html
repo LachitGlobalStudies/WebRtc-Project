@@ -348,26 +348,43 @@
         return canvas.captureStream(30);
     }
 
-    // Fullscreen Toggle Handler
-    function toggleFullScreen() {
-        const targetElem = document.getElementById('mainArea') || document.getElementById('meetingContainer');
+async function toggleFullScreen() {
+    const targetElem = document.getElementById('mainArea') || document.getElementById('meetingContainer');
 
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        try {
+            // 1. Request Fullscreen
             if (targetElem.requestFullscreen) {
-                targetElem.requestFullscreen();
+                await targetElem.requestFullscreen();
             } else if (targetElem.webkitRequestFullscreen) {
-                targetElem.webkitRequestFullscreen();
+                await targetElem.webkitRequestFullscreen();
             } else if (teacherVideo && teacherVideo.webkitEnterFullscreen) {
                 teacherVideo.webkitEnterFullscreen();
             }
-        } else {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) {
-                document.webkitExitFullscreen();
+
+            // 2. Lock to Landscape Mode (Mobile devices)
+            if (screen.orientation && screen.orientation.lock) {
+                await screen.orientation.lock('landscape').catch((err) => {
+                    console.warn("Screen orientation lock failed or not supported:", err);
+                });
             }
+        } catch (err) {
+            console.error("Fullscreen request failed:", err);
+        }
+    } else {
+        // Exit Fullscreen
+        if (document.exitFullscreen) {
+            await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            await document.webkitExitFullscreen();
+        }
+
+        // Release Orientation Lock
+        if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
         }
     }
+}
 
     // Show temporary overlay controls
     function showHiddenItems() {
