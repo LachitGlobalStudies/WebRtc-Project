@@ -304,410 +304,358 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-    <script>
-        const socket = io();
-       let currentFacingMode = 'user'; // ডিফল্ট ক্যামেরা 'user' (Front Camera)
-        let localStream;
-        let teacherPc;
-        const servers = { iceServers: [{ urls: 'stun:stun1.l.google.com:19302' }] };
-        const chatPanel = document.getElementById('chatPanel');
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io();
+    let currentFacingMode = 'user';
+    let localStream;
+    let teacherPc;
+    const servers = { iceServers: [{ urls: 'stun:stun1.l.google.com:19302' }] };
 
-        // Helper function to generate a Dummy Video Stream if camera is unavailable or blocked
-        function createDummyStream() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 640;
-            canvas.height = 480;
-            const ctx = canvas.getContext('2d');
-            
-            let x = 0;
-            function draw() {
-                ctx.fillStyle = '#1e1e1e';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
-                ctx.fillStyle = '#ff9800';
-                ctx.font = '24px Arial';
-                ctx.fillText('Student Panel - Dummy Video Active', 50, 100);
-                
-                ctx.fillStyle = '#007fff';
-                ctx.fillRect(x, 200, 100, 100);
-                x = (x + 2) % canvas.width;
-                
-                requestAnimationFrame(draw);
-            }
-            draw();
+    const chatPanel = document.getElementById('chatPanel');
+    const mainArea = document.getElementById('mainArea');
+    const teacherVideo = document.getElementById('teacherVideo');
+    const meetingContainer = document.getElementById('meetingContainer');
+    const statusLabel = document.getElementById('statusLabel');
+    const myVideoCard = document.getElementById('myVideoCard');
+    const raiseHandBtn = document.getElementById('raiseHandBtn');
 
-            return canvas.captureStream(30);
+    let tapTimer = null;
+    let hideControlsTimer = null;
+    let lastTapTime = 0;
+    const TAP_DELAY = 300;
+
+    // Helper function to generate Dummy Video Stream if camera is unavailable
+    function createDummyStream() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 640;
+        canvas.height = 480;
+        const ctx = canvas.getContext('2d');
+        
+        let x = 0;
+        function draw() {
+            ctx.fillStyle = '#1e1e1e';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ff9800';
+            ctx.font = '24px Arial';
+            ctx.fillText('Student Panel - Dummy Video Active', 50, 100);
+            ctx.fillStyle = '#007fff';
+            ctx.fillRect(x, 200, 100, 100);
+            x = (x + 2) % canvas.width;
+            requestAnimationFrame(draw);
         }
+        draw();
+        return canvas.captureStream(30);
+    }
 
-    
+    // Fullscreen Toggle Handler
+    function toggleFullScreen() {
+        const targetElem = document.getElementById('mainArea') || document.getElementById('meetingContainer');
 
-
-        document.getElementById('joinBtn').onclick = async () => {
-            const roomId = document.getElementById('roomIdInput').value;
-            if (!roomId) return alert("Please enter Room ID");
-             toggleFullScreen();
-            document.querySelector(".welcome-container").style.display = "none";
-            document.getElementById("mainArea").style.display = "block";
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            } catch (err) {
-                console.warn("Camera/Mic access denied or not found. Falling back to dummy video stream.", err);
-                alert("Your camera and microphone is not accessible , a dummy video will play");
-                
-                localStream = createDummyStream();
-                
-                try {
-                    const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    audioStream.getAudioTracks().forEach(track => localStream.addTrack(track));
-                } catch (e) {
-                    console.warn("Audio fallback also failed, running with video-only dummy stream.");
-                }
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            if (targetElem.requestFullscreen) {
+                targetElem.requestFullscreen();
+            } else if (targetElem.webkitRequestFullscreen) {
+                targetElem.webkitRequestFullscreen();
+            } else if (teacherVideo && teacherVideo.webkitEnterFullscreen) {
+                teacherVideo.webkitEnterFullscreen();
             }
-
-            document.getElementById('localVideo').srcObject = localStream;
-            
-            if(localStream.getAudioTracks().length > 0) {
-                localStream.getAudioTracks()[0].enabled = false; 
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
             }
-            document.getElementById('raiseHandBtn').style.display = 'block';
-            document.getElementById('statusLabel').style.display = 'block';
-
-            // জয়েন করার সাথে সাথে লেআউট ফুলস্ক্রিন টিচারের ভিডিওর মডেলে শিফট হবে
-            document.getElementById('meetingContainer').classList.add('joined');
-            
-            socket.emit('join-room', { roomId, role: 'student' });
-            setTimeout(() => {
-                statusLabel.style.display = 'none';
-                myVideoCard.style.display='none';
-                raiseHandBtn.style.display='none';
-               
-            }, 8000);
-        };
-
-        // Text Message Execution Block
-        document.getElementById('sendMsgBtn').onclick = sendTextMessage;
-        document.getElementById('msgInput').onkeypress = (e) => { if (e.key === 'Enter') sendTextMessage(); };
-
-        function sendTextMessage() {
-            const input = document.getElementById('msgInput');
-            const text = input.value.trim();
-            if (!text) return;
-
-            const name = `Student (${socket.id ? socket.id.substring(0,4) : 'User'})`;
-            const data = { sender: name, text: text };
-            socket.emit('send-message', data);
-            appendMsg(data, 'msg-me');
-            input.value = '';
-        }
-
-        // File Broadcast Execution Block
-        document.getElementById('fileInput').onchange = function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            if (file.size > 10 * 1024 * 1024) return alert("File size must be under 10MB");
-
-            const reader = new FileReader();
-            reader.onload = function(evt) {
-                const name = `Student (${socket.id ? socket.id.substring(0,4) : 'User'})`;
-                const fileData = {
-                    sender: name,
-                    fileName: file.name,
-                    fileBuffer: evt.target.result
-                };
-                socket.emit('share-file', fileData);
-                appendFile(fileData, 'msg-me');
-            };
-            reader.readAsDataURL(file);
-        };
-    // double and single tap
-       const mainArea = document.getElementById('mainArea');
-        const teacherVideo = document.getElementById('teacherVideo');
-        const meetingContainer = document.getElementById('meetingContainer');
-        const statusLabel = document.getElementById('statusLabel');
-        const myVideoCard = document.getElementById('myVideoCard');
-        const raiseHandBtn = document.getElementById('raiseHandBtn');
-
-        let tapTimer = null;
-        let hideControlsTimer = null;
-        const TAP_DELAY = 300; // মোবাইল টাচের জন্য ৩০০ms নিখুঁত সময়
-
-        // ১. সঠিক ফুলস্ক্রিন ফাংশন (মোবাইল ও ডেসকটপ উভয়ের জন্য)
-       function toggleFullScreen() {
-    // Target mainArea or falling back to meetingContainer
-    const targetElem = document.getElementById('mainArea') || document.getElementById('meetingContainer');
-
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        if (targetElem.requestFullscreen) {
-            targetElem.requestFullscreen();
-        } else if (targetElem.webkitRequestFullscreen) { /* Safari / iOS / Android Chrome */
-            targetElem.webkitRequestFullscreen();
-        } else if (teacherVideo && teacherVideo.webkitEnterFullscreen) { /* Native iOS Video fallback */
-            teacherVideo.webkitEnterFullscreen();
-        }
-    } else {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
         }
     }
-}
 
-        // ২. বাটনের জন্য অটো-হাইড টাইমারসহ শো ফাংশন
-        function showHiddenItems() {
-            if (statusLabel) statusLabel.style.display = 'block';
-            if (myVideoCard) myVideoCard.style.display = 'block';
-            if (raiseHandBtn) raiseHandBtn.style.display = 'inline-block';
+    // Show temporary overlay controls
+    function showHiddenItems() {
+        if (statusLabel) statusLabel.style.display = 'block';
+        if (myVideoCard) myVideoCard.style.display = 'block';
+        if (raiseHandBtn) raiseHandBtn.style.display = 'inline-block';
 
-            if (hideControlsTimer) clearTimeout(hideControlsTimer);
+        if (hideControlsTimer) clearTimeout(hideControlsTimer);
 
-            hideControlsTimer = setTimeout(() => {
-                if (statusLabel) statusLabel.style.display = 'none';
-                if (myVideoCard) myVideoCard.style.display = 'none';
-                if (raiseHandBtn) raiseHandBtn.style.display = 'none';
-            }, 4000);
+        hideControlsTimer = setTimeout(() => {
+            if (statusLabel) statusLabel.style.display = 'none';
+            if (myVideoCard) myVideoCard.style.display = 'none';
+            if (raiseHandBtn) raiseHandBtn.style.display = 'none';
+        }, 4000);
+    }
+
+    // Unified Mobile & Desktop Tap Handling
+    function handleTap(e) {
+        // Prevent action on interactive UI elements
+        if (e.target.closest('button') || 
+            e.target.closest('.interactive-btn') || 
+            e.target.closest('#chatPanel') || 
+            e.target.closest('#myVideoCard')) {
+            return;
         }
 
-        // ৩. ট্যাপ হ্যান্ডলার
-        mainArea.addEventListener('click', (event) => {
-            // সমাধান ২: বাটনের ভেতরের আইকন/টেক্সটে ট্যাপ করলেও যেন চিনে নিতে পারে (closest দিয়ে)
-            if (event.target.closest('button') || event.target.closest('.interactive-btn')) {
-                return; // বাটন ক্লিকে সিঙ্গেল/ডাবল ট্যাপ রান হবে না, বাটনের নিজস্ব ক্লিক কাজ করবে
-            }
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTapTime;
 
-            if (tapTimer === null) {
-                // --- সিঙ্গেল ট্যাপ: হিডেন বাটন শো করবে ---
-                tapTimer = setTimeout(() => {
-                    tapTimer = null;
-                    showHiddenItems();
-                }, TAP_DELAY);
-
-            } else {
-                // --- ডাবল ট্যাপ: ফুলস্ক্রিন করবে ---
+        if (tapLength < TAP_DELAY && tapLength > 0) {
+            if (tapTimer) {
                 clearTimeout(tapTimer);
                 tapTimer = null;
-                
-                toggleFullScreen();
             }
-        });
-
-        teacherVideo.addEventListener('dblclick', toggleFullScreen);
-        mainArea.addEventListener('dblclick', toggleFullScreen);
-
-      
-
-        document.addEventListener('fullscreenchange', () => {
-            if (document.fullscreenElement === mainArea) {
-              
-            } else {
-                exitFsBtn.style.display = 'none';
-            }
-        });
-
-        // UI Event Listeners
-        socket.on('receive-message', (data) => { appendMsg(data, 'msg-other'); });
-        socket.on('receive-file', (data) => { appendFile(data, 'msg-other'); });
-
-        function appendMsg(data, className) {
-            const win = document.getElementById('chatWindow');
-            const div = document.createElement('div');
-            div.className = `msg-block ${className}`;
-            div.innerHTML = `<strong>${data.sender}:</strong> ${data.text}`;
-            win.appendChild(div);
-            win.scrollTop = win.scrollHeight;
+            toggleFullScreen();
+        } else {
+            tapTimer = setTimeout(() => {
+                tapTimer = null;
+                showHiddenItems();
+            }, TAP_DELAY);
         }
-
-        function appendFile(data, className) {
-            const win = document.getElementById('chatWindow');
-            const div = document.createElement('div');
-            div.className = `msg-block ${className}`;
-            div.innerHTML = `<strong>${data.sender} Shared:</strong> <a class="file-link" href="${data.fileBuffer}" download="${data.fileName}">📁 ${data.fileName}</a>`;
-            win.appendChild(div);
-            win.scrollTop = win.scrollHeight;
-        }
-
-        document.getElementById('raiseHandBtn').onclick = function() {
-            socket.emit('raise-hand');
-            this.innerText = "Hand Raised ✋ (Waiting...)";
-            this.disabled = true;
-            this.style.background = '#555';
-            this.style.color = '#fff';
-        };
-
-        socket.on('all-users', ({ teacherId }) => { if (teacherId) setupTeacherConnection(teacherId); });
-        socket.on('teacher-connected', (teacherId) => { setupTeacherConnection(teacherId); });
-
-        socket.on('signal', async (data) => {
-            if (data.signal.offer) {
-                await teacherPc.setRemoteDescription(new RTCSessionDescription(data.signal.offer));
-                const answer = await teacherPc.createAnswer();
-                await teacherPc.setLocalDescription(answer);
-                socket.emit('signal', { target: data.sender, signal: { answer } });
-            } else if (data.signal.candidate) {
-                try { await teacherPc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){}
-            }
-        });
-      
-
-        // সার্ভার থেকে ক্যামেরা সুইচের নির্দেশ পেলে
-
-        socket.on('request-camera-switch', async () => {
-            try {
-                console.log("Teacher requested camera switch...");
-
-                // ১. আগে পুরাতন ভিডিও ট্র্যাক খুঁজে বের করে পুরোপুরি বন্ধ (Stop) করা
-                if (localStream) {
-                    const oldVideoTrack = localStream.getVideoTracks()[0];
-                    if (oldVideoTrack) {
-                        oldVideoTrack.stop();
-                    }
-                }
-
-                // ২. ক্যামেরা মোড টগল করা
-                currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
-
-                // ৩. স্ট্রিক্ট 'exact' ছাড়া নরমাল facingMode দিয়ে নতুন ক্যামেরা চালু করা
-                const newStream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: currentFacingMode },
-                    audio: false 
-                });
-
-                const newVideoTrack = newStream.getVideoTracks()[0];
-
-                // ৪. স্টুডেন্টের লোকাল প্রিভিউ আপডেট করা
-                const localVideoElement = document.getElementById('localVideo');
-                if (localVideoElement) {
-                    localVideoElement.srcObject = newStream;
-                    localVideoElement.style.transform = (currentFacingMode === 'user') ? 'scaleX(-1)' : 'scaleX(1)';
-                }
-
-                // ৫. WebRTC Peer Connection-এ ভিডিও ট্র্যাক রিপ্লেস করা
-                if (teacherPc) {
-                    const senders = teacherPc.getSenders();
-                    const videoSender = senders.find(s => s.track && s.track.kind === 'video');
-                    
-                    if (videoSender) {
-                        await videoSender.replaceTrack(newVideoTrack);
-                    }
-                }
-
-                // 💡 localStream রেফারেন্স আপডেট রাখা
-                if (localStream) {
-                    const oldTrack = localStream.getVideoTracks()[0];
-                    if (oldTrack) localStream.removeTrack(oldTrack);
-                    localStream.addTrack(newVideoTrack);
-                }
-
-            } catch (err) {
-                console.error("Camera switch error:", err);
-                alert("Camera switch failed: " + err.message);
-                // এরর হলে মোড রিভার্স করা
-                currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
-            }
-        });
-        socket.on('allowed-to-talk', () => {
-            if(localStream && localStream.getAudioTracks().length > 0) {
-                localStream.getAudioTracks()[0].enabled = true; 
-            }
-            document.getElementById('raiseHandBtn').style.display = 'none';
-            const statusLabel = document.getElementById('statusLabel');
-            statusLabel.innerText = "🎙️ Teacher is listening";
-            statusLabel.className = "status-live";
-            statusLabel.style.display = 'block';
-        });
-
-        socket.on('force-mute', () => {
-            if(localStream && localStream.getAudioTracks().length > 0) {
-                localStream.getAudioTracks()[0].enabled = false; 
-            }
-            
-            const raiseBtn = document.getElementById('raiseHandBtn');
-            raiseBtn.style.display = 'block';
-            raiseBtn.innerText = "Raise Hand ✋";
-            raiseBtn.disabled = false;
-            raiseBtn.style.background = '#ff9800';
-            raiseBtn.style.color = 'black';
-            
-            const statusLabel = document.getElementById('statusLabel');
-            statusLabel.innerText = "🔇 Muted by Teacher";
-            statusLabel.className = "status-muted";
-            statusLabel.style.display = 'block';
-
-            // ৩ সেকেন্ড (৩০০০ মিলিসেকেন্ড) পর নোটিফিকেশনটি হাইড বা গায়েব করার জন্য
-            setTimeout(() => {
-                statusLabel.style.display = 'none';
-                raiseBtn.style.display='none';
-            }, 3000);
-        });
-
-        socket.on('teacher-disconnected', () => {
-            document.getElementById('teacherVideo').srcObject = null;
-        });
-
-        let lastTapTime = 0;
-
-// Mobile Touch Handling for Double-Tap
-mainArea.addEventListener('touchend', function (e) {
-    // Prevent double tap from triggering on buttons
-    if (e.target.closest('button') || e.target.closest('.interactive-btn') || e.target.closest('#chatPanel')) {
-        return;
+        lastTapTime = currentTime;
     }
 
-    const currentTime = new Date().getTime();
-    const tapLength = currentTime - lastTapTime;
+    mainArea.addEventListener('touchend', function (e) {
+        handleTap(e);
+    });
 
-    if (tapLength < 300 && tapLength > 0) {
-        e.preventDefault();
-        if (tapTimer) {
-            clearTimeout(tapTimer);
-            tapTimer = null;
+    mainArea.addEventListener('click', function (e) {
+        // Run click logic only for non-touch (mouse) devices
+        if (!('ontouchstart' in window)) {
+            handleTap(e);
         }
+    });
+
+    // Join Room
+    document.getElementById('joinBtn').onclick = async () => {
+        const roomId = document.getElementById('roomIdInput').value;
+        if (!roomId) return alert("Please enter Room ID");
+
         toggleFullScreen();
-    } else {
-        tapTimer = setTimeout(() => {
-            tapTimer = null;
-            showHiddenItems();
-        }, TAP_DELAY);
-    }
-    lastTapTime = currentTime;
-});
-        
-        function setupTeacherConnection(teacherId) {
-            teacherPc = new RTCPeerConnection(servers);
-            localStream.getTracks().forEach(track => teacherPc.addTrack(track, localStream));
-            teacherPc.ontrack = (event) => { document.getElementById('teacherVideo').srcObject = event.streams[0]; };
-            teacherPc.onicecandidate = (event) => {
-                if (event.candidate) socket.emit('signal', { target: teacherId, signal: { candidate: event.candidate } });
-            };
+        document.querySelector(".welcome-container").style.display = "none";
+        document.getElementById("mainArea").style.display = "block";
+
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        } catch (err) {
+            console.warn("Camera/Mic access denied or not found. Falling back to dummy video stream.", err);
+            alert("Your camera and microphone is not accessible, a dummy video will play");
+            
+            localStream = createDummyStream();
+            try {
+                const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                audioStream.getAudioTracks().forEach(track => localStream.addTrack(track));
+            } catch (e) {
+                console.warn("Audio fallback failed, running video-only stream.");
+            }
         }
 
-        // URL Room Parameter Auto-Join Handler
-        window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            const roomIdFromUrl = urlParams.get('room');
-            
-            if (roomIdFromUrl) {
-                document.getElementById('roomIdInput').value = roomIdFromUrl;
-                setTimeout(() => {
-                    document.getElementById('joinBtn').click();
-                }, 500);
-            }
-        });
+        document.getElementById('localVideo').srcObject = localStream;
+        if (localStream.getAudioTracks().length > 0) {
+            localStream.getAudioTracks()[0].enabled = false; 
+        }
 
-     
-                // Sync when Teacher opens/closes Chat Board
-                // শিক্ষক চ্যাট বোর্ড অন/অফ করলে সরাসরি ওভারলে টগল হবে
-        socket.on('chat-state-changed', (data) => {
-            const chatPanel = document.getElementById('chatPanel');
-            if (data && data.open) {
-                chatPanel.classList.add('open');
-            } else {
-                chatPanel.classList.remove('open');
-            }
-        });
-    
+        document.getElementById('raiseHandBtn').style.display = 'block';
+        document.getElementById('statusLabel').style.display = 'block';
+        document.getElementById('meetingContainer').classList.add('joined');
+        
+        socket.emit('join-room', { roomId, role: 'student' });
 
-    
-    </script>
+        setTimeout(() => {
+            if (statusLabel) statusLabel.style.display = 'none';
+            if (myVideoCard) myVideoCard.style.display = 'none';
+            if (raiseHandBtn) raiseHandBtn.style.display = 'none';
+        }, 8000);
+    };
+
+    // Chat Message Handlers
+    document.getElementById('sendMsgBtn').onclick = sendTextMessage;
+    document.getElementById('msgInput').onkeypress = (e) => { if (e.key === 'Enter') sendTextMessage(); };
+
+    function sendTextMessage() {
+        const input = document.getElementById('msgInput');
+        const text = input.value.trim();
+        if (!text) return;
+
+        const name = `Student (${socket.id ? socket.id.substring(0,4) : 'User'})`;
+        const data = { sender: name, text: text };
+        socket.emit('send-message', data);
+        appendMsg(data, 'msg-me');
+        input.value = '';
+    }
+
+    // File Sharing Handler
+    document.getElementById('fileInput').onchange = function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 10 * 1024 * 1024) return alert("File size must be under 10MB");
+
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            const name = `Student (${socket.id ? socket.id.substring(0,4) : 'User'})`;
+            const fileData = {
+                sender: name,
+                fileName: file.name,
+                fileBuffer: evt.target.result
+            };
+            socket.emit('share-file', fileData);
+            appendFile(fileData, 'msg-me');
+        };
+        reader.readAsDataURL(file);
+    };
+
+    function appendMsg(data, className) {
+        const win = document.getElementById('chatWindow');
+        const div = document.createElement('div');
+        div.className = `msg-block ${className}`;
+        div.innerHTML = `<strong>${data.sender}:</strong> ${data.text}`;
+        win.appendChild(div);
+        win.scrollTop = win.scrollHeight;
+    }
+
+    function appendFile(data, className) {
+        const win = document.getElementById('chatWindow');
+        const div = document.createElement('div');
+        div.className = `msg-block ${className}`;
+        div.innerHTML = `<strong>${data.sender} Shared:</strong> <a class="file-link" href="${data.fileBuffer}" download="${data.fileName}">📁 ${data.fileName}</a>`;
+        win.appendChild(div);
+        win.scrollTop = win.scrollHeight;
+    }
+
+    // Raise Hand Action
+    document.getElementById('raiseHandBtn').onclick = function() {
+        socket.emit('raise-hand');
+        this.innerText = "Hand Raised ✋ (Waiting...)";
+        this.disabled = true;
+        this.style.background = '#555';
+        this.style.color = '#fff';
+    };
+
+    // Socket Event Listeners
+    socket.on('receive-message', (data) => { appendMsg(data, 'msg-other'); });
+    socket.on('receive-file', (data) => { appendFile(data, 'msg-other'); });
+    socket.on('all-users', ({ teacherId }) => { if (teacherId) setupTeacherConnection(teacherId); });
+    socket.on('teacher-connected', (teacherId) => { setupTeacherConnection(teacherId); });
+
+    socket.on('signal', async (data) => {
+        if (data.signal.offer) {
+            await teacherPc.setRemoteDescription(new RTCSessionDescription(data.signal.offer));
+            const answer = await teacherPc.createAnswer();
+            await teacherPc.setLocalDescription(answer);
+            socket.emit('signal', { target: data.sender, signal: { answer } });
+        } else if (data.signal.candidate) {
+            try { await teacherPc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){}
+        }
+    });
+
+    socket.on('request-camera-switch', async () => {
+        try {
+            if (localStream) {
+                const oldVideoTrack = localStream.getVideoTracks()[0];
+                if (oldVideoTrack) oldVideoTrack.stop();
+            }
+
+            currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+
+            const newStream = await navigator.mediaDevices.getUserMedia({
+                video: { facingMode: currentFacingMode },
+                audio: false 
+            });
+
+            const newVideoTrack = newStream.getVideoTracks()[0];
+            const localVideoElement = document.getElementById('localVideo');
+            if (localVideoElement) {
+                localVideoElement.srcObject = newStream;
+                localVideoElement.style.transform = (currentFacingMode === 'user') ? 'scaleX(-1)' : 'scaleX(1)';
+            }
+
+            if (teacherPc) {
+                const senders = teacherPc.getSenders();
+                const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+                if (videoSender) {
+                    await videoSender.replaceTrack(newVideoTrack);
+                }
+            }
+
+            if (localStream) {
+                const oldTrack = localStream.getVideoTracks()[0];
+                if (oldTrack) localStream.removeTrack(oldTrack);
+                localStream.addTrack(newVideoTrack);
+            }
+        } catch (err) {
+            console.error("Camera switch error:", err);
+            alert("Camera switch failed: " + err.message);
+            currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+        }
+    });
+
+    socket.on('allowed-to-talk', () => {
+        if (localStream && localStream.getAudioTracks().length > 0) {
+            localStream.getAudioTracks()[0].enabled = true; 
+        }
+        document.getElementById('raiseHandBtn').style.display = 'none';
+        const statusLabel = document.getElementById('statusLabel');
+        statusLabel.innerText = "🎙️ Teacher is listening";
+        statusLabel.className = "status-live";
+        statusLabel.style.display = 'block';
+    });
+
+    socket.on('force-mute', () => {
+        if (localStream && localStream.getAudioTracks().length > 0) {
+            localStream.getAudioTracks()[0].enabled = false; 
+        }
+        
+        const raiseBtn = document.getElementById('raiseHandBtn');
+        raiseBtn.style.display = 'block';
+        raiseBtn.innerText = "Raise Hand ✋";
+        raiseBtn.disabled = false;
+        raiseBtn.style.background = '#ff9800';
+        raiseBtn.style.color = 'black';
+        
+        const statusLabel = document.getElementById('statusLabel');
+        statusLabel.innerText = "🔇 Muted by Teacher";
+        statusLabel.className = "status-muted";
+        statusLabel.style.display = 'block';
+
+        setTimeout(() => {
+            statusLabel.style.display = 'none';
+            raiseBtn.style.display = 'none';
+        }, 3000);
+    });
+
+    socket.on('teacher-disconnected', () => {
+        document.getElementById('teacherVideo').srcObject = null;
+    });
+
+    socket.on('chat-state-changed', (data) => {
+        if (data && data.open) {
+            chatPanel.classList.add('open');
+        } else {
+            chatPanel.classList.remove('open');
+        }
+    });
+
+    function setupTeacherConnection(teacherId) {
+        teacherPc = new RTCPeerConnection(servers);
+        if (localStream) {
+            localStream.getTracks().forEach(track => teacherPc.addTrack(track, localStream));
+        }
+        teacherPc.ontrack = (event) => { 
+            document.getElementById('teacherVideo').srcObject = event.streams[0]; 
+        };
+        teacherPc.onicecandidate = (event) => {
+            if (event.candidate) socket.emit('signal', { target: teacherId, signal: { candidate: event.candidate } });
+        };
+    }
+
+    // Auto-Join from URL parameter
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomIdFromUrl = urlParams.get('room');
+        if (roomIdFromUrl) {
+            document.getElementById('roomIdInput').value = roomIdFromUrl;
+            setTimeout(() => {
+                document.getElementById('joinBtn').click();
+            }, 500);
+        }
+    });
+</script>
 </body>
 </html>
