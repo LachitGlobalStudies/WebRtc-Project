@@ -352,46 +352,49 @@
     
 
 
-        document.getElementById('joinBtn').onclick = async () => {
-            const roomId = document.getElementById('roomIdInput').value;
-            if (!roomId) return alert("Please enter Room ID");
-            document.querySelector(".welcome-container").style.display = "none";
-            document.getElementById("mainArea").style.display = "block";
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            } catch (err) {
-                console.warn("Camera/Mic access denied or not found. Falling back to dummy video stream.", err);
-                alert("Your camera and microphone is not accessible , a dummy video will play");
-                
-                localStream = createDummyStream();
-                
-                try {
-                    const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    audioStream.getAudioTracks().forEach(track => localStream.addTrack(track));
-                } catch (e) {
-                    console.warn("Audio fallback also failed, running with video-only dummy stream.");
-                }
-            }
+     document.getElementById('joinBtn').onclick = async () => {
+    const roomId = document.getElementById('roomIdInput').value;
+    if (!roomId) return alert("Please enter Room ID");
 
-            document.getElementById('localVideo').srcObject = localStream;
-            
-            if(localStream.getAudioTracks().length > 0) {
-                localStream.getAudioTracks()[0].enabled = false; 
-            }
-            document.getElementById('raiseHandBtn').style.display = 'block';
-            document.getElementById('statusLabel').style.display = 'block';
+    // Must be invoked immediately from the click event to satisfy browser security policies
+    await forceLandscapeFullscreen();
 
-            // জয়েন করার সাথে সাথে লেআউট ফুলস্ক্রিন টিচারের ভিডিওর মডেলে শিফট হবে
-            document.getElementById('meetingContainer').classList.add('joined');
-            
-            socket.emit('join-room', { roomId, role: 'student' });
-            setTimeout(() => {
-                statusLabel.style.display = 'none';
-                myVideoCard.style.display='none';
-                raiseHandBtn.style.display='none';
-                toggleFullScreen();
-            }, 8000);
-        };
+    document.querySelector(".welcome-container").style.display = "none";
+    document.getElementById("mainArea").style.display = "block";
+    
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    } catch (err) {
+        console.warn("Camera/Mic access denied or not found. Falling back to dummy video stream.", err);
+        alert("Your camera and microphone is not accessible , a dummy video will play");
+        
+        localStream = createDummyStream();
+        try {
+            const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioStream.getAudioTracks().forEach(track => localStream.addTrack(track));
+        } catch (e) {
+            console.warn("Audio fallback also failed, running with video-only dummy stream.");
+        }
+    }
+
+    document.getElementById('localVideo').srcObject = localStream;
+    
+    if(localStream.getAudioTracks().length > 0) {
+        localStream.getAudioTracks()[0].enabled = false; 
+    }
+    document.getElementById('raiseHandBtn').style.display = 'block';
+    document.getElementById('statusLabel').style.display = 'block';
+
+    document.getElementById('meetingContainer').classList.add('joined');
+    
+    socket.emit('join-room', { roomId, role: 'student' });
+
+    setTimeout(() => {
+        statusLabel.style.display = 'none';
+        myVideoCard.style.display = 'none';
+        raiseHandBtn.style.display = 'none';
+    }, 8000);
+};
 
         // Text Message Execution Block
         document.getElementById('sendMsgBtn').onclick = sendTextMessage;
