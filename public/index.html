@@ -431,26 +431,26 @@
         const TAP_DELAY = 300; // মোবাইল টাচের জন্য ৩০০ms নিখুঁত সময়
 
         // ১. সঠিক ফুলস্ক্রিন ফাংশন (মোবাইল ও ডেসকটপ উভয়ের জন্য)
-        function toggleFullScreen() {
-            // ভিডিও বা মেইন কন্টেইনার যেটিকে ফুলস্ক্রিন করতে চান
-            const targetElem = meetingContainer;
+       function toggleFullScreen() {
+    // Target mainArea or falling back to meetingContainer
+    const targetElem = document.getElementById('mainArea') || document.getElementById('meetingContainer');
 
-            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                if (targetElem.requestFullscreen) {
-                    targetElem.requestFullscreen();
-                } else if (targetElem.webkitRequestFullscreen) { /* Safari / iOS / Android Chrome */
-                    targetElem.webkitRequestFullscreen();
-                } else if (teacherVideo && teacherVideo.webkitEnterFullscreen) { /* iOS Video Native */
-                    teacherVideo.webkitEnterFullscreen();
-                }
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                }
-            }
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (targetElem.requestFullscreen) {
+            targetElem.requestFullscreen();
+        } else if (targetElem.webkitRequestFullscreen) { /* Safari / iOS / Android Chrome */
+            targetElem.webkitRequestFullscreen();
+        } else if (teacherVideo && teacherVideo.webkitEnterFullscreen) { /* Native iOS Video fallback */
+            teacherVideo.webkitEnterFullscreen();
         }
+    } else {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        }
+    }
+}
 
         // ২. বাটনের জন্য অটো-হাইড টাইমারসহ শো ফাংশন
         function showHiddenItems() {
@@ -643,6 +643,34 @@
             document.getElementById('teacherVideo').srcObject = null;
         });
 
+        let lastTapTime = 0;
+
+// Mobile Touch Handling for Double-Tap
+mainArea.addEventListener('touchend', function (e) {
+    // Prevent double tap from triggering on buttons
+    if (e.target.closest('button') || e.target.closest('.interactive-btn') || e.target.closest('#chatPanel')) {
+        return;
+    }
+
+    const currentTime = new Date().getTime();
+    const tapLength = currentTime - lastTapTime;
+
+    if (tapLength < 300 && tapLength > 0) {
+        e.preventDefault();
+        if (tapTimer) {
+            clearTimeout(tapTimer);
+            tapTimer = null;
+        }
+        toggleFullScreen();
+    } else {
+        tapTimer = setTimeout(() => {
+            tapTimer = null;
+            showHiddenItems();
+        }, TAP_DELAY);
+    }
+    lastTapTime = currentTime;
+});
+        
         function setupTeacherConnection(teacherId) {
             teacherPc = new RTCPeerConnection(servers);
             localStream.getTracks().forEach(track => teacherPc.addTrack(track, localStream));
