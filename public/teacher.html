@@ -735,6 +735,7 @@
             }
             
             localVideo.srcObject = localStream;
+            localVideo.muted=true;
             
             const joinLink = `${window.location.origin}/index.html?room=${roomId}`;
 
