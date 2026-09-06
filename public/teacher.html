@@ -470,7 +470,7 @@
     <!-- Main Video Display -->
     <div class="main-display" id="mainArea">
         <div id="participantCounter" class="counter-header">0</div>
-        <video id="localVideo" autoplay playsinline class="mirror" muted="1"></video>
+        <video id="localVideo" autoplay playsinline class="mirror"></video>
         
         <!-- Updated Overlay Controls -->
         <div class="cam-controls-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 50;">
@@ -1048,6 +1048,7 @@
             const teacherStream = localVideo.srcObject;
 
             localVideo.srcObject = studentStream;
+            localVideo.muted = false;
             localVideo.classList.remove('mirror');
 
             studentVideo.srcObject = teacherStream;
@@ -1074,6 +1075,7 @@
                 const currentCardStream = studentVideo.srcObject;
 
                 localVideo.srcObject = currentCardStream;
+                localVideo.muted = true;
                 localVideo.classList.add('mirror');
 
                 studentVideo.srcObject = currentMainStream;
