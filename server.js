@@ -27,19 +27,26 @@ app.get('/get-html-page', (req, res) => {
 const roomTeachers = {};
 const roomChatState = {}; 
 const activeStreams = {};
+const pendingStudents = {}; // { roomId: [ { id, name } ] }
+const socketUserData = {};  // { [socket.id]: { role, roomId, name } }
 
 // Socket.io Connection Logic
 io.on('connection', (socket) => {
     
+    // Teacher Joins
     socket.on('join-room', ({ roomId, role }) => {
         socket.join(roomId);
         socket.role = role;
         socket.roomId = roomId; 
+        socketUserData[socket.id] = { role, roomId, name: role === 'teacher' ? 'Teacher' : 'Student' };
 
         if (role === 'teacher') {
             roomTeachers[roomId] = socket.id;
             roomChatState[roomId] = false; 
+            if (!pendingStudents[roomId]) pendingStudents[roomId] = [];
             socket.to(roomId).emit('teacher-connected', socket.id);
+            // Send pending list to teacher
+            socket.emit('pending-list-update', pendingStudents[roomId]);
         }
 
         if (role === 'student' && roomChatState[roomId] === true) {
@@ -51,14 +58,92 @@ io.on('connection', (socket) => {
         if (clients) {
             for (let clientId of clients) {
                 if (clientId !== socket.id) {
-                    const clientSocket = io.sockets.sockets.get(clientId);
-                    otherUsers.push({ id: clientId, role: clientSocket ? clientSocket.role : 'student' });
+                    const clientData = socketUserData[clientId];
+                    otherUsers.push({ 
+                        id: clientId, 
+                        role: clientData ? clientData.role : 'student',
+                        name: clientData ? clientData.name : 'Student'
+                    });
                 }
             }
         }
 
         socket.emit('all-users', { users: otherUsers, teacherId: roomTeachers[roomId] });
-        io.to(roomId).emit('user-joined', { userId: socket.id, role: role, count: clients ? clients.size : 1 });
+        io.to(roomId).emit('user-joined', { 
+            userId: socket.id, 
+            role: role, 
+            name: socketUserData[socket.id].name,
+            count: clients ? clients.size : 1 
+        });
+    });
+
+    // Student Requests Admission
+    socket.on('request-join', ({ roomId, studentName }) => {
+        const name = (studentName && studentName.trim()) ? studentName.trim() : `Student (${socket.id.substring(0,4)})`;
+        socket.role = 'student';
+        socket.roomId = roomId;
+        socket.studentName = name;
+        socketUserData[socket.id] = { role: 'student', roomId, name };
+
+        const teacherId = roomTeachers[roomId];
+        if (!teacherId) {
+            socket.emit('join-rejected', { reason: 'Teacher is not in this class yet. Please wait or check your Room ID.' });
+            return;
+        }
+
+        if (!pendingStudents[roomId]) pendingStudents[roomId] = [];
+        pendingStudents[roomId].push({ id: socket.id, name });
+
+        socket.emit('join-pending');
+        io.to(teacherId).emit('student-join-request', { id: socket.id, name });
+        io.to(teacherId).emit('pending-list-update', pendingStudents[roomId]);
+    });
+
+    // Teacher Approves Student
+    socket.on('accept-student', ({ studentId }) => {
+        const currentRoom = socket.roomId;
+        if (socket.role !== 'teacher') return;
+
+        if (pendingStudents[currentRoom]) {
+            pendingStudents[currentRoom] = pendingStudents[currentRoom].filter(s => s.id !== studentId);
+            socket.emit('pending-list-update', pendingStudents[currentRoom]);
+        }
+
+        const studentSocket = io.sockets.sockets.get(studentId);
+        if (studentSocket) {
+            studentSocket.join(currentRoom);
+            const studentInfo = socketUserData[studentId] || { name: 'Student' };
+
+            studentSocket.emit('join-accepted', { 
+                teacherId: roomTeachers[currentRoom],
+                roomId: currentRoom
+            });
+
+            if (roomChatState[currentRoom] === true) {
+                studentSocket.emit('chat-state-changed', { open: true });
+            }
+
+            const clients = io.sockets.adapter.rooms.get(currentRoom);
+            io.to(currentRoom).emit('user-joined', { 
+                userId: studentId, 
+                role: 'student', 
+                name: studentInfo.name,
+                count: clients ? clients.size : 1 
+            });
+        }
+    });
+
+    // Teacher Rejects Student
+    socket.on('reject-student', ({ studentId }) => {
+        const currentRoom = socket.roomId;
+        if (socket.role !== 'teacher') return;
+
+        if (pendingStudents[currentRoom]) {
+            pendingStudents[currentRoom] = pendingStudents[currentRoom].filter(s => s.id !== studentId);
+            socket.emit('pending-list-update', pendingStudents[currentRoom]);
+        }
+
+        io.to(studentId).emit('join-rejected', { reason: 'The teacher declined your request to join the class.' });
     });
 
     // WebRTC Signaling
@@ -191,6 +276,18 @@ io.on('connection', (socket) => {
     // Disconnect Handling
     socket.on('disconnect', () => {
         const currentRoom = socket.roomId;
+        const socketId = socket.id;
+
+        if (currentRoom && pendingStudents[currentRoom]) {
+            pendingStudents[currentRoom] = pendingStudents[currentRoom].filter(s => s.id !== socketId);
+            const teacherId = roomTeachers[currentRoom];
+            if (teacherId) io.to(teacherId).emit('pending-list-update', pendingStudents[currentRoom]);
+        }
+
+        if (socketUserData[socketId]) {
+            delete socketUserData[socketId];
+        }
+
         if (!currentRoom) return;
 
         if (socket.role === 'teacher') {
@@ -200,6 +297,7 @@ io.on('connection', (socket) => {
             }
             delete roomTeachers[currentRoom];
             delete roomChatState[currentRoom];
+            delete pendingStudents[currentRoom];
             socket.to(currentRoom).emit('teacher-disconnected');
         } else {
             socket.to(currentRoom).emit('user-left', socket.id);
