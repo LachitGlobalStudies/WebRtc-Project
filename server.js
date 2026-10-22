@@ -272,7 +272,10 @@ io.on('connection', (socket) => {
     socket.on('switch-student-camera', ({ targetStudentId }) => {
         io.to(targetStudentId).emit('request-camera-switch');
     });
-
+    // Student ready hole teacher ke bolbe call start korte
+    socket.on('student-ready-for-call', ({ teacherId }) => {
+    io.to(teacherId).emit('start-call-with-student', { studentId: socket.id });
+});
     // Disconnect Handling
     socket.on('disconnect', () => {
         const currentRoom = socket.roomId;
