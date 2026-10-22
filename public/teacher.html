@@ -608,7 +608,13 @@
         const peerConnections = {};
         const studentMicStatus = {}; 
         const studentNames = {}; // Store real student names
-        const servers = { iceServers: [{ urls: 'stun:stun.l.google.com:19020' }] };
+        // teacher.html er servers change korun:
+        const servers = { 
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' }
+            ] 
+        };
         let currentCamFacingMode = "user";
         let activeSwappedStudentId = null;
         
