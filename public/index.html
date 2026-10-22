@@ -98,6 +98,38 @@
     transform:translateY(-2px);
 }
 
+/* Waiting / Rejection State Box */
+.waiting-status-box {
+    display: none;
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px dashed #ff9800;
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 15px;
+    text-align: center;
+}
+.waiting-status-box .loader {
+    display: inline-block;
+    width: 34px;
+    height: 34px;
+    border: 4px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: #ff9800;
+    animation: spin 1s ease-in-out infinite;
+    margin-bottom: 12px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.error-banner {
+    display: none;
+    background: #ea4335;
+    color: #fff;
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-top: 12px;
+}
+
 @keyframes cardPop{
     from{
         opacity:0;
@@ -112,12 +144,10 @@
         .meeting-container { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; position: relative; }
         .sidebar { width: 15%; background: #161719; border-right: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 5px; padding: 5px; transition: all 0.3s ease; }
         
-        /* স্টুডেন্ট জয়েন করার পর সাইডবার হাইড করে ভিডিও ফুলস্ক্রিন করা */
         .meeting-container.joined .sidebar { display: none; }
         .meeting-container.joined .main-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 0; }
         .meeting-container.joined .main-display video#teacherVideo { border-radius: 0; }
 
-        /* শিক্ষার্থীর সার্কেল ভিডিও যা শিক্ষকের ভিডিওর উপরে বামে থাকবে */
         .my-video-card { 
             width: 100%; 
             background: #222; 
@@ -130,7 +160,6 @@
         .my-video-card video { width: 100%; height: 100%; object-fit: cover; aspect-ratio: 4/3; transform: scaleX(-1); }
         .label { position: absolute; bottom: 5px; left: 5px; background: rgba(0,0,0,0.6); padding: 2px 6px; font-size: 11px; border-radius: 4px; }
 
-        /* জয়েন করার পর শিক্ষার্থীর ভিডিও সার্কেল স্টাইলে প্লেস করার জন্য CSS */
         .meeting-container.joined .my-video-card {
             position: absolute;
             top: 5px;
@@ -145,26 +174,24 @@
         .meeting-container.joined .my-video-card .label { display: none; }
 
        .main-display { 
-    flex: 1; 
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    background: #0e0f11; 
-    padding: 2px; 
-    position: relative; 
-    overflow: hidden; 
-}
+            flex: 1; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            background: #0e0f11; 
+            padding: 2px; 
+            position: relative; 
+            overflow: hidden; 
+        }
 
-.main-display video { 
-    width: 100%; 
-    height: 100%; 
-    object-fit: fill; /* Stretches video to fill exact container dimensions */
-    background: #000; 
-    border-radius: 12px; 
-}
+        .main-display video { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: fill; 
+            background: #000; 
+            border-radius: 12px; 
+        }
 
-        /* চ্যাট প্যানেলটি ভিডিওর ওপর ফ্লোটিং বা ওভারলে উইন্ডো হিসেবে থাকবে */
-       /* চ্যাট প্যানেল ডিফোল্ট অবস্থায় হাইড থাকবে */
         .chat-panel { 
             position: absolute !important;
             right: 20px !important;
@@ -187,7 +214,6 @@
             z-index: 99999 !important; 
         }
 
-        /* টিচার ওপেন করলে ওভারলে ভাসমান উইন্ডো হিসেবে দৃশ্যমান হবে */
         .chat-panel.open { 
             width: 320px !important; 
             height: 400px !important;
@@ -200,7 +226,6 @@
         
         .action-bar { height: 70px; background: #1a1c20; display: flex; justify-content: center; align-items: center; border-top: 1px solid #2a2d32; gap: 15px; }
         
-        /* Raise Hand বাটন ডিফোল্ট ও জয়েন করার পর শিক্ষকের ডান কোণে দেখানোর স্টাইল */
         .raise-btn { padding: 12px 30px; font-size: 15px; font-weight: bold; border: none; border-radius: 30px; background: #ff9800; color: black; cursor: pointer; display: none; }
         
         .meeting-container.joined .raise-btn {
@@ -234,48 +259,46 @@
         .chat-input-area button { padding: 8px 15px; background: #2ea44f; border: none; color: #fff; font-weight: bold; border-radius: 4px; cursor: pointer; }
         .file-label { display: inline-block; background: #444; text-align: center; padding: 5px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .file-link { color: #ff9800; text-decoration: underline; display: block; font-weight: bold; margin-top: 4px; }
-#raiseHandBtn, #myVideoCard {
-    pointer-events: auto;
-    z-index: 100; /* ভিডিওর ওপরে বাটন রাখার জন্য */
-}
-
+        #raiseHandBtn, #myVideoCard {
+            pointer-events: auto;
+            z-index: 100;
+        }
     </style>
 </head>
 <body>
 
-     <div class="welcome-container">
-                    <div class="welcome-card">
-                        <div class="welcome-icon">🎓</div>
+    <div class="welcome-container" id="welcomeContainer">
+        <div class="welcome-card">
+            <div class="welcome-icon">🎓</div>
+            <h1>Welcome to</h1>
+            <h2>Lachit Global Studies</h2>
+            <p>Join your live class and start learning with your teachers in real time.</p>
 
-                        <h1>Welcome to</h1>
-                        <h2>Lachit Global Studies</h2>
+            <div class="controls" id="joinControls">
+                <!-- Name Box -->
+                <input type="text" id="studentNameInput" placeholder="Enter Your Name" style="text-align: center;" required>
+                <!-- Room ID Box -->
+                <input type="text" id="roomIdInput" placeholder="Enter Class Room ID" style="text-align: center;" required>
+                <button id="joinBtn">Ask to Join Class</button>
+            </div>
 
-                        <p>
-                            Join your live class and start learning with your teachers in real time.
-                        </p>
+            <!-- Waiting Screen (Lobby) -->
+            <div class="waiting-status-box" id="waitingBox">
+                <div class="loader"></div>
+                <h3 style="font-size: 16px; color: #ff9800; margin-bottom: 6px;">Waiting for Teacher Approval</h3>
+                <p style="font-size: 13px; color: #dbeafe; margin: 0;">Your request has been sent to the teacher. Please wait while they accept your request.</p>
+            </div>
 
-                        <div class="controls">
-                            <input
-                                type="text"
-                                id="roomIdInput"
-                                placeholder="Enter Class Room ID"
-                            >
-
-                            <button id="joinBtn">Join Class</button>
-                        </div>
-                    </div>
-                </div>
+            <!-- Error/Rejection Notice -->
+            <div class="error-banner" id="errorBanner"></div>
+        </div>
+    </div>
             
-       
-
     <div class="meeting-container" id="meetingContainer" style="margin: 0;padding: 0;">
-               
-        
-        <div class="main-display" id="mainArea"  style="display: none;">
-            <!-- শিক্ষার্থীর সার্কেল ভিডিও জয়েন করার পর এখানে ভেসে উঠবে -->
+        <div class="main-display" id="mainArea" style="display: none;">
             <div class="my-video-card" id="myVideoCard">
                 <video id="localVideo" autoplay playsinline muted></video>
-                <div class="label">You (Student)</div>
+                <div class="label" id="myLabel">You (Student)</div>
             </div>
 
             <video id="teacherVideo" autoplay playsinline></video>
@@ -283,9 +306,6 @@
             <button id="raiseHandBtn" class="raise-btn">Raise Hand ✋</button>
             <div id="statusLabel" class="status-muted">🔇 Muted by Teacher</div>
 
-            
-
-            <!-- চ্যাট প্যানেলটি মেইন ডিসপ্লের ভেতরে রাখা হলো যাতে ফুলস্ক্রিনে পারফেক্ট ওভারলে কাজ করে -->
             <div class="chat-panel" id="chatPanel">
                 <div class="chat-header">Classroom Chat Board</div>
                 <div class="chat-messages" id="chatWindow"></div>
@@ -304,375 +324,405 @@
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
-<script src="/socket.io/socket.io.js"></script>
-<script>
-    const socket = io();
-    let currentFacingMode = 'user';
-    let localStream;
-    let teacherPc;
-    const servers = { iceServers: [{ urls: 'stun:stun1.l.google.com:19302' }] };
+    <script>
+        const socket = io();
+        let currentFacingMode = 'user';
+        let localStream;
+        let teacherPc;
+        let myStudentName = "";
+        const servers = { iceServers: [{ urls: 'stun:stun1.l.google.com:19302' }] };
 
-    const chatPanel = document.getElementById('chatPanel');
-    const mainArea = document.getElementById('mainArea');
-    const teacherVideo = document.getElementById('teacherVideo');
-    const meetingContainer = document.getElementById('meetingContainer');
-    const statusLabel = document.getElementById('statusLabel');
-    const myVideoCard = document.getElementById('myVideoCard');
-    const raiseHandBtn = document.getElementById('raiseHandBtn');
+        const welcomeContainer = document.getElementById('welcomeContainer');
+        const joinControls = document.getElementById('joinControls');
+        const waitingBox = document.getElementById('waitingBox');
+        const errorBanner = document.getElementById('errorBanner');
+        const studentNameInput = document.getElementById('studentNameInput');
+        const roomIdInput = document.getElementById('roomIdInput');
+        const joinBtn = document.getElementById('joinBtn');
+        const myLabel = document.getElementById('myLabel');
 
-    let tapTimer = null;
-    let hideControlsTimer = null;
-    let lastTapTime = 0;
-    const TAP_DELAY = 300;
+        const chatPanel = document.getElementById('chatPanel');
+        const mainArea = document.getElementById('mainArea');
+        const teacherVideo = document.getElementById('teacherVideo');
+        const meetingContainer = document.getElementById('meetingContainer');
+        const statusLabel = document.getElementById('statusLabel');
+        const myVideoCard = document.getElementById('myVideoCard');
+        const raiseHandBtn = document.getElementById('raiseHandBtn');
 
-    // Helper function to generate Dummy Video Stream if camera is unavailable
-    function createDummyStream() {
-        const canvas = document.createElement('canvas');
-        canvas.width = 640;
-        canvas.height = 480;
-        const ctx = canvas.getContext('2d');
-        
-        let x = 0;
-        function draw() {
-            ctx.fillStyle = '#1e1e1e';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            ctx.fillStyle = '#ff9800';
-            ctx.font = '24px Arial';
-            ctx.fillText('Student Panel - Dummy Video Active', 50, 100);
-            ctx.fillStyle = '#007fff';
-            ctx.fillRect(x, 200, 100, 100);
-            x = (x + 2) % canvas.width;
-            requestAnimationFrame(draw);
-        }
-        draw();
-        return canvas.captureStream(30);
-    }
+        let tapTimer = null;
+        let hideControlsTimer = null;
+        let lastTapTime = 0;
+        const TAP_DELAY = 300;
 
-async function toggleFullScreen() {
-    const targetElem = document.getElementById('mainArea') || document.getElementById('meetingContainer');
-
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        try {
-            // 1. Request Fullscreen
-            if (targetElem.requestFullscreen) {
-                await targetElem.requestFullscreen();
-            } else if (targetElem.webkitRequestFullscreen) {
-                await targetElem.webkitRequestFullscreen();
-            } else if (teacherVideo && teacherVideo.webkitEnterFullscreen) {
-                teacherVideo.webkitEnterFullscreen();
-            }
-
-            // 2. Lock to Landscape Mode (Mobile devices)
-            if (screen.orientation && screen.orientation.lock) {
-                await screen.orientation.lock('landscape').catch((err) => {
-                    console.warn("Screen orientation lock failed or not supported:", err);
-                });
-            }
-        } catch (err) {
-            console.error("Fullscreen request failed:", err);
-        }
-    } else {
-        // Exit Fullscreen
-        if (document.exitFullscreen) {
-            await document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-            await document.webkitExitFullscreen();
-        }
-
-        // Release Orientation Lock
-        if (screen.orientation && screen.orientation.unlock) {
-            screen.orientation.unlock();
-        }
-    }
-}
-
-    // Show temporary overlay controls
-    function showHiddenItems() {
-        if (statusLabel) statusLabel.style.display = 'block';
-        if (myVideoCard) myVideoCard.style.display = 'block';
-        if (raiseHandBtn) raiseHandBtn.style.display = 'inline-block';
-
-        if (hideControlsTimer) clearTimeout(hideControlsTimer);
-
-        hideControlsTimer = setTimeout(() => {
-            if (statusLabel) statusLabel.style.display = 'none';
-            if (myVideoCard) myVideoCard.style.display = 'none';
-            if (raiseHandBtn) raiseHandBtn.style.display = 'none';
-        }, 4000);
-    }
-
-    // Unified Mobile & Desktop Tap Handling
-    function handleTap(e) {
-        // Prevent action on interactive UI elements
-        if (e.target.closest('button') || 
-            e.target.closest('.interactive-btn') || 
-            e.target.closest('#chatPanel') || 
-            e.target.closest('#myVideoCard')) {
-            return;
-        }
-
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - lastTapTime;
-
-        if (tapLength < TAP_DELAY && tapLength > 0) {
-            if (tapTimer) {
-                clearTimeout(tapTimer);
-                tapTimer = null;
-            }
-            toggleFullScreen();
-        } else {
-            tapTimer = setTimeout(() => {
-                tapTimer = null;
-                showHiddenItems();
-            }, TAP_DELAY);
-        }
-        lastTapTime = currentTime;
-    }
-
-    mainArea.addEventListener('touchend', function (e) {
-        handleTap(e);
-    });
-
-    mainArea.addEventListener('click', function (e) {
-        // Run click logic only for non-touch (mouse) devices
-        if (!('ontouchstart' in window)) {
-            handleTap(e);
-        }
-    });
-
-    // Join Room
-    document.getElementById('joinBtn').onclick = async () => {
-        const roomId = document.getElementById('roomIdInput').value;
-        if (!roomId) return alert("Please enter Room ID");
-
-        toggleFullScreen();
-        document.querySelector(".welcome-container").style.display = "none";
-        document.getElementById("mainArea").style.display = "block";
-
-        try {
-            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        } catch (err) {
-            console.warn("Camera/Mic access denied or not found. Falling back to dummy video stream.", err);
-            alert("Your camera and microphone is not accessible, a dummy video will play");
+        // Helper function to generate Dummy Video Stream if camera is unavailable
+        function createDummyStream() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 640;
+            canvas.height = 480;
+            const ctx = canvas.getContext('2d');
             
-            localStream = createDummyStream();
-            try {
-                const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                audioStream.getAudioTracks().forEach(track => localStream.addTrack(track));
-            } catch (e) {
-                console.warn("Audio fallback failed, running video-only stream.");
+            let x = 0;
+            function draw() {
+                ctx.fillStyle = '#1e1e1e';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#ff9800';
+                ctx.font = '24px Arial';
+                ctx.fillText('Student Panel - Dummy Video Active', 50, 100);
+                ctx.fillStyle = '#007fff';
+                ctx.fillRect(x, 200, 100, 100);
+                x = (x + 2) % canvas.width;
+                requestAnimationFrame(draw);
+            }
+            draw();
+            return canvas.captureStream(30);
+        }
+
+        async function toggleFullScreen() {
+            const targetElem = document.getElementById('mainArea') || document.getElementById('meetingContainer');
+
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                try {
+                    if (targetElem.requestFullscreen) {
+                        await targetElem.requestFullscreen();
+                    } else if (targetElem.webkitRequestFullscreen) {
+                        await targetElem.webkitRequestFullscreen();
+                    } else if (teacherVideo && teacherVideo.webkitEnterFullscreen) {
+                        teacherVideo.webkitEnterFullscreen();
+                    }
+
+                    if (screen.orientation && screen.orientation.lock) {
+                        await screen.orientation.lock('landscape').catch((err) => {
+                            console.warn("Screen orientation lock failed or not supported:", err);
+                        });
+                    }
+                } catch (err) {
+                    console.error("Fullscreen request failed:", err);
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    await document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    await document.webkitExitFullscreen();
+                }
+
+                if (screen.orientation && screen.orientation.unlock) {
+                    screen.orientation.unlock();
+                }
             }
         }
 
-        document.getElementById('localVideo').srcObject = localStream;
-        if (localStream.getAudioTracks().length > 0) {
-            localStream.getAudioTracks()[0].enabled = false; 
+        // Show temporary overlay controls
+        function showHiddenItems() {
+            if (statusLabel) statusLabel.style.display = 'block';
+            if (myVideoCard) myVideoCard.style.display = 'block';
+            if (raiseHandBtn) raiseHandBtn.style.display = 'inline-block';
+
+            if (hideControlsTimer) clearTimeout(hideControlsTimer);
+
+            hideControlsTimer = setTimeout(() => {
+                if (statusLabel) statusLabel.style.display = 'none';
+                if (myVideoCard) myVideoCard.style.display = 'none';
+                if (raiseHandBtn) raiseHandBtn.style.display = 'none';
+            }, 4000);
         }
 
-        document.getElementById('raiseHandBtn').style.display = 'block';
-        document.getElementById('statusLabel').style.display = 'block';
-        document.getElementById('meetingContainer').classList.add('joined');
-        
-        socket.emit('join-room', { roomId, role: 'student' });
+        // Unified Mobile & Desktop Tap Handling
+        function handleTap(e) {
+            if (e.target.closest('button') || 
+                e.target.closest('.interactive-btn') || 
+                e.target.closest('#chatPanel') || 
+                e.target.closest('#myVideoCard')) {
+                return;
+            }
 
-        setTimeout(() => {
-            if (statusLabel) statusLabel.style.display = 'none';
-            if (myVideoCard) myVideoCard.style.display = 'none';
-            if (raiseHandBtn) raiseHandBtn.style.display = 'none';
-        }, 8000);
-    };
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
 
-    // Chat Message Handlers
-    document.getElementById('sendMsgBtn').onclick = sendTextMessage;
-    document.getElementById('msgInput').onkeypress = (e) => { if (e.key === 'Enter') sendTextMessage(); };
+            if (tapLength < TAP_DELAY && tapLength > 0) {
+                if (tapTimer) {
+                    clearTimeout(tapTimer);
+                    tapTimer = null;
+                }
+                toggleFullScreen();
+            } else {
+                tapTimer = setTimeout(() => {
+                    tapTimer = null;
+                    showHiddenItems();
+                }, TAP_DELAY);
+            }
+            lastTapTime = currentTime;
+        }
 
-    function sendTextMessage() {
-        const input = document.getElementById('msgInput');
-        const text = input.value.trim();
-        if (!text) return;
+        mainArea.addEventListener('touchend', function (e) {
+            handleTap(e);
+        });
 
-        const name = `Student (${socket.id ? socket.id.substring(0,4) : 'User'})`;
-        const data = { sender: name, text: text };
-        socket.emit('send-message', data);
-        appendMsg(data, 'msg-me');
-        input.value = '';
-    }
+        mainArea.addEventListener('click', function (e) {
+            if (!('ontouchstart' in window)) {
+                handleTap(e);
+            }
+        });
 
-    // File Sharing Handler
-    document.getElementById('fileInput').onchange = function(e) {
-        const file = e.target.files[0];
-        if (!file) return;
-        if (file.size > 10 * 1024 * 1024) return alert("File size must be under 10MB");
+        // Request To Join (Student asks for permission)
+        joinBtn.onclick = async () => {
+            const name = studentNameInput.value.trim();
+            const roomId = roomIdInput.value.trim();
 
-        const reader = new FileReader();
-        reader.onload = function(evt) {
-            const name = `Student (${socket.id ? socket.id.substring(0,4) : 'User'})`;
-            const fileData = {
-                sender: name,
-                fileName: file.name,
-                fileBuffer: evt.target.result
-            };
-            socket.emit('share-file', fileData);
-            appendFile(fileData, 'msg-me');
+            if (!name) return alert("Please enter your name!");
+            if (!roomId) return alert("Please enter the Class Room ID!");
+
+            myStudentName = name;
+            errorBanner.style.display = 'none';
+
+            // Send request to server
+            socket.emit('request-join', { roomId, studentName: name });
         };
-        reader.readAsDataURL(file);
-    };
 
-    function appendMsg(data, className) {
-        const win = document.getElementById('chatWindow');
-        const div = document.createElement('div');
-        div.className = `msg-block ${className}`;
-        div.innerHTML = `<strong>${data.sender}:</strong> ${data.text}`;
-        win.appendChild(div);
-        win.scrollTop = win.scrollHeight;
-    }
+        socket.on('join-pending', () => {
+            joinControls.style.display = 'none';
+            waitingBox.style.display = 'block';
+        });
 
-    function appendFile(data, className) {
-        const win = document.getElementById('chatWindow');
-        const div = document.createElement('div');
-        div.className = `msg-block ${className}`;
-        div.innerHTML = `<strong>${data.sender} Shared:</strong> <a class="file-link" href="${data.fileBuffer}" download="${data.fileName}">📁 ${data.fileName}</a>`;
-        win.appendChild(div);
-        win.scrollTop = win.scrollHeight;
-    }
+        socket.on('join-rejected', ({ reason }) => {
+            waitingBox.style.display = 'none';
+            joinControls.style.display = 'flex';
+            errorBanner.innerText = reason || "The teacher rejected your request to join the class.";
+            errorBanner.style.display = 'block';
+        });
 
-    // Raise Hand Action
-    document.getElementById('raiseHandBtn').onclick = function() {
-        socket.emit('raise-hand');
-        this.innerText = "Hand Raised ✋ (Waiting...)";
-        this.disabled = true;
-        this.style.background = '#555';
-        this.style.color = '#fff';
-    };
+        // When Teacher Approves the Student
+        socket.on('join-accepted', async ({ teacherId, roomId }) => {
+            toggleFullScreen();
+            waitingBox.style.display = "none";
+            welcomeContainer.style.display = "none";
+            mainArea.style.display = "block";
 
-    // Socket Event Listeners
-    socket.on('receive-message', (data) => { appendMsg(data, 'msg-other'); });
-    socket.on('receive-file', (data) => { appendFile(data, 'msg-other'); });
-    socket.on('all-users', ({ teacherId }) => { if (teacherId) setupTeacherConnection(teacherId); });
-    socket.on('teacher-connected', (teacherId) => { setupTeacherConnection(teacherId); });
-
-    socket.on('signal', async (data) => {
-        if (data.signal.offer) {
-            await teacherPc.setRemoteDescription(new RTCSessionDescription(data.signal.offer));
-            const answer = await teacherPc.createAnswer();
-            await teacherPc.setLocalDescription(answer);
-            socket.emit('signal', { target: data.sender, signal: { answer } });
-        } else if (data.signal.candidate) {
-            try { await teacherPc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){}
-        }
-    });
-
-    socket.on('request-camera-switch', async () => {
-        try {
-            if (localStream) {
-                const oldVideoTrack = localStream.getVideoTracks()[0];
-                if (oldVideoTrack) oldVideoTrack.stop();
-            }
-
-            currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
-
-            const newStream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: currentFacingMode },
-                audio: false 
-            });
-
-            const newVideoTrack = newStream.getVideoTracks()[0];
-            const localVideoElement = document.getElementById('localVideo');
-            if (localVideoElement) {
-                localVideoElement.srcObject = newStream;
-                localVideoElement.style.transform = (currentFacingMode === 'user') ? 'scaleX(-1)' : 'scaleX(1)';
-            }
-
-            if (teacherPc) {
-                const senders = teacherPc.getSenders();
-                const videoSender = senders.find(s => s.track && s.track.kind === 'video');
-                if (videoSender) {
-                    await videoSender.replaceTrack(newVideoTrack);
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            } catch (err) {
+                console.warn("Camera/Mic access denied or not found. Falling back to dummy video stream.", err);
+                alert("Your camera and microphone is not accessible, a dummy video will play");
+                
+                localStream = createDummyStream();
+                try {
+                    const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    audioStream.getAudioTracks().forEach(track => localStream.addTrack(track));
+                } catch (e) {
+                    console.warn("Audio fallback failed, running video-only stream.");
                 }
             }
 
-            if (localStream) {
-                const oldTrack = localStream.getVideoTracks()[0];
-                if (oldTrack) localStream.removeTrack(oldTrack);
-                localStream.addTrack(newVideoTrack);
+            document.getElementById('localVideo').srcObject = localStream;
+            if (localStream.getAudioTracks().length > 0) {
+                localStream.getAudioTracks()[0].enabled = false; 
             }
-        } catch (err) {
-            console.error("Camera switch error:", err);
-            alert("Camera switch failed: " + err.message);
-            currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
-        }
-    });
 
-    socket.on('allowed-to-talk', () => {
-        if (localStream && localStream.getAudioTracks().length > 0) {
-            localStream.getAudioTracks()[0].enabled = true; 
-        }
-        document.getElementById('raiseHandBtn').style.display = 'none';
-        const statusLabel = document.getElementById('statusLabel');
-        statusLabel.innerText = "🎙️ Teacher is listening";
-        statusLabel.className = "status-live";
-        statusLabel.style.display = 'block';
-    });
+            if (myLabel) myLabel.innerText = `${myStudentName} (You)`;
+            raiseHandBtn.style.display = 'block';
+            statusLabel.style.display = 'block';
+            meetingContainer.classList.add('joined');
+            
+            if (teacherId) {
+                setupTeacherConnection(teacherId);
+            }
 
-    socket.on('force-mute', () => {
-        if (localStream && localStream.getAudioTracks().length > 0) {
-            localStream.getAudioTracks()[0].enabled = false; 
-        }
-        
-        const raiseBtn = document.getElementById('raiseHandBtn');
-        raiseBtn.style.display = 'block';
-        raiseBtn.innerText = "Raise Hand ✋";
-        raiseBtn.disabled = false;
-        raiseBtn.style.background = '#ff9800';
-        raiseBtn.style.color = 'black';
-        
-        const statusLabel = document.getElementById('statusLabel');
-        statusLabel.innerText = "🔇 Muted by Teacher";
-        statusLabel.className = "status-muted";
-        statusLabel.style.display = 'block';
-
-        setTimeout(() => {
-            statusLabel.style.display = 'none';
-            raiseBtn.style.display = 'none';
-        }, 3000);
-    });
-
-    socket.on('teacher-disconnected', () => {
-        document.getElementById('teacherVideo').srcObject = null;
-    });
-
-    socket.on('chat-state-changed', (data) => {
-        if (data && data.open) {
-            chatPanel.classList.add('open');
-        } else {
-            chatPanel.classList.remove('open');
-        }
-    });
-
-    function setupTeacherConnection(teacherId) {
-        teacherPc = new RTCPeerConnection(servers);
-        if (localStream) {
-            localStream.getTracks().forEach(track => teacherPc.addTrack(track, localStream));
-        }
-        teacherPc.ontrack = (event) => { 
-            document.getElementById('teacherVideo').srcObject = event.streams[0]; 
-        };
-        teacherPc.onicecandidate = (event) => {
-            if (event.candidate) socket.emit('signal', { target: teacherId, signal: { candidate: event.candidate } });
-        };
-    }
-
-    // Auto-Join from URL parameter
-    window.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const roomIdFromUrl = urlParams.get('room');
-        if (roomIdFromUrl) {
-            document.getElementById('roomIdInput').value = roomIdFromUrl;
             setTimeout(() => {
-                document.getElementById('joinBtn').click();
-            }, 500);
+                if (statusLabel) statusLabel.style.display = 'none';
+                if (myVideoCard) myVideoCard.style.display = 'none';
+                if (raiseHandBtn) raiseHandBtn.style.display = 'none';
+            }, 8000);
+        });
+
+        // Chat Message Handlers
+        document.getElementById('sendMsgBtn').onclick = sendTextMessage;
+        document.getElementById('msgInput').onkeypress = (e) => { if (e.key === 'Enter') sendTextMessage(); };
+
+        function sendTextMessage() {
+            const input = document.getElementById('msgInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const name = myStudentName || `Student (${socket.id ? socket.id.substring(0,4) : 'User'})`;
+            const data = { sender: name, text: text };
+            socket.emit('send-message', data);
+            appendMsg(data, 'msg-me');
+            input.value = '';
         }
-    });
-</script>
+
+        // File Sharing Handler
+        document.getElementById('fileInput').onchange = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (file.size > 10 * 1024 * 1024) return alert("File size must be under 10MB");
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                const name = myStudentName || `Student (${socket.id ? socket.id.substring(0,4) : 'User'})`;
+                const fileData = {
+                    sender: name,
+                    fileName: file.name,
+                    fileBuffer: evt.target.result
+                };
+                socket.emit('share-file', fileData);
+                appendFile(fileData, 'msg-me');
+            };
+            reader.readAsDataURL(file);
+        };
+
+        function appendMsg(data, className) {
+            const win = document.getElementById('chatWindow');
+            const div = document.createElement('div');
+            div.className = `msg-block ${className}`;
+            div.innerHTML = `<strong>${data.sender}:</strong> ${data.text}`;
+            win.appendChild(div);
+            win.scrollTop = win.scrollHeight;
+        }
+
+        function appendFile(data, className) {
+            const win = document.getElementById('chatWindow');
+            const div = document.createElement('div');
+            div.className = `msg-block ${className}`;
+            div.innerHTML = `<strong>${data.sender} Shared:</strong> <a class="file-link" href="${data.fileBuffer}" download="${data.fileName}">📁 ${data.fileName}</a>`;
+            win.appendChild(div);
+            win.scrollTop = win.scrollHeight;
+        }
+
+        // Raise Hand Action
+        document.getElementById('raiseHandBtn').onclick = function() {
+            socket.emit('raise-hand');
+            this.innerText = "Hand Raised ✋ (Waiting...)";
+            this.disabled = true;
+            this.style.background = '#555';
+            this.style.color = '#fff';
+        };
+
+        // Socket Event Listeners
+        socket.on('receive-message', (data) => { appendMsg(data, 'msg-other'); });
+        socket.on('receive-file', (data) => { appendFile(data, 'msg-other'); });
+        socket.on('all-users', ({ teacherId }) => { if (teacherId) setupTeacherConnection(teacherId); });
+        socket.on('teacher-connected', (teacherId) => { setupTeacherConnection(teacherId); });
+
+        socket.on('signal', async (data) => {
+            if (!teacherPc) return;
+            if (data.signal.offer) {
+                await teacherPc.setRemoteDescription(new RTCSessionDescription(data.signal.offer));
+                const answer = await teacherPc.createAnswer();
+                await teacherPc.setLocalDescription(answer);
+                socket.emit('signal', { target: data.sender, signal: { answer } });
+            } else if (data.signal.candidate) {
+                try { await teacherPc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){}
+            }
+        });
+
+        socket.on('request-camera-switch', async () => {
+            try {
+                if (localStream) {
+                    const oldVideoTrack = localStream.getVideoTracks()[0];
+                    if (oldVideoTrack) oldVideoTrack.stop();
+                }
+
+                currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+
+                const newStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: currentFacingMode },
+                    audio: false 
+                });
+
+                const newVideoTrack = newStream.getVideoTracks()[0];
+                const localVideoElement = document.getElementById('localVideo');
+                if (localVideoElement) {
+                    localVideoElement.srcObject = newStream;
+                    localVideoElement.style.transform = (currentFacingMode === 'user') ? 'scaleX(-1)' : 'scaleX(1)';
+                }
+
+                if (teacherPc) {
+                    const senders = teacherPc.getSenders();
+                    const videoSender = senders.find(s => s.track && s.track.kind === 'video');
+                    if (videoSender) {
+                        await videoSender.replaceTrack(newVideoTrack);
+                    }
+                }
+
+                if (localStream) {
+                    const oldTrack = localStream.getVideoTracks()[0];
+                    if (oldTrack) localStream.removeTrack(oldTrack);
+                    localStream.addTrack(newVideoTrack);
+                }
+            } catch (err) {
+                console.error("Camera switch error:", err);
+                alert("Camera switch failed: " + err.message);
+                currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+            }
+        });
+
+        socket.on('allowed-to-talk', () => {
+            if (localStream && localStream.getAudioTracks().length > 0) {
+                localStream.getAudioTracks()[0].enabled = true; 
+            }
+            document.getElementById('raiseHandBtn').style.display = 'none';
+            const statusLabel = document.getElementById('statusLabel');
+            statusLabel.innerText = "🎙️ Teacher is listening";
+            statusLabel.className = "status-live";
+            statusLabel.style.display = 'block';
+        });
+
+        socket.on('force-mute', () => {
+            if (localStream && localStream.getAudioTracks().length > 0) {
+                localStream.getAudioTracks()[0].enabled = false; 
+            }
+            
+            const raiseBtn = document.getElementById('raiseHandBtn');
+            raiseBtn.style.display = 'block';
+            raiseBtn.innerText = "Raise Hand ✋";
+            raiseBtn.disabled = false;
+            raiseBtn.style.background = '#ff9800';
+            raiseBtn.style.color = 'black';
+            
+            const statusLabel = document.getElementById('statusLabel');
+            statusLabel.innerText = "🔇 Muted by Teacher";
+            statusLabel.className = "status-muted";
+            statusLabel.style.display = 'block';
+
+            setTimeout(() => {
+                statusLabel.style.display = 'none';
+                raiseBtn.style.display = 'none';
+            }, 3000);
+        });
+
+        socket.on('teacher-disconnected', () => {
+            document.getElementById('teacherVideo').srcObject = null;
+        });
+
+        socket.on('chat-state-changed', (data) => {
+            if (data && data.open) {
+                chatPanel.classList.add('open');
+            } else {
+                chatPanel.classList.remove('open');
+            }
+        });
+
+        function setupTeacherConnection(teacherId) {
+            teacherPc = new RTCPeerConnection(servers);
+            if (localStream) {
+                localStream.getTracks().forEach(track => teacherPc.addTrack(track, localStream));
+            }
+            teacherPc.ontrack = (event) => { 
+                document.getElementById('teacherVideo').srcObject = event.streams[0]; 
+            };
+            teacherPc.onicecandidate = (event) => {
+                if (event.candidate) socket.emit('signal', { target: teacherId, signal: { candidate: event.candidate } });
+            };
+        }
+
+        // Handle joining from link (Pre-fills Room ID and focuses the Name box)
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const roomIdFromUrl = urlParams.get('room');
+            if (roomIdFromUrl) {
+                roomIdInput.value = roomIdFromUrl;
+                studentNameInput.focus();
+            }
+        });
+    </script>
 </body>
 </html>
