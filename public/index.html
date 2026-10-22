@@ -8,10 +8,7 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background:linear-gradient(135deg,#0f172a,#1e3a8a,#2563eb); color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
         
-/* ===========================
-   Welcome Screen
-=========================== */
-
+/* Welcome Screen */
 .welcome-container{
     position:absolute;
     inset:0;
@@ -330,7 +327,16 @@
         let localStream;
         let teacherPc;
         let myStudentName = "";
-        const servers = { iceServers: [{ urls: 'stun:stun1.l.google.com:19302' }] };
+        let candidateQueue = []; // Queue for candidates arriving before RemoteDescription
+
+        // STUN Servers with standard port 19302
+        const servers = { 
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' }
+            ] 
+        };
 
         const welcomeContainer = document.getElementById('welcomeContainer');
         const joinControls = document.getElementById('joinControls');
@@ -354,7 +360,6 @@
         let lastTapTime = 0;
         const TAP_DELAY = 300;
 
-        // Helper function to generate Dummy Video Stream if camera is unavailable
         function createDummyStream() {
             const canvas = document.createElement('canvas');
             canvas.width = 640;
@@ -411,7 +416,6 @@
             }
         }
 
-        // Show temporary overlay controls
         function showHiddenItems() {
             if (statusLabel) statusLabel.style.display = 'block';
             if (myVideoCard) myVideoCard.style.display = 'block';
@@ -426,7 +430,6 @@
             }, 4000);
         }
 
-        // Unified Mobile & Desktop Tap Handling
         function handleTap(e) {
             if (e.target.closest('button') || 
                 e.target.closest('.interactive-btn') || 
@@ -463,7 +466,7 @@
             }
         });
 
-        // Request To Join (Student asks for permission)
+        // Request To Join
         joinBtn.onclick = async () => {
             const name = studentNameInput.value.trim();
             const roomId = roomIdInput.value.trim();
@@ -474,7 +477,6 @@
             myStudentName = name;
             errorBanner.style.display = 'none';
 
-            // Send request to server
             socket.emit('request-join', { roomId, studentName: name });
         };
 
@@ -498,7 +500,10 @@
             mainArea.style.display = "block";
 
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: { ideal: 640 }, height: { ideal: 480 } }, 
+                    audio: true 
+                });
             } catch (err) {
                 console.warn("Camera/Mic access denied or not found. Falling back to dummy video stream.", err);
                 alert("Your camera and microphone is not accessible, a dummy video will play");
@@ -522,8 +527,10 @@
             statusLabel.style.display = 'block';
             meetingContainer.classList.add('joined');
             
+            // Set up peer connection and inform teacher we are ready
             if (teacherId) {
                 setupTeacherConnection(teacherId);
+                socket.emit('student-ready-for-call', { teacherId });
             }
 
             setTimeout(() => {
@@ -549,7 +556,6 @@
             input.value = '';
         }
 
-        // File Sharing Handler
         document.getElementById('fileInput').onchange = function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -599,7 +605,6 @@
         // Socket Event Listeners
         socket.on('receive-message', (data) => { appendMsg(data, 'msg-other'); });
         socket.on('receive-file', (data) => { appendFile(data, 'msg-other'); });
-        socket.on('all-users', ({ teacherId }) => { if (teacherId) setupTeacherConnection(teacherId); });
         socket.on('teacher-connected', (teacherId) => { setupTeacherConnection(teacherId); });
 
         socket.on('signal', async (data) => {
@@ -609,8 +614,19 @@
                 const answer = await teacherPc.createAnswer();
                 await teacherPc.setLocalDescription(answer);
                 socket.emit('signal', { target: data.sender, signal: { answer } });
+
+                // Flush queue
+                while (candidateQueue.length > 0) {
+                    const cand = candidateQueue.shift();
+                    try { await teacherPc.addIceCandidate(cand); } catch(e){}
+                }
             } else if (data.signal.candidate) {
-                try { await teacherPc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){}
+                const candidate = new RTCIceCandidate(data.signal.candidate);
+                if (teacherPc.remoteDescription && teacherPc.remoteDescription.type) {
+                    try { await teacherPc.addIceCandidate(candidate); } catch(e){}
+                } else {
+                    candidateQueue.push(candidate);
+                }
             }
         });
 
@@ -703,18 +719,24 @@
 
         function setupTeacherConnection(teacherId) {
             teacherPc = new RTCPeerConnection(servers);
+            candidateQueue = [];
+
             if (localStream) {
                 localStream.getTracks().forEach(track => teacherPc.addTrack(track, localStream));
             }
             teacherPc.ontrack = (event) => { 
-                document.getElementById('teacherVideo').srcObject = event.streams[0]; 
+                const tVid = document.getElementById('teacherVideo');
+                tVid.srcObject = event.streams[0];
+                tVid.play().catch(e => console.log("Teacher video auto-play prevented:", e));
             };
             teacherPc.onicecandidate = (event) => {
-                if (event.candidate) socket.emit('signal', { target: teacherId, signal: { candidate: event.candidate } });
+                if (event.candidate) {
+                    socket.emit('signal', { target: teacherId, signal: { candidate: event.candidate } });
+                }
             };
         }
 
-        // Handle joining from link (Pre-fills Room ID and focuses the Name box)
+        // Auto pre-fill Room ID if joining via shared link
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const roomIdFromUrl = urlParams.get('room');
