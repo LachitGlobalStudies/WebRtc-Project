@@ -17,9 +17,7 @@
         overflow: hidden; 
     }
 
-    /* ===========================
-       Welcome Screen Fixed
-    =========================== */
+    /* Welcome Screen */
     .welcome-container {
         position: fixed;
         inset: 0;
@@ -53,63 +51,14 @@
         animation: cardPop .5s ease;
     }
 
-    .welcome-icon {
-        font-size: 60px;
-        margin-bottom: 15px;
-    }
-
-    .welcome-card h1 {
-        margin: 0;
-        font-size: 22px;
-        font-weight: 400;
-    }
-
-    .welcome-card h2 {
-        margin: 10px 0;
-        font-size: 34px;
-        color: #fff;
-        font-weight: 700;
-    }
-
-    .welcome-card p {
-        color: #dbeafe;
-        margin: 20px 0 30px;
-        line-height: 1.6;
-    }
-
-    .welcome-card .controls {
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-    }
-
-    .welcome-card .controls input {
-        padding: 15px;
-        border: none;
-        border-radius: 12px;
-        font-size: 16px;
-        outline: none;
-        width: 100%;
-        color: #000;
-    }
-
-    .welcome-card .controls button {
-        padding: 15px;
-        border: none;
-        border-radius: 12px;
-        background: #22c55e;
-        color: #fff;
-        font-size: 16px;
-        font-weight: bold;
-        cursor: pointer;
-        transition: .3s;
-        width: 100%;
-    }
-
-    .welcome-card .controls button:hover {
-        background: #16a34a;
-        transform: translateY(-2px);
-    }
+    .welcome-icon { font-size: 60px; margin-bottom: 15px; }
+    .welcome-card h1 { margin: 0; font-size: 22px; font-weight: 400; }
+    .welcome-card h2 { margin: 10px 0; font-size: 34px; color: #fff; font-weight: 700; }
+    .welcome-card p { color: #dbeafe; margin: 20px 0 30px; line-height: 1.6; }
+    .welcome-card .controls { display: flex; flex-direction: column; gap: 15px; }
+    .welcome-card .controls input { padding: 15px; border: none; border-radius: 12px; font-size: 16px; outline: none; width: 100%; color: #000; }
+    .welcome-card .controls button { padding: 15px; border: none; border-radius: 12px; background: #22c55e; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; transition: .3s; width: 100%; }
+    .welcome-card .controls button:hover { background: #16a34a; transform: translateY(-2px); }
 
     /* Tools Bar & Equal-Sized Controls */
     .tools-bar { 
@@ -155,7 +104,7 @@
     #youtubeStreamBtn { background: #ff0000; color: white; }
     #masterChatBtn { background: #ff9800; color: #000; }
 
-    /* Pending Requests Section in Sidebar */
+    /* Pending Requests Section */
     .pending-requests-box {
         display: none;
         flex-direction: column;
@@ -248,7 +197,7 @@
     .sidebar::-webkit-scrollbar-thumb { background: #90f169; border-radius: 4px; }
     .sidebar::-webkit-scrollbar-track { background: #ffffff; }
 
-    /* Student Grid Structure Fix */
+    /* Student Grid Structure */
     .studentgrid { 
         flex: 1; 
         overflow-y: auto; 
@@ -296,7 +245,6 @@
         white-space: nowrap;
     }
 
-    /* Camera Switch Button Overlay */
     .cam-switch-btn {
         background: rgba(0, 0, 0, 0.7);
         color: #fff;
@@ -312,18 +260,8 @@
         gap: 6px;
         transition: background 0.2s;
     }
-    .camera-mirror{
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-    .mirror-icon{
-        font-size: 20px;
-        line-height: 1;
-    }
-    .cam-switch-btn:hover {
-        background: rgba(0, 127, 255, 0.8);
-    }
+
+    .cam-switch-btn:hover { background: rgba(0, 127, 255, 0.8); }
 
     .main-display-label {
         position: absolute;
@@ -342,9 +280,7 @@
         white-space: nowrap;
     }
 
-    .student-card.swapped-teacher {
-        border-color: #ff9800;
-    }
+    .student-card.swapped-teacher { border-color: #ff9800; }
     
     .mic-control-btn { 
         position: absolute; 
@@ -454,19 +390,9 @@
     /* Responsive Styles (Mobile & Small Screens) */
     @media screen and (max-width: 768px) {
         body { height: 100vh; overflow: auto; }
-        
-        #shareBtn{
-            display: none !important;
-        }
-
-        #youtubeStreamBtn{
-            display: none !important;
-        }
-        .meeting-container { 
-            flex-direction: column; 
-            height: auto; 
-        }
-
+        #shareBtn { display: none !important; }
+        #youtubeStreamBtn { display: none !important; }
+        .meeting-container { flex-direction: column; height: auto; }
         .sidebar {
             display: flex;
             flex-direction: column;
@@ -476,11 +402,7 @@
             box-sizing: border-box;
             overflow: hidden;
         }
-
-        .sidebar .controls {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
+        .sidebar .controls { grid-template-columns: repeat(2, 1fr); }
         .studentgrid {
             width: 100%;
             height: 100%;
@@ -492,18 +414,8 @@
             white-space: nowrap;
             padding: 10px 0;
         }
-
-        .student-card {
-            min-width: 130px;
-            width: 90%;
-            flex-shrink: 0;
-        }
-
-        .main-display {
-            width: 100%;
-            height: calc(100vh - 300px);
-            min-height: 300px;
-        }
+        .student-card { min-width: 130px; width: 90%; flex-shrink: 0; }
+        .main-display { width: 100%; height: calc(100vh - 300px); min-height: 300px; }
     }
 </style>
 </head>
@@ -527,7 +439,6 @@
     <div class="meeting-container" id="meetingContainer" style="display: none;">
         <div class="sidebar">
             <div class="tools-bar">
-                <!-- Controls Grid Section -->
                 <div class="controls">
                     <button id="shareBtn" style="display: none;">Share Screen 🖥️</button>
                     <button id="youtubeStreamBtn" style="display: none;">Stream YouTube 🎥</button>
@@ -549,22 +460,21 @@
             <div class="studentgrid" id="studentGrid"></div>
         </div>
 
-    <!-- Main Video Display -->
-    <div class="main-display" id="mainArea">
-        <div id="participantCounter" class="counter-header">0</div>
-        <video id="localVideo" autoplay playsinline class="mirror"></video>
-        
-        <!-- Updated Overlay Controls -->
-        <div class="cam-controls-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 50;">
-            <button id="cameraMirror" class="cam-switch-btn" style="display: none;">🪞 Mirror</button>
-            <button id="toggleAudioBtn" class="cam-switch-btn" style="display: none;">🎙️ Mute Audio</button>
-            <button id="toggleVideoBtn" class="cam-switch-btn" style="display: none;">📹 Turn Off Video</button>
-            <button id="camSwitchBtn" class="cam-switch-btn" style="display: none;">📷 My Camera</button>
-            <button id="studentCamSwitchBtn" class="cam-switch-btn" style="display: none; background: #ff9800; color: #000;">📷 Student's Camera</button>
-        </div>
+        <!-- Main Video Display -->
+        <div class="main-display" id="mainArea">
+            <div id="participantCounter" class="counter-header">0</div>
+            <video id="localVideo" autoplay playsinline class="mirror"></video>
+            
+            <div class="cam-controls-overlay" style="position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; z-index: 50;">
+                <button id="cameraMirror" class="cam-switch-btn" style="display: none;">🪞 Mirror</button>
+                <button id="toggleAudioBtn" class="cam-switch-btn" style="display: none;">🎙️ Mute Audio</button>
+                <button id="toggleVideoBtn" class="cam-switch-btn" style="display: none;">📹 Turn Off Video</button>
+                <button id="camSwitchBtn" class="cam-switch-btn" style="display: none;">📷 My Camera</button>
+                <button id="studentCamSwitchBtn" class="cam-switch-btn" style="display: none; background: #ff9800; color: #000;">📷 Student's Camera</button>
+            </div>
 
-        <div id="mainDisplayLabel" class="main-display-label" style="display: none;">Teacher (You)</div>
-    </div>
+            <div id="mainDisplayLabel" class="main-display-label" style="display: none;">Teacher (You)</div>
+        </div>
 
         <!-- Floating Chat Panel -->
         <div class="chat-panel" id="chatPanel">
@@ -607,14 +517,18 @@
         let overlayTimeout;
         const peerConnections = {};
         const studentMicStatus = {}; 
-        const studentNames = {}; // Store real student names
-        // teacher.html er servers change korun:
+        const studentNames = {}; 
+        const candidateQueues = {}; // Queue to store ICE candidates before RemoteDescription
+
+        // Proper STUN Servers with standard port 19302
         const servers = { 
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' }
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' }
             ] 
         };
+
         let currentCamFacingMode = "user";
         let activeSwappedStudentId = null;
         
@@ -828,7 +742,10 @@
             }
 
             try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+                localStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: { ideal: 640 }, height: { ideal: 480 } }, 
+                    audio: true 
+                });
             } catch (err) {
                 console.warn("Camera/Mic access denied or not found. Falling back to dummy video stream.", err);
                 alert("Your camera and microphone is not accessible , a dummy video will play");
@@ -1228,18 +1145,25 @@
             users.forEach(user => { 
                 if (user.role === 'student') {
                     if (user.name) studentNames[user.id] = user.name;
-                    createPeerConnection(user.id);
                 }
             });
         });
 
         socket.on('user-joined', ({ userId, role, name, count }) => {
             updateCountUI(count);
-            if (role === 'student') {
-                if (name) studentNames[userId] = name;
-                const pc = createPeerConnection(userId);
-                initiateCall(pc, userId);
+            if (role === 'student' && name) {
+                studentNames[userId] = name;
             }
+        });
+
+        // Triggered only after the student's camera and mic are completely ready
+        socket.on('start-call-with-student', ({ studentId, name }) => {
+            if (name) studentNames[studentId] = name;
+            let pc = peerConnections[studentId];
+            if (!pc) {
+                pc = createPeerConnection(studentId);
+            }
+            initiateCall(pc, studentId);
         });
 
         socket.on('room-count-update', ({ count }) => {
@@ -1247,16 +1171,39 @@
         });
 
         async function initiateCall(pc, userId) {
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            socket.emit('signal', { target: userId, signal: { offer } });
+            try {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                socket.emit('signal', { target: userId, signal: { offer } });
+            } catch(e) {
+                console.error("Initiate call failed:", e);
+            }
         }
 
         socket.on('signal', async (data) => {
             let pc = peerConnections[data.sender];
             if (!pc) return;
-            if (data.signal.answer) await pc.setRemoteDescription(new RTCSessionDescription(data.signal.answer));
-            else if (data.signal.candidate) { try { await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){} }
+
+            if (!candidateQueues[data.sender]) {
+                candidateQueues[data.sender] = [];
+            }
+
+            if (data.signal.answer) {
+                await pc.setRemoteDescription(new RTCSessionDescription(data.signal.answer));
+                
+                // Flush queued candidates
+                while (candidateQueues[data.sender].length > 0) {
+                    const cand = candidateQueues[data.sender].shift();
+                    try { await pc.addIceCandidate(cand); } catch(e){}
+                }
+            } else if (data.signal.candidate) {
+                const candidate = new RTCIceCandidate(data.signal.candidate);
+                if (pc.remoteDescription && pc.remoteDescription.type) {
+                    try { await pc.addIceCandidate(candidate); } catch(e){}
+                } else {
+                    candidateQueues[data.sender].push(candidate);
+                }
+            }
         });
 
         socket.on('student-raised-hand', (studentId) => {
@@ -1310,6 +1257,7 @@
             delete peerConnections[userId];
             delete studentMicStatus[userId];
             delete studentNames[userId];
+            delete candidateQueues[userId];
             const card = document.getElementById(`card-${userId}`);
             if (card) card.remove();
         });
@@ -1318,6 +1266,7 @@
             const pc = new RTCPeerConnection(servers);
             peerConnections[userId] = pc;
             studentMicStatus[userId] = 'muted'; 
+            candidateQueues[userId] = [];
             
             const currentStream = isScreenSharing ? screenStream : localStream;
             if (currentStream) {
@@ -1387,7 +1336,9 @@
             };
 
             pc.onicecandidate = (event) => {
-                if (event.candidate) socket.emit('signal', { target: userId, signal: { candidate: event.candidate } });
+                if (event.candidate) {
+                    socket.emit('signal', { target: userId, signal: { candidate: event.candidate } });
+                }
             };
             return pc;
         }
