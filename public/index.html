@@ -330,7 +330,13 @@
         let localStream;
         let teacherPc;
         let myStudentName = "";
-        const servers = { iceServers: [{ urls: 'stun:stun1.l.google.com:19302' }] };
+       const servers = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' }
+    ]
+};
 
         const welcomeContainer = document.getElementById('welcomeContainer');
         const joinControls = document.getElementById('joinControls');
