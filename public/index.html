@@ -208,10 +208,10 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 10px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
-            display: flex; 
+            display: none; 
             flex-direction: column; 
             transition: all 0.3s ease; 
-            z-index: 99999 !important; 
+            z-index: 999999 !important; 
         }
 
         .chat-panel.open { 
@@ -221,6 +221,7 @@
             opacity: 1 !important;
             visibility: visible !important;
             pointer-events: auto !important;
+            display: flex !important;
         }
         .role-label { position: absolute; top: 35px; left: 45px; background: #e02424; padding: 5px 12px; font-weight: bold; border-radius: 6px; }
         
@@ -330,13 +331,13 @@
         let localStream;
         let teacherPc;
         let myStudentName = "";
-       const servers = {
-    iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
-        { urls: 'stun:stun1.l.google.com:19302' },
-        { urls: 'stun:stun2.l.google.com:19302' }
-    ]
-};
+        const servers = {
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' }
+            ]
+        };
 
         const welcomeContainer = document.getElementById('welcomeContainer');
         const joinControls = document.getElementById('joinControls');
@@ -360,7 +361,6 @@
         let lastTapTime = 0;
         const TAP_DELAY = 300;
 
-        // Helper function to generate Dummy Video Stream if camera is unavailable
         function createDummyStream() {
             const canvas = document.createElement('canvas');
             canvas.width = 640;
@@ -417,7 +417,6 @@
             }
         }
 
-        // Show temporary overlay controls
         function showHiddenItems() {
             if (statusLabel) statusLabel.style.display = 'block';
             if (myVideoCard) myVideoCard.style.display = 'block';
@@ -432,7 +431,6 @@
             }, 4000);
         }
 
-        // Unified Mobile & Desktop Tap Handling
         function handleTap(e) {
             if (e.target.closest('button') || 
                 e.target.closest('.interactive-btn') || 
@@ -469,7 +467,6 @@
             }
         });
 
-        // Request To Join (Student asks for permission)
         joinBtn.onclick = async () => {
             const name = studentNameInput.value.trim();
             const roomId = roomIdInput.value.trim();
@@ -480,7 +477,6 @@
             myStudentName = name;
             errorBanner.style.display = 'none';
 
-            // Send request to server
             socket.emit('request-join', { roomId, studentName: name });
         };
 
@@ -496,7 +492,6 @@
             errorBanner.style.display = 'block';
         });
 
-        // When Teacher Approves the Student
         socket.on('join-accepted', async ({ teacherId, roomId }) => {
             toggleFullScreen();
             waitingBox.style.display = "none";
@@ -506,16 +501,8 @@
             try {
                 localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             } catch (err) {
-                console.warn("Camera/Mic access denied or not found. Falling back to dummy video stream.", err);
-                alert("Your camera and microphone is not accessible, a dummy video will play");
-                
+                console.warn("Camera fallback active", err);
                 localStream = createDummyStream();
-                try {
-                    const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    audioStream.getAudioTracks().forEach(track => localStream.addTrack(track));
-                } catch (e) {
-                    console.warn("Audio fallback failed, running video-only stream.");
-                }
             }
 
             document.getElementById('localVideo').srcObject = localStream;
@@ -530,6 +517,7 @@
             
             if (teacherId) {
                 setupTeacherConnection(teacherId);
+                socket.emit('student-ready-for-call', { teacherId });
             }
 
             setTimeout(() => {
@@ -539,7 +527,6 @@
             }, 8000);
         });
 
-        // Chat Message Handlers
         document.getElementById('sendMsgBtn').onclick = sendTextMessage;
         document.getElementById('msgInput').onkeypress = (e) => { if (e.key === 'Enter') sendTextMessage(); };
 
@@ -555,7 +542,6 @@
             input.value = '';
         }
 
-        // File Sharing Handler
         document.getElementById('fileInput').onchange = function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -593,7 +579,6 @@
             win.scrollTop = win.scrollHeight;
         }
 
-        // Raise Hand Action
         document.getElementById('raiseHandBtn').onclick = function() {
             socket.emit('raise-hand');
             this.innerText = "Hand Raised ✋ (Waiting...)";
@@ -602,21 +587,30 @@
             this.style.color = '#fff';
         };
 
-        // Socket Event Listeners
         socket.on('receive-message', (data) => { appendMsg(data, 'msg-other'); });
         socket.on('receive-file', (data) => { appendFile(data, 'msg-other'); });
-        socket.on('all-users', ({ teacherId }) => { if (teacherId) setupTeacherConnection(teacherId); });
-        socket.on('teacher-connected', (teacherId) => { setupTeacherConnection(teacherId); });
+        socket.on('all-users', ({ teacherId }) => { 
+            if (teacherId && localStream) setupTeacherConnection(teacherId); 
+        });
+        socket.on('teacher-connected', (teacherId) => { 
+            if (localStream) setupTeacherConnection(teacherId); 
+        });
 
         socket.on('signal', async (data) => {
-            if (!teacherPc) return;
+            if (!teacherPc) {
+                setupTeacherConnection(data.sender);
+            }
             if (data.signal.offer) {
                 await teacherPc.setRemoteDescription(new RTCSessionDescription(data.signal.offer));
                 const answer = await teacherPc.createAnswer();
                 await teacherPc.setLocalDescription(answer);
                 socket.emit('signal', { target: data.sender, signal: { answer } });
             } else if (data.signal.candidate) {
-                try { await teacherPc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){}
+                try { 
+                    await teacherPc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); 
+                } catch(e) {
+                    console.error(e);
+                }
             }
         });
 
@@ -700,10 +694,11 @@
         });
 
         socket.on('chat-state-changed', (data) => {
+            const chat = document.getElementById('chatPanel');
             if (data && data.open) {
-                chatPanel.classList.add('open');
+                chat.classList.add('open');
             } else {
-                chatPanel.classList.remove('open');
+                chat.classList.remove('open');
             }
         });
 
@@ -720,7 +715,6 @@
             };
         }
 
-        // Handle joining from link (Pre-fills Room ID and focuses the Name box)
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
             const roomIdFromUrl = urlParams.get('room');
