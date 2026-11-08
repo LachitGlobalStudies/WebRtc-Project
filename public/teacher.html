@@ -812,6 +812,44 @@
         window.rejectStudent = function(studentId) {
             socket.emit('reject-student', { studentId });
         };
+        // --- NOTIFICATION & SOUND FOR STUDENT REQUESTS ---
+        function playJoinChime() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = audioCtx.currentTime;
+
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(740, now);          // F#5
+                osc.frequency.setValueAtTime(880, now + 0.12);     // A5
+
+                gain.gain.setValueAtTime(0.2, now);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.4);
+            } catch (e) {
+                console.warn("Audio chime failed:", e);
+            }
+        }
+
+        function showStudentNotification(studentName) {
+            if ("Notification" in window && Notification.permission === "granted") {
+                new Notification("New Student Join Request 🎓", {
+                    body: `${studentName} wants to enter the class.`
+                });
+            }
+        }
+
+        socket.on('student-join-request', ({ id, name }) => {
+            playJoinChime();
+            showStudentNotification(name);
+        });
 
         document.getElementById('createBtn').onclick = async function() {
             const customInput = document.getElementById('customRoomIdInput');
@@ -820,6 +858,9 @@
             if (!roomId) {
                 alert("Please Enter a room id");
                 return;
+            }
+            if ("Notification" in window && Notification.permission !== "denied") {
+                Notification.requestPermission();
             }
 
             try {
