@@ -1337,7 +1337,17 @@
             else if (data.signal.candidate) { try { await pc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); } catch(e){} }
         });
 
-        socket.on('student-raised-hand', (studentId) => {
+      socket.on('student-raised-hand', (data) => {
+            // Handle both object payload { studentId, name } and legacy raw ID string
+            const studentId = typeof data === 'object' ? data.studentId : data;
+            const studentName = (typeof data === 'object' && data.name) 
+                ? data.name 
+                : (studentNames[studentId] || `Student (${studentId.substring(0,4)})`);
+
+            // Play alert sound and display system notification
+            playHandRaiseChime();
+            showHandRaiseNotification(studentName);
+
             const btn = document.getElementById(`mic-${studentId}`);
             const card = document.getElementById(`card-${studentId}`);
             const grid = document.getElementById('studentGrid');
@@ -1346,7 +1356,7 @@
                 btn.innerText = "✋ Hand Raised"; 
                 btn.className = "mic-control-btn hand-raised"; 
                 if (card && grid) {
-                    grid.prepend(card);
+                    grid.prepend(card); // Brings the student to the top of the teacher's list
                 }
             }
         });
