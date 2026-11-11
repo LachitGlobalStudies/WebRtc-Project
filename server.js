@@ -244,11 +244,18 @@ io.on('connection', (socket) => {
         });
     });
 
+  
     // Classroom Controls and Moderation
     socket.on('raise-hand', () => {
         const currentRoom = socket.roomId;
         const teacherId = roomTeachers[currentRoom];
-        if (teacherId) io.to(teacherId).emit('student-raised-hand', socket.id);
+        const studentName = socketUserData[socket.id] ? socketUserData[socket.id].name : 'A student';
+        if (teacherId) {
+            io.to(teacherId).emit('student-raised-hand', { 
+                studentId: socket.id, 
+                name: studentName 
+            });
+        }
     });
 
     socket.on('allow-student', (studentId) => {
