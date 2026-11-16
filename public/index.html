@@ -131,24 +131,54 @@
         }
         .meeting-container.joined .my-video-card .label { display: none; }
 
-       .main-display { 
-            flex: 1; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            background: #0e0f11; 
-            padding: 2px; 
-            position: relative; 
-            overflow: hidden; 
-        }
+   .main-display { 
+    flex: 1; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    background: linear-gradient(135deg, #1e293b, #0f172a); /* কালো (#0e0f11) এর বদলে ডার্ক ব্লু-স্ল্যাট */
+    padding: 2px; 
+    position: relative; 
+    overflow: hidden; 
+}
 
-        .main-display video { 
-            width: 100%; 
-            height: 100%; 
-            object-fit: fill; 
-            background: #000; 
-            border-radius: 12px; 
-        }
+.main-display video { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: fill; 
+    background: linear-gradient(135deg, #1e3a8a, #0f172a); /* কালো (#000) এর বদলে রয়্যাল ব্লু গ্র্যাডিয়েন্ট */
+    border-radius: 12px; 
+}
+
+/* ভিডিও লোড না হলে যে স্ট্যাটাস ওভারলে দেখাবে */
+.video-fallback-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #1e3a8a, #172554);
+    color: #dbeafe;
+    z-index: 5;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.video-fallback-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+}
+
+.video-fallback-spinner {
+    width: 42px;
+    height: 42px;
+    border: 4px solid rgba(255, 255, 255, 0.25);
+    border-top-color: #38bdf8;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 14px;
+}
 
         .chat-panel { 
             position: absolute !important;
@@ -239,6 +269,12 @@
             </div>
 
             <video id="teacherVideo" autoplay playsinline></video>
+            <!-- ভিডিও না আসা পর্যন্ত বা ডিসকানেক্ট হলে এই নীল স্ক্রিন ও মেসেজ দেখাবে -->
+            <div id="videoFallbackOverlay" class="video-fallback-overlay">
+                <div class="video-fallback-spinner"></div>
+                <h3 id="fallbackTitle" style="font-size: 18px; margin-bottom: 6px; color: #fff;">Connecting to Teacher's Video...</h3>
+                <p id="fallbackSubtext" style="font-size: 13px; color: #93c5fd;">Please wait while the live stream loads</p>
+            </div>
             
             <button id="raiseHandBtn" class="raise-btn">Raise Hand ✋</button>
             <div id="statusLabel" class="status-muted">🔇 Muted by Teacher</div>
@@ -501,7 +537,37 @@
                 if (raiseHandBtn) raiseHandBtn.style.display = 'none';
             }, 8000);
         });
+// video loading and disconnect
 
+        const videoFallbackOverlay = document.getElementById('videoFallbackOverlay');
+        const fallbackTitle = document.getElementById('fallbackTitle');
+        const fallbackSubtext = document.getElementById('fallbackSubtext');
+        
+        function showVideoFallback(title, subtext) {
+            if (fallbackTitle && title) fallbackTitle.innerText = title;
+            if (fallbackSubtext && subtext) fallbackSubtext.innerText = subtext;
+            if (videoFallbackOverlay) videoFallbackOverlay.classList.remove('hidden');
+        }
+        
+        function hideVideoFallback() {
+            if (videoFallbackOverlay) videoFallbackOverlay.classList.add('hidden');
+        }
+        
+        // ভিডিও আসলেই প্লে শুরু হলে কালার ওভারলে সরে গিয়ে আসল ভিডিও দেখাবে
+        teacherVideo.addEventListener('playing', () => {
+            hideVideoFallback();
+        });
+        
+        teacherVideo.addEventListener('loadeddata', () => {
+            if (teacherVideo.videoWidth > 0) {
+                hideVideoFallback();
+            }
+        });
+        
+        // ভিডিও স্ট্রিম আটকে গেলে বা ওয়েটিং অবস্থায় থাকলে
+        teacherVideo.addEventListener('waiting', () => {
+            showVideoFallback("Buffering Teacher's Video...", "Checking network connection...");
+        });
         // Chat & File Logic
         document.getElementById('sendMsgBtn').onclick = sendTextMessage;
         document.getElementById('msgInput').onkeypress = (e) => { if (e.key === 'Enter') sendTextMessage(); };
@@ -680,12 +746,12 @@
 
         socket.on('teacher-disconnected', () => {
             teacherVideo.srcObject = null;
-            if (teacherPc) {
-                teacherPc.close();
-                teacherPc = null;
-            }
-            reconnectBanner.innerText = "⚠️ Teacher disconnected. Waiting to reconnect...";
-            reconnectBanner.style.display = 'block';
+                       if (teacherPc) {
+                    teacherPc.close();
+                    teacherPc = null;
+                }
+                showVideoFallback("Teacher Disconnected", "Waiting for teacher to rejoin the class...");
+            
         });
 
         socket.on('chat-state-changed', (data) => {
@@ -724,9 +790,12 @@
                 }
             };
 
-            teacherPc.oniceconnectionstatechange = () => {
-                if (teacherPc && (teacherPc.iceConnectionState === 'failed' || teacherPc.iceConnectionState === 'disconnected')) {
-                    console.log("ICE Connection failed/disconnected, requesting fresh call...");
+          teacherPc.oniceconnectionstatechange = () => {
+                if (!teacherPc) return;
+                if (teacherPc.iceConnectionState === 'connected' || teacherPc.iceConnectionState === 'completed') {
+                    hideVideoFallback();
+                } else if (teacherPc.iceConnectionState === 'failed' || teacherPc.iceConnectionState === 'disconnected') {
+                    showVideoFallback("Reconnecting Video...", "Restoring connection with teacher...");
                     socket.emit('student-ready-for-call', { teacherId });
                 }
             };
