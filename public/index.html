@@ -8,143 +8,101 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Segoe UI', Arial, sans-serif; background:linear-gradient(135deg,#0f172a,#1e3a8a,#2563eb); color: #fff; height: 100vh; display: flex; flex-direction: column; overflow: hidden; position: relative; }
         
-/* ===========================
-   Welcome Screen
-=========================== */
+        .welcome-container{
+            position:absolute;
+            inset:0;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            background:linear-gradient(135deg,#0f172a,#1e3a8a,#2563eb);
+            z-index:999999;
+            transition:.4s ease;
+        }
 
-.welcome-container{
-    position:absolute;
-    inset:0;
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    background:linear-gradient(135deg,#0f172a,#1e3a8a,#2563eb);
-    z-index:999999;
-    transition:.4s ease;
-}
+        .welcome-container.hide{
+            opacity:0;
+            visibility:hidden;
+            pointer-events:none;
+        }
 
-.welcome-container.hide{
-    opacity:0;
-    visibility:hidden;
-    pointer-events:none;
-}
+        .welcome-card{
+            width:90%;
+            max-width:480px;
+            padding:45px 35px;
+            text-align:center;
+            border-radius:20px;
+            background:rgba(255,255,255,.12);
+            backdrop-filter:blur(18px);
+            border:1px solid rgba(255,255,255,.18);
+            box-shadow:0 20px 45px rgba(0,0,0,.4);
+            color:#fff;
+            animation:cardPop .5s ease;
+        }
 
-.welcome-card{
-    width:90%;
-    max-width:480px;
-    padding:45px 35px;
-    text-align:center;
-    border-radius:20px;
-    background:rgba(255,255,255,.12);
-    backdrop-filter:blur(18px);
-    border:1px solid rgba(255,255,255,.18);
-    box-shadow:0 20px 45px rgba(0,0,0,.4);
-    color:#fff;
-    animation:cardPop .5s ease;
-}
+        .welcome-icon{ font-size:60px; margin-bottom:15px; }
+        .welcome-card h1{ margin:0; font-size:22px; font-weight:400; }
+        .welcome-card h2{ margin:10px 0; font-size:34px; color:#fff; font-weight:700; }
+        .welcome-card p{ color:#dbeafe; margin:20px 0 30px; line-height:1.6; }
 
-.welcome-icon{
-    font-size:60px;
-    margin-bottom:15px;
-}
+        .controls{ display:flex; flex-direction:column; gap:15px; }
+        .controls input{ padding:15px; border:none; border-radius:12px; font-size:16px; outline:none; }
+        .controls button{ padding:15px; border:none; border-radius:12px; background:#22c55e; color:#fff; font-size:16px; font-weight:bold; cursor:pointer; transition:.3s; }
+        .controls button:hover{ background:#16a34a; transform:translateY(-2px); }
 
-.welcome-card h1{
-    margin:0;
-    font-size:22px;
-    font-weight:400;
-}
+        .waiting-status-box {
+            display: none;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px dashed #ff9800;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 15px;
+            text-align: center;
+        }
+        .waiting-status-box .loader {
+            display: inline-block;
+            width: 34px;
+            height: 34px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #ff9800;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 12px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-.welcome-card h2{
-    margin:10px 0;
-    font-size:34px;
-    color:#fff;
-    font-weight:700;
-}
+        .error-banner {
+            display: none;
+            background: #ea4335;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-top: 12px;
+        }
 
-.welcome-card p{
-    color:#dbeafe;
-    margin:20px 0 30px;
-    line-height:1.6;
-}
+        /* Reconnect Banner */
+        #reconnectBanner {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(234, 67, 53, 0.95);
+            color: #fff;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 9999999;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
 
-.controls{
-    display:flex;
-    flex-direction:column;
-    gap:15px;
-}
-
-.controls input{
-    padding:15px;
-    border:none;
-    border-radius:12px;
-    font-size:16px;
-    outline:none;
-}
-
-.controls button{
-    padding:15px;
-    border:none;
-    border-radius:12px;
-    background:#22c55e;
-    color:#fff;
-    font-size:16px;
-    font-weight:bold;
-    cursor:pointer;
-    transition:.3s;
-}
-
-.controls button:hover{
-    background:#16a34a;
-    transform:translateY(-2px);
-}
-
-/* Waiting / Rejection State Box */
-.waiting-status-box {
-    display: none;
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px dashed #ff9800;
-    padding: 20px;
-    border-radius: 12px;
-    margin-top: 15px;
-    text-align: center;
-}
-.waiting-status-box .loader {
-    display: inline-block;
-    width: 34px;
-    height: 34px;
-    border: 4px solid rgba(255,255,255,0.3);
-    border-radius: 50%;
-    border-top-color: #ff9800;
-    animation: spin 1s ease-in-out infinite;
-    margin-bottom: 12px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.error-banner {
-    display: none;
-    background: #ea4335;
-    color: #fff;
-    padding: 12px;
-    border-radius: 8px;
-    font-size: 14px;
-    margin-top: 12px;
-}
-
-@keyframes cardPop{
-    from{
-        opacity:0;
-        transform:translateY(30px) scale(.95);
-    }
-    to{
-        opacity:1;
-        transform:translateY(0) scale(1);
-    }
-}
+        @keyframes cardPop{
+            from{ opacity:0; transform:translateY(30px) scale(.95); }
+            to{ opacity:1; transform:translateY(0) scale(1); }
+        }
         
         .meeting-container { display: flex; flex: 1; height: calc(100vh - 140px); overflow: hidden; position: relative; }
-        .sidebar { width: 15%; background: #161719; border-right: 1px solid #2a2d32; display: flex; flex-direction: column; gap: 5px; padding: 5px; transition: all 0.3s ease; }
-        
-        .meeting-container.joined .sidebar { display: none; }
         .meeting-container.joined .main-display { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 0; }
         .meeting-container.joined .main-display video#teacherVideo { border-radius: 0; }
 
@@ -196,8 +154,6 @@
             position: absolute !important;
             right: 20px !important;
             bottom: 70px !important;
-            top: auto !important;
-            left: auto !important;
             width: 0;
             height: 0;
             opacity: 0;
@@ -223,27 +179,12 @@
             pointer-events: auto !important;
             display: flex !important;
         }
-        .role-label { position: absolute; top: 35px; left: 45px; background: #e02424; padding: 5px 12px; font-weight: bold; border-radius: 6px; }
-        
-        .action-bar { height: 70px; background: #1a1c20; display: flex; justify-content: center; align-items: center; border-top: 1px solid #2a2d32; gap: 15px; }
         
         .raise-btn { padding: 12px 30px; font-size: 15px; font-weight: bold; border: none; border-radius: 30px; background: #ff9800; color: black; cursor: pointer; display: none; }
-        
-        .meeting-container.joined .raise-btn {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-        }
+        .meeting-container.joined .raise-btn { position: absolute; top: 20px; right: 20px; z-index: 9999; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
 
         #statusLabel { font-size: 14px; padding: 10px 20px; border-radius: 20px; font-weight: bold; display: none; }
-        .meeting-container.joined #statusLabel {
-            position: absolute;
-            top: 70px;
-            right: 20px;
-            z-index: 9999;
-        }
+        .meeting-container.joined #statusLabel { position: absolute; top: 70px; right: 20px; z-index: 9999; }
 
         .status-muted { background: #ea4335; color: white; }
         .status-live { background: #2ea44f; color: white; animation: pulse 1.5s infinite; }
@@ -260,13 +201,12 @@
         .chat-input-area button { padding: 8px 15px; background: #2ea44f; border: none; color: #fff; font-weight: bold; border-radius: 4px; cursor: pointer; }
         .file-label { display: inline-block; background: #444; text-align: center; padding: 5px; font-size: 11px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         .file-link { color: #ff9800; text-decoration: underline; display: block; font-weight: bold; margin-top: 4px; }
-        #raiseHandBtn, #myVideoCard {
-            pointer-events: auto;
-            z-index: 100;
-        }
+        #raiseHandBtn, #myVideoCard { pointer-events: auto; z-index: 100; }
     </style>
 </head>
 <body>
+
+    <div id="reconnectBanner">🔄 Reconnecting to class...</div>
 
     <div class="welcome-container" id="welcomeContainer">
         <div class="welcome-card">
@@ -276,21 +216,17 @@
             <p>Join your live class and start learning with your teachers in real time.</p>
 
             <div class="controls" id="joinControls">
-                <!-- Name Box -->
                 <input type="text" id="studentNameInput" placeholder="Enter Your Name" style="text-align: center;" required>
-                <!-- Room ID Box -->
                 <input type="text" id="roomIdInput" placeholder="Enter Class Room ID" style="text-align: center;" required>
                 <button id="joinBtn">Ask to Join Class</button>
             </div>
 
-            <!-- Waiting Screen (Lobby) -->
             <div class="waiting-status-box" id="waitingBox">
                 <div class="loader"></div>
                 <h3 style="font-size: 16px; color: #ff9800; margin-bottom: 6px;">Waiting for Teacher Approval</h3>
                 <p style="font-size: 13px; color: #dbeafe; margin: 0;">Your request has been sent to the teacher. Please wait while they accept your request.</p>
             </div>
 
-            <!-- Error/Rejection Notice -->
             <div class="error-banner" id="errorBanner"></div>
         </div>
     </div>
@@ -326,16 +262,43 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
+        const socket = io({
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000
+        });
+
         let currentFacingMode = 'user';
         let localStream;
         let teacherPc;
-        let myStudentName = "";
+        let iceCandidateQueue = [];
+        let isRemoteDescriptionSet = false;
+
+        let myStudentName = sessionStorage.getItem('lgs_student_name') || "";
+        let myRoomId = sessionStorage.getItem('lgs_room_id') || "";
+        let isAcceptedSession = sessionStorage.getItem('lgs_accepted') === 'true';
+
+        // STUN + TURN Servers (Mobile Data & Strict NAT Fix)
         const servers = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' }
+                {
+                    urls: "turn:openrelay.metered.ca:80",
+                    username: "openrelayproject",
+                    credential: "openrelayproject"
+                },
+                {
+                    urls: "turn:openrelay.metered.ca:443",
+                    username: "openrelayproject",
+                    credential: "openrelayproject"
+                },
+                {
+                    urls: "turn:openrelay.metered.ca:443?transport=tcp",
+                    username: "openrelayproject",
+                    credential: "openrelayproject"
+                }
             ]
         };
 
@@ -347,8 +310,8 @@
         const roomIdInput = document.getElementById('roomIdInput');
         const joinBtn = document.getElementById('joinBtn');
         const myLabel = document.getElementById('myLabel');
+        const reconnectBanner = document.getElementById('reconnectBanner');
 
-        const chatPanel = document.getElementById('chatPanel');
         const mainArea = document.getElementById('mainArea');
         const teacherVideo = document.getElementById('teacherVideo');
         const meetingContainer = document.getElementById('meetingContainer');
@@ -383,37 +346,35 @@
             return canvas.captureStream(30);
         }
 
+        async function ensureLocalStream() {
+            if (localStream && localStream.active) return localStream;
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            } catch (err) {
+                console.warn("Camera fallback active", err);
+                localStream = createDummyStream();
+            }
+            document.getElementById('localVideo').srcObject = localStream;
+            if (localStream.getAudioTracks().length > 0) {
+                localStream.getAudioTracks()[0].enabled = false; 
+            }
+            return localStream;
+        }
+
         async function toggleFullScreen() {
             const targetElem = document.getElementById('mainArea') || document.getElementById('meetingContainer');
-
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
                 try {
-                    if (targetElem.requestFullscreen) {
-                        await targetElem.requestFullscreen();
-                    } else if (targetElem.webkitRequestFullscreen) {
-                        await targetElem.webkitRequestFullscreen();
-                    } else if (teacherVideo && teacherVideo.webkitEnterFullscreen) {
-                        teacherVideo.webkitEnterFullscreen();
-                    }
-
+                    if (targetElem.requestFullscreen) await targetElem.requestFullscreen();
+                    else if (targetElem.webkitRequestFullscreen) await targetElem.webkitRequestFullscreen();
                     if (screen.orientation && screen.orientation.lock) {
-                        await screen.orientation.lock('landscape').catch((err) => {
-                            console.warn("Screen orientation lock failed or not supported:", err);
-                        });
+                        await screen.orientation.lock('landscape').catch(() => {});
                     }
-                } catch (err) {
-                    console.error("Fullscreen request failed:", err);
-                }
+                } catch (err) {}
             } else {
-                if (document.exitFullscreen) {
-                    await document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) {
-                    await document.webkitExitFullscreen();
-                }
-
-                if (screen.orientation && screen.orientation.unlock) {
-                    screen.orientation.unlock();
-                }
+                if (document.exitFullscreen) await document.exitFullscreen();
+                else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+                if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
             }
         }
 
@@ -423,7 +384,6 @@
             if (raiseHandBtn) raiseHandBtn.style.display = 'inline-block';
 
             if (hideControlsTimer) clearTimeout(hideControlsTimer);
-
             hideControlsTimer = setTimeout(() => {
                 if (statusLabel) statusLabel.style.display = 'none';
                 if (myVideoCard) myVideoCard.style.display = 'none';
@@ -432,21 +392,18 @@
         }
 
         function handleTap(e) {
-            if (e.target.closest('button') || 
-                e.target.closest('.interactive-btn') || 
-                e.target.closest('#chatPanel') || 
-                e.target.closest('#myVideoCard')) {
-                return;
+            if (e.target.closest('button') || e.target.closest('#chatPanel') || e.target.closest('#myVideoCard')) return;
+
+            // ব্রাউজার অটোপ্লে ব্লক থাকলে ট্যাপ করলেই ভিডিও প্লে হবে
+            if (teacherVideo && teacherVideo.paused && teacherVideo.srcObject) {
+                teacherVideo.play().catch(() => {});
             }
 
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTapTime;
 
             if (tapLength < TAP_DELAY && tapLength > 0) {
-                if (tapTimer) {
-                    clearTimeout(tapTimer);
-                    tapTimer = null;
-                }
+                if (tapTimer) { clearTimeout(tapTimer); tapTimer = null; }
                 toggleFullScreen();
             } else {
                 tapTimer = setTimeout(() => {
@@ -457,14 +414,28 @@
             lastTapTime = currentTime;
         }
 
-        mainArea.addEventListener('touchend', function (e) {
-            handleTap(e);
+        mainArea.addEventListener('touchend', handleTap);
+        mainArea.addEventListener('click', (e) => { if (!('ontouchstart' in window)) handleTap(e); });
+
+        // --- Socket Connection & Auto-Reconnect Handling ---
+        socket.on('connect', () => {
+            reconnectBanner.style.display = 'none';
+            if (isAcceptedSession && myRoomId && myStudentName) {
+                console.log("Auto-rejoining room:", myRoomId);
+                socket.emit('auto-rejoin', { roomId: myRoomId, studentName: myStudentName });
+            }
         });
 
-        mainArea.addEventListener('click', function (e) {
-            if (!('ontouchstart' in window)) {
-                handleTap(e);
+        socket.on('disconnect', () => {
+            if (isAcceptedSession) {
+                reconnectBanner.innerText = "⚠️ Connection lost! Reconnecting automatically...";
+                reconnectBanner.style.display = 'block';
             }
+        });
+
+        socket.on('waiting-for-teacher-reconnect', () => {
+            reconnectBanner.innerText = "⏳ Waiting for teacher to reconnect...";
+            reconnectBanner.style.display = 'block';
         });
 
         joinBtn.onclick = async () => {
@@ -475,6 +446,7 @@
             if (!roomId) return alert("Please enter the Class Room ID!");
 
             myStudentName = name;
+            myRoomId = roomId;
             errorBanner.style.display = 'none';
 
             socket.emit('request-join', { roomId, studentName: name });
@@ -486,29 +458,32 @@
         });
 
         socket.on('join-rejected', ({ reason }) => {
+            isAcceptedSession = false;
+            sessionStorage.removeItem('lgs_accepted');
             waitingBox.style.display = 'none';
             joinControls.style.display = 'flex';
             errorBanner.innerText = reason || "The teacher rejected your request to join the class.";
             errorBanner.style.display = 'block';
         });
 
-        socket.on('join-accepted', async ({ teacherId, roomId }) => {
-            toggleFullScreen();
+        socket.on('join-accepted', async ({ teacherId, roomId, isReconnect }) => {
+            // সেশন সেভ রাখা যাতে ডিসকানেক্ট হলে অটো জয়েন হয়
+            isAcceptedSession = true;
+            myRoomId = roomId;
+            sessionStorage.setItem('lgs_accepted', 'true');
+            sessionStorage.setItem('lgs_room_id', roomId);
+            sessionStorage.setItem('lgs_student_name', myStudentName);
+
+            reconnectBanner.style.display = 'none';
+            if (!isReconnect) {
+                toggleFullScreen();
+            }
+
             waitingBox.style.display = "none";
             welcomeContainer.style.display = "none";
             mainArea.style.display = "block";
 
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            } catch (err) {
-                console.warn("Camera fallback active", err);
-                localStream = createDummyStream();
-            }
-
-            document.getElementById('localVideo').srcObject = localStream;
-            if (localStream.getAudioTracks().length > 0) {
-                localStream.getAudioTracks()[0].enabled = false; 
-            }
+            await ensureLocalStream();
 
             if (myLabel) myLabel.innerText = `${myStudentName} (You)`;
             raiseHandBtn.style.display = 'block';
@@ -527,6 +502,7 @@
             }, 8000);
         });
 
+        // Chat & File Logic
         document.getElementById('sendMsgBtn').onclick = sendTextMessage;
         document.getElementById('msgInput').onkeypress = (e) => { if (e.key === 'Enter') sendTextMessage(); };
 
@@ -589,28 +565,44 @@
 
         socket.on('receive-message', (data) => { appendMsg(data, 'msg-other'); });
         socket.on('receive-file', (data) => { appendFile(data, 'msg-other'); });
-        socket.on('all-users', ({ teacherId }) => { 
-            if (teacherId && localStream) setupTeacherConnection(teacherId); 
-        });
-        socket.on('teacher-connected', (teacherId) => { 
-            if (localStream) setupTeacherConnection(teacherId); 
+        
+        socket.on('teacher-connected', async (teacherId) => { 
+            reconnectBanner.style.display = 'none';
+            if (isAcceptedSession) {
+                await ensureLocalStream();
+                setupTeacherConnection(teacherId);
+                socket.emit('student-ready-for-call', { teacherId });
+            }
         });
 
+        // --- Fixed WebRTC Signaling with ICE Candidate Queue ---
         socket.on('signal', async (data) => {
             if (!teacherPc) {
                 setupTeacherConnection(data.sender);
             }
-            if (data.signal.offer) {
-                await teacherPc.setRemoteDescription(new RTCSessionDescription(data.signal.offer));
-                const answer = await teacherPc.createAnswer();
-                await teacherPc.setLocalDescription(answer);
-                socket.emit('signal', { target: data.sender, signal: { answer } });
-            } else if (data.signal.candidate) {
-                try { 
-                    await teacherPc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); 
-                } catch(e) {
-                    console.error(e);
+            try {
+                if (data.signal.offer) {
+                    await teacherPc.setRemoteDescription(new RTCSessionDescription(data.signal.offer));
+                    isRemoteDescriptionSet = true;
+
+                    // কিউতে জমা থাকা সব ICE Candidate প্রসেস করা
+                    while (iceCandidateQueue.length > 0) {
+                        const cand = iceCandidateQueue.shift();
+                        await teacherPc.addIceCandidate(new RTCIceCandidate(cand)).catch(e => console.error(e));
+                    }
+
+                    const answer = await teacherPc.createAnswer();
+                    await teacherPc.setLocalDescription(answer);
+                    socket.emit('signal', { target: data.sender, signal: { answer } });
+                } else if (data.signal.candidate) {
+                    if (isRemoteDescriptionSet && teacherPc.remoteDescription) {
+                        await teacherPc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
+                    } else {
+                        iceCandidateQueue.push(data.signal.candidate);
+                    }
                 }
+            } catch (e) {
+                console.error("Signaling error:", e);
             }
         });
 
@@ -650,7 +642,6 @@
                 }
             } catch (err) {
                 console.error("Camera switch error:", err);
-                alert("Camera switch failed: " + err.message);
                 currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
             }
         });
@@ -660,7 +651,6 @@
                 localStream.getAudioTracks()[0].enabled = true; 
             }
             document.getElementById('raiseHandBtn').style.display = 'none';
-            const statusLabel = document.getElementById('statusLabel');
             statusLabel.innerText = "🎙️ Teacher is listening";
             statusLabel.className = "status-live";
             statusLabel.style.display = 'block';
@@ -678,7 +668,6 @@
             raiseBtn.style.background = '#ff9800';
             raiseBtn.style.color = 'black';
             
-            const statusLabel = document.getElementById('statusLabel');
             statusLabel.innerText = "🔇 Muted by Teacher";
             statusLabel.className = "status-muted";
             statusLabel.style.display = 'block';
@@ -690,28 +679,62 @@
         });
 
         socket.on('teacher-disconnected', () => {
-            document.getElementById('teacherVideo').srcObject = null;
+            teacherVideo.srcObject = null;
+            if (teacherPc) {
+                teacherPc.close();
+                teacherPc = null;
+            }
+            reconnectBanner.innerText = "⚠️ Teacher disconnected. Waiting to reconnect...";
+            reconnectBanner.style.display = 'block';
         });
 
         socket.on('chat-state-changed', (data) => {
             const chat = document.getElementById('chatPanel');
-            if (data && data.open) {
-                chat.classList.add('open');
-            } else {
-                chat.classList.remove('open');
-            }
+            if (data && data.open) chat.classList.add('open');
+            else chat.classList.remove('open');
         });
 
         function setupTeacherConnection(teacherId) {
+            if (teacherPc) {
+                teacherPc.close();
+                teacherPc = null;
+            }
+            iceCandidateQueue = [];
+            isRemoteDescriptionSet = false;
+
             teacherPc = new RTCPeerConnection(servers);
             if (localStream) {
                 localStream.getTracks().forEach(track => teacherPc.addTrack(track, localStream));
             }
+            
             teacherPc.ontrack = (event) => { 
-                document.getElementById('teacherVideo').srcObject = event.streams[0]; 
+                const remoteStream = event.streams[0];
+                if (teacherVideo.srcObject !== remoteStream) {
+                    teacherVideo.srcObject = remoteStream;
+                    // ব্ল্যাক স্ক্রিন প্রতিরোধে ফোর্স প্লে ব্যাক
+                    teacherVideo.play().catch(err => {
+                        console.warn("Autoplay blocked, muting initially to start video:", err);
+                        teacherVideo.muted = true;
+                        teacherVideo.play().then(() => {
+                            // ইউজার স্ক্রিনে টাচ করলে আনমিউট হবে
+                            document.body.addEventListener('touchstart', () => { teacherVideo.muted = false; }, { once: true });
+                            document.body.addEventListener('click', () => { teacherVideo.muted = false; }, { once: true });
+                        });
+                    });
+                }
             };
+
+            teacherPc.oniceconnectionstatechange = () => {
+                if (teacherPc && (teacherPc.iceConnectionState === 'failed' || teacherPc.iceConnectionState === 'disconnected')) {
+                    console.log("ICE Connection failed/disconnected, requesting fresh call...");
+                    socket.emit('student-ready-for-call', { teacherId });
+                }
+            };
+
             teacherPc.onicecandidate = (event) => {
-                if (event.candidate) socket.emit('signal', { target: teacherId, signal: { candidate: event.candidate } });
+                if (event.candidate) {
+                    socket.emit('signal', { target: teacherId, signal: { candidate: event.candidate } });
+                }
             };
         }
 
@@ -722,6 +745,8 @@
                 roomIdInput.value = roomIdFromUrl;
                 studentNameInput.focus();
             }
+            if (myStudentName) studentNameInput.value = myStudentName;
+            if (myRoomId && !roomIdFromUrl) roomIdInput.value = myRoomId;
         });
     </script>
 </body>
