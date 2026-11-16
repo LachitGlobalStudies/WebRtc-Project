@@ -608,11 +608,26 @@
         const peerConnections = {};
         const studentMicStatus = {}; 
         const studentNames = {}; // Store real student names
+    // ১. servers ভেরিয়েবলে TURN সার্ভার যুক্ত করুন:
         const servers = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' }
+                {
+                    urls: "turn:openrelay.metered.ca:80",
+                    username: "openrelayproject",
+                    credential: "openrelayproject"
+                },
+                {
+                    urls: "turn:openrelay.metered.ca:443",
+                    username: "openrelayproject",
+                    credential: "openrelayproject"
+                },
+                {
+                    urls: "turn:openrelay.metered.ca:443?transport=tcp",
+                    username: "openrelayproject",
+                    credential: "openrelayproject"
+                }
             ]
         };
         let currentCamFacingMode = "user";
@@ -1310,13 +1325,17 @@
             }
         });
 
-        // Student camera ready korle call initiate kora hoy
+// ২. start-call-with-student ইভেন্টটি এভাবে আপডেট করুন (যাতে রিকানেক্ট হলে পুরোনো কানেকশন ক্লোজ হয়ে নতুন শুরু হয়):
         socket.on('start-call-with-student', ({ studentId, name }) => {
             if (name) studentNames[studentId] = name;
-            let pc = peerConnections[studentId];
-            if (!pc) {
-                pc = createPeerConnection(studentId);
+            if (peerConnections[studentId]) {
+                peerConnections[studentId].close();
+                delete peerConnections[studentId];
             }
+            const oldCard = document.getElementById(`card-${studentId}`);
+            if (oldCard) oldCard.remove();
+
+            const pc = createPeerConnection(studentId);
             initiateCall(pc, studentId);
         });
 
@@ -1417,7 +1436,7 @@
 
             pc.ontrack = (event) => {
                 let card = document.getElementById(`card-${userId}`);
-                const disName = studentNames[userId] || `Student (${userId.substring(0,4)})`;
+                const displayName = studentNames[userId] || `Student (${userId.substring(0,4)})`;
                 
                 if (!card) {
                     const grid = document.getElementById('studentGrid');
