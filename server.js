@@ -6,7 +6,6 @@ const { spawn } = require('child_process');
 const app = express();
 const http = require('http').createServer(app);
 
-// Express and Middleware Setup
 app.use(cors({ origin: "*" }));
 app.use(express.static('public'));
 
@@ -18,7 +17,6 @@ const io = require('socket.io')(http, {
     maxHttpBufferSize: 1e7 // 10MB Limit
 });
 
-// Routes
 app.get('/get-html-page', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -28,9 +26,9 @@ const roomTeachers = {};
 const roomChatState = {}; 
 const activeStreams = {};
 const pendingStudents = {}; // { roomId: [ { id, name } ] }
+const approvedStudents = {}; // { roomId: Set([studentName]) } -> ট্র্যাক রাখার জন্য
 const socketUserData = {};  // { [socket.id]: { role, roomId, name } }
 
-// Socket.io Connection Logic
 io.on('connection', (socket) => {
     
     // Teacher Joins
@@ -44,13 +42,10 @@ io.on('connection', (socket) => {
             roomTeachers[roomId] = socket.id;
             roomChatState[roomId] = false; 
             if (!pendingStudents[roomId]) pendingStudents[roomId] = [];
+            if (!approvedStudents[roomId]) approvedStudents[roomId] = new Set();
+            
             socket.to(roomId).emit('teacher-connected', socket.id);
-            // Send pending list to teacher
             socket.emit('pending-list-update', pendingStudents[roomId]);
-        }
-
-        if (role === 'student' && roomChatState[roomId] === true) {
-            socket.emit('chat-state-changed', { open: true });
         }
 
         const clients = io.sockets.adapter.rooms.get(roomId);
@@ -92,11 +87,47 @@ io.on('connection', (socket) => {
         }
 
         if (!pendingStudents[roomId]) pendingStudents[roomId] = [];
+        // ডুপ্লিকেট রিকোয়েস্ট রিমুভ করা
+        pendingStudents[roomId] = pendingStudents[roomId].filter(s => s.name !== name);
         pendingStudents[roomId].push({ id: socket.id, name });
 
         socket.emit('join-pending');
         io.to(teacherId).emit('student-join-request', { id: socket.id, name });
         io.to(teacherId).emit('pending-list-update', pendingStudents[roomId]);
+    });
+
+    // Auto-Rejoin for Previously Accepted Students
+    socket.on('auto-rejoin', ({ roomId, studentName }) => {
+        const teacherId = roomTeachers[roomId];
+        if (!teacherId) {
+            socket.emit('waiting-for-teacher-reconnect');
+            return;
+        }
+
+        const name = (studentName && studentName.trim()) ? studentName.trim() : `Student (${socket.id.substring(0,4)})`;
+        socket.role = 'student';
+        socket.roomId = roomId;
+        socket.studentName = name;
+        socketUserData[socket.id] = { role: 'student', roomId, name };
+
+        socket.join(roomId);
+        socket.emit('join-accepted', { 
+            teacherId: teacherId,
+            roomId: roomId,
+            isReconnect: true
+        });
+
+        if (roomChatState[roomId] === true) {
+            socket.emit('chat-state-changed', { open: true });
+        }
+
+        const clients = io.sockets.adapter.rooms.get(roomId);
+        io.to(roomId).emit('user-joined', { 
+            userId: socket.id, 
+            role: 'student', 
+            name: name,
+            count: clients ? clients.size : 1 
+        });
     });
 
     // Teacher Approves Student
@@ -113,10 +144,14 @@ io.on('connection', (socket) => {
         if (studentSocket) {
             studentSocket.join(currentRoom);
             const studentInfo = socketUserData[studentId] || { name: 'Student' };
+            
+            if (!approvedStudents[currentRoom]) approvedStudents[currentRoom] = new Set();
+            approvedStudents[currentRoom].add(studentInfo.name);
 
             studentSocket.emit('join-accepted', { 
                 teacherId: roomTeachers[currentRoom],
-                roomId: currentRoom
+                roomId: currentRoom,
+                isReconnect: false
             });
 
             if (roomChatState[currentRoom] === true) {
@@ -135,10 +170,12 @@ io.on('connection', (socket) => {
 
     // Student Signals they are ready with camera & mic
     socket.on('student-ready-for-call', ({ teacherId }) => {
-        io.to(teacherId).emit('start-call-with-student', { 
-            studentId: socket.id,
-            name: socketUserData[socket.id] ? socketUserData[socket.id].name : 'Student'
-        });
+        if (teacherId) {
+            io.to(teacherId).emit('start-call-with-student', { 
+                studentId: socket.id,
+                name: socketUserData[socket.id] ? socketUserData[socket.id].name : 'Student'
+            });
+        }
     });
 
     // Teacher Rejects Student
@@ -189,13 +226,8 @@ io.on('connection', (socket) => {
             youtubeUrl
         ]);
 
-        ffmpeg.on('close', (code) => {
-            console.log(`FFmpeg process closed with code ${code}`);
+        ffmpeg.on('close', () => {
             delete activeStreams[currentRoom];
-        });
-
-        ffmpeg.stderr.on('data', (data) => {
-            console.log('FFmpeg Log:', data.toString());
         });
 
         activeStreams[currentRoom] = ffmpeg;
@@ -244,7 +276,6 @@ io.on('connection', (socket) => {
         });
     });
 
-  
     // Classroom Controls and Moderation
     socket.on('raise-hand', () => {
         const currentRoom = socket.roomId;
@@ -323,7 +354,6 @@ io.on('connection', (socket) => {
     });
 });
 
-// Server Initialization
 const PORT = process.env.PORT || 3000;
 http.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
