@@ -130,6 +130,25 @@
     margin-top: 12px;
 }
 
+/* =====================================================================
+   [ADDED FEATURE] Reconnect Notification Banner Styling
+===================================================================== */
+#reconnectBanner {
+    display: none;
+    position: fixed;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(234, 67, 53, 0.95);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 9999999;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+
 @keyframes cardPop{
     from{
         opacity:0;
@@ -178,7 +197,7 @@
             display: flex; 
             justify-content: center; 
             align-items: center; 
-            background: #0e0f11; 
+            background: linear-gradient(135deg, #1e293b, #0f172a); /* [UPDATED] Royal dark slate instead of pitch black */
             padding: 2px; 
             position: relative; 
             overflow: hidden; 
@@ -188,8 +207,40 @@
             width: 100%; 
             height: 100%; 
             object-fit: fill; 
-            background: #000; 
+            background: linear-gradient(135deg, #1e3a8a, #0f172a); /* [UPDATED] Royal blue gradient fallback */
             border-radius: 12px; 
+        }
+
+        /* =====================================================================
+           [ADDED FEATURE] Video Loading / Disconnect Fallback Overlay Styling
+        ===================================================================== */
+        .video-fallback-overlay {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1e3a8a, #172554);
+            color: #dbeafe;
+            z-index: 5;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .video-fallback-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .video-fallback-spinner {
+            width: 42px;
+            height: 42px;
+            border: 4px solid rgba(255, 255, 255, 0.25);
+            border-top-color: #38bdf8;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 14px;
         }
 
         .chat-panel { 
@@ -268,6 +319,11 @@
 </head>
 <body>
 
+    <!-- =====================================================================
+         [ADDED FEATURE] Reconnect Status Banner
+    ===================================================================== -->
+    <div id="reconnectBanner">🔄 Reconnecting to class...</div>
+
     <div class="welcome-container" id="welcomeContainer">
         <div class="welcome-card">
             <div class="welcome-icon">🎓</div>
@@ -303,6 +359,15 @@
             </div>
 
             <video id="teacherVideo" autoplay playsinline></video>
+
+            <!-- =====================================================================
+                 [ADDED FEATURE] Video Loading / Buffering / Disconnect Overlay
+            ===================================================================== -->
+            <div id="videoFallbackOverlay" class="video-fallback-overlay">
+                <div class="video-fallback-spinner"></div>
+                <h3 id="fallbackTitle" style="font-size: 18px; margin-bottom: 6px; color: #fff;">Connecting to Teacher's Video...</h3>
+                <p id="fallbackSubtext" style="font-size: 13px; color: #93c5fd;">Please wait while the live stream loads</p>
+            </div>
             
             <button id="raiseHandBtn" class="raise-btn">Raise Hand ✋</button>
             <div id="statusLabel" class="status-muted">🔇 Muted by Teacher</div>
@@ -326,16 +391,52 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const socket = io();
+        /* =====================================================================
+           [ADDED FEATURE] Socket.IO Auto-Reconnection Configuration
+        ===================================================================== */
+        const socket = io({
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000
+        });
+
         let currentFacingMode = 'user';
         let localStream;
         let teacherPc;
-        let myStudentName = "";
+
+        /* =====================================================================
+           [ADDED FEATURE] ICE Candidate Queue & Session Persistence Variables
+        ===================================================================== */
+        let iceCandidateQueue = [];
+        let isRemoteDescriptionSet = false;
+        let myStudentName = sessionStorage.getItem('lgs_student_name') || "";
+        let myRoomId = sessionStorage.getItem('lgs_room_id') || "";
+        let isAcceptedSession = sessionStorage.getItem('lgs_accepted') === 'true';
+
+        /* =====================================================================
+           [UPDATED] STUN + TURN Servers (Preserves index(1) STUNs + Adds TURN)
+        ===================================================================== */
         const servers = {
             iceServers: [
                 { urls: 'stun:stun.l.google.com:19302' },
                 { urls: 'stun:stun1.l.google.com:19302' },
-                { urls: 'stun:stun2.l.google.com:19302' }
+                { urls: 'stun:stun2.l.google.com:19302' },
+                {
+                    urls: "turn:openrelay.metered.ca:80",
+                    username: "openrelayproject",
+                    credential: "openrelayproject"
+                },
+                {
+                    urls: "turn:openrelay.metered.ca:443",
+                    username: "openrelayproject",
+                    credential: "openrelayproject"
+                },
+                {
+                    urls: "turn:openrelay.metered.ca:443?transport=tcp",
+                    username: "openrelayproject",
+                    credential: "openrelayproject"
+                }
             ]
         };
 
@@ -347,6 +448,7 @@
         const roomIdInput = document.getElementById('roomIdInput');
         const joinBtn = document.getElementById('joinBtn');
         const myLabel = document.getElementById('myLabel');
+        const reconnectBanner = document.getElementById('reconnectBanner'); // [ADDED]
 
         const chatPanel = document.getElementById('chatPanel');
         const mainArea = document.getElementById('mainArea');
@@ -381,6 +483,24 @@
             }
             draw();
             return canvas.captureStream(30);
+        }
+
+        /* =====================================================================
+           [ADDED FEATURE] Reusable Local Stream Helper for Reconnect Recovery
+        ===================================================================== */
+        async function ensureLocalStream() {
+            if (localStream && localStream.active) return localStream;
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            } catch (err) {
+                console.warn("Camera fallback active", err);
+                localStream = createDummyStream();
+            }
+            document.getElementById('localVideo').srcObject = localStream;
+            if (localStream.getAudioTracks().length > 0) {
+                localStream.getAudioTracks()[0].enabled = false; 
+            }
+            return localStream;
         }
 
         async function toggleFullScreen() {
@@ -439,6 +559,13 @@
                 return;
             }
 
+            /* =====================================================================
+               [ADDED FEATURE] Force Video Playback on User Tap if Autoplay Blocked
+            ===================================================================== */
+            if (teacherVideo && teacherVideo.paused && teacherVideo.srcObject) {
+                teacherVideo.play().catch(() => {});
+            }
+
             const currentTime = new Date().getTime();
             const tapLength = currentTime - lastTapTime;
 
@@ -467,6 +594,29 @@
             }
         });
 
+        /* =====================================================================
+           [ADDED FEATURE] Socket Auto-Reconnect & Session Recovery Listeners
+        ===================================================================== */
+        socket.on('connect', () => {
+            reconnectBanner.style.display = 'none';
+            if (isAcceptedSession && myRoomId && myStudentName) {
+                console.log("Auto-rejoining room:", myRoomId);
+                socket.emit('auto-rejoin', { roomId: myRoomId, studentName: myStudentName });
+            }
+        });
+
+        socket.on('disconnect', () => {
+            if (isAcceptedSession) {
+                reconnectBanner.innerText = "⚠️ Connection lost! Reconnecting automatically...";
+                reconnectBanner.style.display = 'block';
+            }
+        });
+
+        socket.on('waiting-for-teacher-reconnect', () => {
+            reconnectBanner.innerText = "⏳ Waiting for teacher to reconnect...";
+            reconnectBanner.style.display = 'block';
+        });
+
         joinBtn.onclick = async () => {
             const name = studentNameInput.value.trim();
             const roomId = roomIdInput.value.trim();
@@ -475,6 +625,7 @@
             if (!roomId) return alert("Please enter the Class Room ID!");
 
             myStudentName = name;
+            myRoomId = roomId; // [ADDED] Store roomId
             errorBanner.style.display = 'none';
 
             socket.emit('request-join', { roomId, studentName: name });
@@ -486,29 +637,38 @@
         });
 
         socket.on('join-rejected', ({ reason }) => {
+            /* =====================================================================
+               [ADDED FEATURE] Clear Saved Session on Rejection
+            ===================================================================== */
+            isAcceptedSession = false;
+            sessionStorage.removeItem('lgs_accepted');
+
             waitingBox.style.display = 'none';
             joinControls.style.display = 'flex';
             errorBanner.innerText = reason || "The teacher rejected your request to join the class.";
             errorBanner.style.display = 'block';
         });
 
-        socket.on('join-accepted', async ({ teacherId, roomId }) => {
-            toggleFullScreen();
+        socket.on('join-accepted', async ({ teacherId, roomId, isReconnect }) => {
+            /* =====================================================================
+               [ADDED FEATURE] Persist Session State for Auto-Rejoin
+            ===================================================================== */
+            isAcceptedSession = true;
+            myRoomId = roomId;
+            sessionStorage.setItem('lgs_accepted', 'true');
+            sessionStorage.setItem('lgs_room_id', roomId);
+            sessionStorage.setItem('lgs_student_name', myStudentName);
+            reconnectBanner.style.display = 'none';
+
+            if (!isReconnect) {
+                toggleFullScreen();
+            }
+
             waitingBox.style.display = "none";
             welcomeContainer.style.display = "none";
             mainArea.style.display = "block";
 
-            try {
-                localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            } catch (err) {
-                console.warn("Camera fallback active", err);
-                localStream = createDummyStream();
-            }
-
-            document.getElementById('localVideo').srcObject = localStream;
-            if (localStream.getAudioTracks().length > 0) {
-                localStream.getAudioTracks()[0].enabled = false; 
-            }
+            await ensureLocalStream(); // [UPDATED] Uses reusable stream helper
 
             if (myLabel) myLabel.innerText = `${myStudentName} (You)`;
             raiseHandBtn.style.display = 'block';
@@ -525,6 +685,37 @@
                 if (myVideoCard) myVideoCard.style.display = 'none';
                 if (raiseHandBtn) raiseHandBtn.style.display = 'none';
             }, 8000);
+        });
+
+        /* =====================================================================
+           [ADDED FEATURE] Video Fallback Overlay Controls & Stream Event Listeners
+        ===================================================================== */
+        const videoFallbackOverlay = document.getElementById('videoFallbackOverlay');
+        const fallbackTitle = document.getElementById('fallbackTitle');
+        const fallbackSubtext = document.getElementById('fallbackSubtext');
+        
+        function showVideoFallback(title, subtext) {
+            if (fallbackTitle && title) fallbackTitle.innerText = title;
+            if (fallbackSubtext && subtext) fallbackSubtext.innerText = subtext;
+            if (videoFallbackOverlay) videoFallbackOverlay.classList.remove('hidden');
+        }
+        
+        function hideVideoFallback() {
+            if (videoFallbackOverlay) videoFallbackOverlay.classList.add('hidden');
+        }
+        
+        teacherVideo.addEventListener('playing', () => {
+            hideVideoFallback();
+        });
+        
+        teacherVideo.addEventListener('loadeddata', () => {
+            if (teacherVideo.videoWidth > 0) {
+                hideVideoFallback();
+            }
+        });
+        
+        teacherVideo.addEventListener('waiting', () => {
+            showVideoFallback("Buffering Teacher's Video...", "Checking network connection...");
         });
 
         document.getElementById('sendMsgBtn').onclick = sendTextMessage;
@@ -589,28 +780,56 @@
 
         socket.on('receive-message', (data) => { appendMsg(data, 'msg-other'); });
         socket.on('receive-file', (data) => { appendFile(data, 'msg-other'); });
+        
+        /* =====================================================================
+           [PRESERVED FROM INDEX(1)] all-users & teacher-connected Handlers
+        ===================================================================== */
         socket.on('all-users', ({ teacherId }) => { 
             if (teacherId && localStream) setupTeacherConnection(teacherId); 
         });
-        socket.on('teacher-connected', (teacherId) => { 
-            if (localStream) setupTeacherConnection(teacherId); 
+
+        socket.on('teacher-connected', async (teacherId) => { 
+            reconnectBanner.style.display = 'none';
+            if (localStream) {
+                setupTeacherConnection(teacherId);
+                socket.emit('student-ready-for-call', { teacherId }); // [ADDED] Ensures teacher initiates call on reconnect
+            } else if (isAcceptedSession) {
+                await ensureLocalStream();
+                setupTeacherConnection(teacherId);
+                socket.emit('student-ready-for-call', { teacherId });
+            }
         });
 
+        /* =====================================================================
+           [UPDATED] WebRTC Signaling with ICE Candidate Queue Protection
+        ===================================================================== */
         socket.on('signal', async (data) => {
             if (!teacherPc) {
                 setupTeacherConnection(data.sender);
             }
-            if (data.signal.offer) {
-                await teacherPc.setRemoteDescription(new RTCSessionDescription(data.signal.offer));
-                const answer = await teacherPc.createAnswer();
-                await teacherPc.setLocalDescription(answer);
-                socket.emit('signal', { target: data.sender, signal: { answer } });
-            } else if (data.signal.candidate) {
-                try { 
-                    await teacherPc.addIceCandidate(new RTCIceCandidate(data.signal.candidate)); 
-                } catch(e) {
-                    console.error(e);
+            try {
+                if (data.signal.offer) {
+                    await teacherPc.setRemoteDescription(new RTCSessionDescription(data.signal.offer));
+                    isRemoteDescriptionSet = true;
+
+                    // [ADDED] Flush any ICE candidates that arrived early
+                    while (iceCandidateQueue.length > 0) {
+                        const cand = iceCandidateQueue.shift();
+                        await teacherPc.addIceCandidate(new RTCIceCandidate(cand)).catch(e => console.error(e));
+                    }
+
+                    const answer = await teacherPc.createAnswer();
+                    await teacherPc.setLocalDescription(answer);
+                    socket.emit('signal', { target: data.sender, signal: { answer } });
+                } else if (data.signal.candidate) {
+                    if (isRemoteDescriptionSet && teacherPc.remoteDescription) {
+                        await teacherPc.addIceCandidate(new RTCIceCandidate(data.signal.candidate));
+                    } else {
+                        iceCandidateQueue.push(data.signal.candidate);
+                    }
                 }
+            } catch(e) {
+                console.error("Signaling error:", e);
             }
         });
 
@@ -691,6 +910,14 @@
 
         socket.on('teacher-disconnected', () => {
             document.getElementById('teacherVideo').srcObject = null;
+            /* =====================================================================
+               [ADDED FEATURE] Clean Peer Connection Close & Disconnect Overlay
+            ===================================================================== */
+            if (teacherPc) {
+                teacherPc.close();
+                teacherPc = null;
+            }
+            showVideoFallback("Teacher Disconnected", "Waiting for teacher to rejoin the class...");
         });
 
         socket.on('chat-state-changed', (data) => {
@@ -703,13 +930,50 @@
         });
 
         function setupTeacherConnection(teacherId) {
+            /* =====================================================================
+               [ADDED FEATURE] Clean Reset of Previous Peer Connection & Queues
+            ===================================================================== */
+            if (teacherPc) {
+                teacherPc.close();
+                teacherPc = null;
+            }
+            iceCandidateQueue = [];
+            isRemoteDescriptionSet = false;
+
             teacherPc = new RTCPeerConnection(servers);
             if (localStream) {
                 localStream.getTracks().forEach(track => teacherPc.addTrack(track, localStream));
             }
+            
+            /* =====================================================================
+               [UPDATED] Preserves index(1) Direct Stream Binding + Adds Autoplay Unblock
+            ===================================================================== */
             teacherPc.ontrack = (event) => { 
-                document.getElementById('teacherVideo').srcObject = event.streams[0]; 
+                const videoEl = document.getElementById('teacherVideo');
+                videoEl.srcObject = event.streams[0]; 
+                videoEl.play().catch(err => {
+                    console.warn("Autoplay blocked, muting initially to start video:", err);
+                    videoEl.muted = true;
+                    videoEl.play().then(() => {
+                        document.body.addEventListener('touchstart', () => { videoEl.muted = false; }, { once: true });
+                        document.body.addEventListener('click', () => { videoEl.muted = false; }, { once: true });
+                    });
+                });
             };
+
+            /* =====================================================================
+               [ADDED FEATURE] ICE Connection State Monitor & Auto-Recovery
+            ===================================================================== */
+            teacherPc.oniceconnectionstatechange = () => {
+                if (!teacherPc) return;
+                if (teacherPc.iceConnectionState === 'connected' || teacherPc.iceConnectionState === 'completed') {
+                    hideVideoFallback();
+                } else if (teacherPc.iceConnectionState === 'failed' || teacherPc.iceConnectionState === 'disconnected') {
+                    showVideoFallback("Reconnecting Video...", "Restoring connection with teacher...");
+                    socket.emit('student-ready-for-call', { teacherId });
+                }
+            };
+
             teacherPc.onicecandidate = (event) => {
                 if (event.candidate) socket.emit('signal', { target: teacherId, signal: { candidate: event.candidate } });
             };
@@ -722,6 +986,11 @@
                 roomIdInput.value = roomIdFromUrl;
                 studentNameInput.focus();
             }
+            /* =====================================================================
+               [ADDED FEATURE] Pre-fill Saved Name & Room ID from Session Storage
+            ===================================================================== */
+            if (myStudentName) studentNameInput.value = myStudentName;
+            if (myRoomId && !roomIdFromUrl) roomIdInput.value = myRoomId;
         });
     </script>
 </body>
