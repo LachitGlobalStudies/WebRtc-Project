@@ -396,7 +396,7 @@
         ===================================================================== */
         const socket = io({
             reconnection: true,
-            reconnectionAttempts: Infinity,
+            reconnectionAttempts: 10,
             reconnectionDelay: 1000,
             reconnectionDelayMax: 5000
         });
