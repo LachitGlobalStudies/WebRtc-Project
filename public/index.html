@@ -949,17 +949,22 @@
                [UPDATED] Preserves index(1) Direct Stream Binding + Adds Autoplay Unblock
             ===================================================================== */
             teacherPc.ontrack = (event) => { 
-                const videoEl = document.getElementById('teacherVideo');
-                videoEl.srcObject = event.streams[0]; 
-                videoEl.play().catch(err => {
-                    console.warn("Autoplay blocked, muting initially to start video:", err);
-                    videoEl.muted = true;
-                    videoEl.play().then(() => {
-                        document.body.addEventListener('touchstart', () => { videoEl.muted = false; }, { once: true });
-                        document.body.addEventListener('click', () => { videoEl.muted = false; }, { once: true });
-                    });
-                });
-            };
+                    const videoEl = document.getElementById('teacherVideo');
+                    videoEl.muted = false;
+                    videoEl.srcObject = event.streams[0]; 
+                };
+            // teacherPc.ontrack = (event) => { 
+            //     const videoEl = document.getElementById('teacherVideo');
+            //     videoEl.srcObject = event.streams[0]; 
+            //     videoEl.play().catch(err => {
+            //         console.warn("Autoplay blocked, muting initially to start video:", err);
+            //         videoEl.muted = true;
+            //         videoEl.play().then(() => {
+            //             document.body.addEventListener('touchstart', () => { videoEl.muted = false; }, { once: true });
+            //             document.body.addEventListener('click', () => { videoEl.muted = false; }, { once: true });
+            //         });
+            //     });
+            // };
 
             /* =====================================================================
                [ADDED FEATURE] ICE Connection State Monitor & Auto-Recovery
