@@ -474,12 +474,16 @@
             reconnectBanner.style.display = 'block';
         });
 
-        joinBtn.onclick = async () => {
+      joinBtn.onclick = async () => {
             const name = studentNameInput.value.trim();
             const roomId = roomIdInput.value.trim();
 
             if (!name) return alert("Please enter your name!");
             if (!roomId) return alert("Please enter the Class Room ID!");
+
+            // ইউজার জয়েন বাটনে ক্লিক করার সাথে সাথেই অডিও আনলক করা
+            teacherVideo.muted = false;
+            teacherVideo.play().catch(() => {});
 
             myStudentName = name;
             myRoomId = roomId;
