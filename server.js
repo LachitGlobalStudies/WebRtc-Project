@@ -14,8 +14,13 @@ const io = require('socket.io')(http, {
         origin: "*",
         methods: ["GET", "POST"]
     },
-    maxHttpBufferSize: 1e7 // 10MB Limit
+    maxHttpBufferSize: 1e7, // 10MB Limit
+    pingTimeout: 60000,     // ৬০ সেকেন্ড পর্যন্ত ওয়েট করবে (Render-এর জন্য জরুরি)
+    pingInterval: 25000     // প্রতি ২৫ সেকেন্ডে কানেকশন চেক করবে
 });
+
+// উপরে ভেরিয়েবল ডিক্লেয়ারেশনের জায়গায় এটি যোগ করুন:
+const teacherDisconnectTimers = {};
 
 app.get('/get-html-page', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -39,8 +44,14 @@ io.on('connection', (socket) => {
         socketUserData[socket.id] = { role, roomId, name: role === 'teacher' ? 'Teacher' : 'Student' };
 
         if (role === 'teacher') {
+            // যদি টিচার ১০ সেকেন্ডের মধ্যে রিকানেক্ট করে, তবে ডিসকানেক্ট টাইমার বাতিল করা
+            if (teacherDisconnectTimers[roomId]) {
+                clearTimeout(teacherDisconnectTimers[roomId]);
+                delete teacherDisconnectTimers[roomId];
+            }
+
             roomTeachers[roomId] = socket.id;
-            roomChatState[roomId] = false; 
+            if (roomChatState[roomId] === undefined) roomChatState[roomId] = false; 
             if (!pendingStudents[roomId]) pendingStudents[roomId] = [];
             if (!approvedStudents[roomId]) approvedStudents[roomId] = new Set();
             
@@ -337,17 +348,22 @@ io.on('connection', (socket) => {
         if (!currentRoom) return;
 
         if (socket.role === 'teacher') {
-            if (activeStreams[currentRoom]) {
-                activeStreams[currentRoom].stdin.end();
-                delete activeStreams[currentRoom];
-            }
-            delete roomTeachers[currentRoom];
-            delete roomChatState[currentRoom];
-            delete pendingStudents[currentRoom];
-            socket.to(currentRoom).emit('teacher-disconnected');
+            // সাথে সাথে ডিসকানেক্ট না দেখিয়ে ১২ সেকেন্ড সময় দেওয়া (Auto-reconnect এর জন্য)
+            teacherDisconnectTimers[currentRoom] = setTimeout(() => {
+                if (roomTeachers[currentRoom] === socketId) {
+                    if (activeStreams[currentRoom]) {
+                        activeStreams[currentRoom].stdin.end();
+                        delete activeStreams[currentRoom];
+                    }
+                    delete roomTeachers[currentRoom];
+                    delete roomChatState[currentRoom];
+                    delete pendingStudents[currentRoom];
+                    io.to(currentRoom).emit('teacher-disconnected');
+                }
+                delete teacherDisconnectTimers[currentRoom];
+            }, 12000);
         } else {
             socket.to(currentRoom).emit('user-left', socket.id);
-            
             const clients = io.sockets.adapter.rooms.get(currentRoom);
             io.to(currentRoom).emit('room-count-update', { count: clients ? clients.size : 0 });
         }
