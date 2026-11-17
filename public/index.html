@@ -773,19 +773,34 @@
                 localStream.getTracks().forEach(track => teacherPc.addTrack(track, localStream));
             }
             
-            teacherPc.ontrack = (event) => { 
+       teacherPc.ontrack = (event) => { 
                 const remoteStream = event.streams[0];
                 if (teacherVideo.srcObject !== remoteStream) {
                     teacherVideo.srcObject = remoteStream;
-                    // ব্ল্যাক স্ক্রিন প্রতিরোধে ফোর্স প্লে ব্যাক
+                    teacherVideo.muted = false;
+                    teacherVideo.volume = 1.0;
+
                     teacherVideo.play().catch(err => {
-                        console.warn("Autoplay blocked, muting initially to start video:", err);
+                        console.warn("Autoplay with audio blocked:", err);
                         teacherVideo.muted = true;
-                        teacherVideo.play().then(() => {
-                            // ইউজার স্ক্রিনে টাচ করলে আনমিউট হবে
-                            document.body.addEventListener('touchstart', () => { teacherVideo.muted = false; }, { once: true });
-                            document.body.addEventListener('click', () => { teacherVideo.muted = false; }, { once: true });
-                        });
+                        teacherVideo.play();
+
+                        // স্ক্রিনে স্পষ্ট আনমিউট বাটন দেখানো
+                        let unmuteBtn = document.getElementById('unmuteTeacherBtn');
+                        if (!unmuteBtn) {
+                            unmuteBtn = document.createElement('button');
+                            unmuteBtn.id = 'unmuteTeacherBtn';
+                            unmuteBtn.innerText = "🔊 Tap to Hear Teacher's Voice";
+                            unmuteBtn.style.cssText = "position:fixed; bottom:30px; left:50%; transform:translateX(-50%); z-index:999999; padding:14px 24px; background:#22c55e; color:#fff; font-size:16px; font-weight:bold; border:none; border-radius:30px; box-shadow:0 4px 20px rgba(0,0,0,0.6); cursor:pointer;";
+                            document.body.appendChild(unmuteBtn);
+
+                            unmuteBtn.onclick = () => {
+                                teacherVideo.muted = false;
+                                teacherVideo.volume = 1.0;
+                                teacherVideo.play();
+                                unmuteBtn.remove();
+                            };
+                        }
                     });
                 }
             };
