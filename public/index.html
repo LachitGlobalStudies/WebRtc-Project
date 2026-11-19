@@ -394,12 +394,14 @@
         /* =====================================================================
            [ADDED FEATURE] Socket.IO Auto-Reconnection Configuration
         ===================================================================== */
-        const socket = io({
-            reconnection: true,
-            reconnectionAttempts: 10,
-            reconnectionDelay: 1000,
-            reconnectionDelayMax: 5000
-        });
+    const socket = io({
+    transports: ["websocket", "polling"],
+    reconnection: true,
+    reconnectionAttempts: Infinity,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 60000
+});
 
         let currentFacingMode = 'user';
         let localStream;
@@ -685,6 +687,12 @@
                 if (myVideoCard) myVideoCard.style.display = 'none';
                 if (raiseHandBtn) raiseHandBtn.style.display = 'none';
             }, 8000);
+            // join-accepted এর ভেতরে যোগ করুন
+                setInterval(() => {
+                    if (socket.connected && myRoomId) {
+                        socket.emit('keep-alive', { roomId: myRoomId, role: 'student' });
+                    }
+                }, 15000);
         });
 
         /* =====================================================================
@@ -969,11 +977,25 @@
             /* =====================================================================
                [ADDED FEATURE] ICE Connection State Monitor & Auto-Recovery
             ===================================================================== */
+          let disconnectTimeout = null;
+
             teacherPc.oniceconnectionstatechange = () => {
                 if (!teacherPc) return;
-                if (teacherPc.iceConnectionState === 'connected' || teacherPc.iceConnectionState === 'completed') {
+                const state = teacherPc.iceConnectionState;
+            
+                if (state === 'connected' || state === 'completed') {
+                    clearTimeout(disconnectTimeout);
                     hideVideoFallback();
-                } else if (teacherPc.iceConnectionState === 'failed' || teacherPc.iceConnectionState === 'disconnected') {
+                } else if (state === 'disconnected') {
+                    // ৪ সেকেন্ড অপেক্ষা করে দেখবে নিজে থেকে ঠিক হয় কি না
+                    disconnectTimeout = setTimeout(() => {
+                        if (teacherPc && teacherPc.iceConnectionState === 'disconnected') {
+                            showVideoFallback("Reconnecting Video...", "Restoring connection with teacher...");
+                            socket.emit('student-ready-for-call', { teacherId });
+                        }
+                    }, 4000);
+                } else if (state === 'failed') {
+                    clearTimeout(disconnectTimeout);
                     showVideoFallback("Reconnecting Video...", "Restoring connection with teacher...");
                     socket.emit('student-ready-for-call', { teacherId });
                 }
