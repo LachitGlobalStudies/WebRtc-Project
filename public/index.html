@@ -394,14 +394,25 @@
         /* =====================================================================
            [ADDED FEATURE] Socket.IO Auto-Reconnection Configuration
         ===================================================================== */
-    const socket = io({
-    transports: ["websocket", "polling"],
-    reconnection: true,
-    reconnectionAttempts: Infinity,
-    reconnectionDelay: 1000,
-    reconnectionDelayMax: 5000,
-    timeout: 60000
-});
+ // ১. Socket Configuration (Line ~307)
+        const socket = io({
+            transports: ["websocket", "polling"],
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
+            timeout: 60000
+        });
+
+        let keepAliveTimer = null;
+        function startStudentHeartbeat() {
+            if (keepAliveTimer) clearInterval(keepAliveTimer);
+            keepAliveTimer = setInterval(() => {
+                if (socket.connected && myRoomId) {
+                    socket.emit('keep-alive', { roomId: myRoomId, role: 'student' });
+                }
+            }, 15000);
+        }
 
         let currentFacingMode = 'user';
         let localStream;
@@ -661,7 +672,7 @@
             sessionStorage.setItem('lgs_room_id', roomId);
             sessionStorage.setItem('lgs_student_name', myStudentName);
             reconnectBanner.style.display = 'none';
-
+            startStudentHeartbeat(); // <-- এটি যোগ করুন
             if (!isReconnect) {
                 toggleFullScreen();
             }
@@ -977,25 +988,31 @@
             /* =====================================================================
                [ADDED FEATURE] ICE Connection State Monitor & Auto-Recovery
             ===================================================================== */
-          let disconnectTimeout = null;
+
+            let iceDisconnectTimer = null;
 
             teacherPc.oniceconnectionstatechange = () => {
                 if (!teacherPc) return;
                 const state = teacherPc.iceConnectionState;
-            
+
                 if (state === 'connected' || state === 'completed') {
-                    clearTimeout(disconnectTimeout);
+                    if (iceDisconnectTimer) {
+                        clearTimeout(iceDisconnectTimer);
+                        iceDisconnectTimer = null;
+                    }
                     hideVideoFallback();
                 } else if (state === 'disconnected') {
-                    // ৪ সেকেন্ড অপেক্ষা করে দেখবে নিজে থেকে ঠিক হয় কি না
-                    disconnectTimeout = setTimeout(() => {
-                        if (teacherPc && teacherPc.iceConnectionState === 'disconnected') {
-                            showVideoFallback("Reconnecting Video...", "Restoring connection with teacher...");
-                            socket.emit('student-ready-for-call', { teacherId });
-                        }
-                    }, 4000);
+                    // মোবাইল নেটওয়ার্কে ১-২ সেকেন্ড ফ্লাকচুয়েট করলে সাথে সাথে রিসেট করবে না
+                    if (!iceDisconnectTimer) {
+                        iceDisconnectTimer = setTimeout(() => {
+                            if (teacherPc && teacherPc.iceConnectionState === 'disconnected') {
+                                showVideoFallback("Reconnecting Video...", "Restoring connection with teacher...");
+                                socket.emit('student-ready-for-call', { teacherId });
+                            }
+                        }, 5000);
+                    }
                 } else if (state === 'failed') {
-                    clearTimeout(disconnectTimeout);
+                    if (iceDisconnectTimer) clearTimeout(iceDisconnectTimer);
                     showVideoFallback("Reconnecting Video...", "Restoring connection with teacher...");
                     socket.emit('student-ready-for-call', { teacherId });
                 }
