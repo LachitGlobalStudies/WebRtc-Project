@@ -947,7 +947,15 @@
                 chat.classList.remove('open');
             }
         });
-
+        socket.on('force-refresh-connection', async ({ teacherId }) => {
+                    showVideoFallback("Refreshing Connection...", "Teacher refreshed the live stream...");
+                    
+                    await ensureLocalStream();
+                    if (teacherId) {
+                        setupTeacherConnection(teacherId);
+                        socket.emit('student-ready-for-call', { teacherId });
+                    }
+                });
         function setupTeacherConnection(teacherId) {
             /* =====================================================================
                [ADDED FEATURE] Clean Reset of Previous Peer Connection & Queues
