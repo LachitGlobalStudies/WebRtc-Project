@@ -35,7 +35,10 @@ const approvedStudents = {}; // { roomId: Set([studentName]) } -> ট্র্�
 const socketUserData = {};  // { [socket.id]: { role, roomId, name } }
 
 io.on('connection', (socket) => {
-    
+    // Keep-Alive Handler (Render & Mobile NAT timeout প্রতিরোধ করবে)
+    socket.on('keep-alive', () => {
+        socket.emit('keep-alive-ack');
+    });
     // Teacher Joins
     socket.on('join-room', ({ roomId, role }) => {
         socket.join(roomId);
