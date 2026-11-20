@@ -333,6 +333,15 @@ io.on('connection', (socket) => {
         io.to(targetStudentId).emit('request-camera-switch');
     });
 
+    // Add this right here inside io.on('connection') in server.js:
+    socket.on('refresh-all-students', ({ roomId }) => {
+        if (socket.role !== 'teacher') return;
+        const targetRoom = roomId || socket.roomId;
+        socket.to(targetRoom).emit('', { 
+            teacherId: socket.id 
+        });
+    });
+
     // Disconnect Handling
     socket.on('disconnect', () => {
         const currentRoom = socket.roomId;
